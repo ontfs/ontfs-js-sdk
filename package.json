@@ -1,0 +1,17 @@
+{
+  "name": "ontfs-js-sdk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "bignumber.js": "^9.0.0",
+    "bytes": "^3.1.0",
+    "ontology-ts-sdk": "^1.1.0"
+  },
+  "devDependencies": {
+    "jest": "^25.2.7"
+  }
+}
