@@ -25,6 +25,14 @@ const formatVolumeStringFromByteNum = (byteNum) => {
     return humanize.bytes(byteNum)
 }
 
+const formatTimeStringFromUnixTime = (timestamp) => {
+    let timestampLen = timestamp.toString().length
+    if (timestampLen == 10) {
+        return new Date(timestamp * 1000)
+    }
+    return new Date(timestamp)
+}
+
 const parseVolumeStringToByteNum = (volume) => {
     let sizeInByte = humanize.parseBytes(volume)
     return sizeInByte
@@ -70,6 +78,7 @@ module.exports = {
     formatVolumeStringFromKb,
     formatVolumeStringFromByteNum,
     parseVolumeStringToByteNum,
+    formatTimeStringFromUnixTime,
     formatAssetAmount,
     parseAssetAmount,
     formatOng,

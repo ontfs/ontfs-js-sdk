@@ -23,6 +23,7 @@ const FILE_LINK_BLOCKNUM_KEY = "blocknum" // block count
 const FILE_LINK_OWNER_KEY = "owner"    // owner
 const P2P_REQUEST_WAIT_REPLY_TIMEOUT = 20 // 30s
 const WAIT_FOR_GENERATEBLOCK_TIMEOUT = 10 // wait for generate timeout
+const WAIT_FOR_TX_COMFIRME_TIMEOUT = 10 // wait for tx confirmed timeout
 const DEFAULT_FS_NODES_LIST = 64 // default fs nodes list
 const MAX_COPY_NUM = 64 // max copy num limit
 const PER_SEND_BLOCK_SIZE = 1024 * 128 //network.PER_SEND_BLOCK_SIZE
@@ -62,6 +63,7 @@ module.exports = {
     FILE_LINK_OWNER_KEY,
     P2P_REQUEST_WAIT_REPLY_TIMEOUT,
     WAIT_FOR_GENERATEBLOCK_TIMEOUT,
+    WAIT_FOR_TX_COMFIRME_TIMEOUT,
     DEFAULT_FS_NODES_LIST,
     MAX_COPY_NUM,
     PER_SEND_BLOCK_SIZE,

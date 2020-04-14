@@ -1,6 +1,11 @@
 const utils = require("../utils")
 const { CurveLabel, KeyParameters, KeyType, PrivateKey, SignatureScheme, Signature, PublicKey } = require("ontology-ts-sdk").Crypto
 const { str2hexstr } = require("ontology-ts-sdk").utils
+const Deferred = require("deferred")
+const sleep = (ms = 0) => {
+    return new Promise(r => setTimeout(r, ms));
+}
+
 describe('crypto test', () => {
     test('test address from pubKey', () => {
         const pubKeyHex = "03e55c62375ee6725a0a7c45db4c209aa28ac08aa985dfc634757a8de89a2f6aae"
@@ -23,6 +28,17 @@ describe('crypto test', () => {
         const publicKey = privateKey.getPublicKey();
         const result = utils.verify(publicKey.serializeHex(), encoded, signature.serializeHex());
         expect(result).toBeTruthy()
+    })
+
+    test('test promise', async () => {
+        let closePromise = new Deferred()
+        closePromise.promise.then(() => {
+            console.log("receive close promise")
+        })
+
+        await sleep(3000)
+        console.log('closePromise', closePromise.resolve())
+        console.log("test promise done")
     })
 })
 
