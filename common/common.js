@@ -10,7 +10,7 @@ const pathExisted = (path) => {
     return fs.existsSync(path)
 }
 
-const createDirIfNeed = (dir) => {
+const createDirIfNeed = (folder) => {
     if (!fs.existsSync(folder)) {
         fs.mkdirSync(folder, { recursive: true });
     }

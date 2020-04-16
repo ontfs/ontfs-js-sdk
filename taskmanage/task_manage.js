@@ -1,17 +1,9 @@
 const types = require("../types")
-const taskentity = {}
-const GlobalTaskMgr
-
-const initTaskManage = () => {
-    const taskMgr = {
-        uploadTaskHub: {},
-        downloadTaskHub: {},
-    }
-    GlobalTaskMgr = taskMgr
-}
+const taskentity = require("../taskentity")
+const utils = require("../utils")
 
 const getTaskId = () => {
-    Math.floor(100000000 + Math.random() * 10000000000000000000)
+    return utils.randomInt()
 }
 
 class TaskMgr {
@@ -50,11 +42,19 @@ class TaskMgr {
     }
 
     getUploadTaskByTaskId(taskId) {
-        return this.uploadTaskHub[taskId]
+        const task = this.uploadTaskHub[taskId]
+        if (task) {
+            return task
+        }
+        throw new Error(`[GetUploadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
     getDownloadTaskByTaskId(taskId) {
-        return this.downloadTaskHub[taskId]
+        const task = this.downloadTaskHub[taskId]
+        if (task) {
+            return task
+        }
+        throw new Error(`[GetDownloadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
     getAllUploadTask() {
@@ -130,7 +130,20 @@ class TaskMgr {
     }
 }
 
+var Global = {}
+
+const initTaskManage = () => {
+    const taskMgr = new TaskMgr({}, {})
+    Global['taskMgr'] = taskMgr
+    return taskMgr
+}
+
+const GlobalTaskMgr = () => {
+    return Global["taskMgr"]
+}
+
 module.exports = {
     initTaskManage,
-    TaskMgr
+    TaskMgr,
+    GlobalTaskMgr,
 }

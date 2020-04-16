@@ -39,6 +39,9 @@ class FilePrefix {
     }
 
     getPasswordHash() {
+        if (!this.encryptPwd || !this.encryptPwd.length) {
+            return num2hexstring(0, CRYPTO_HASH_LEN, true)
+        }
         const pwdHex = str2hexstr(this.encryptPwd)
         let zero16Bstr = num2hexstring(0, 16, true)
         let encryptSaltStr = this.encryptSalt ? this.encryptSalt : zero16Bstr
@@ -50,6 +53,8 @@ class FilePrefix {
         this.version = this.version || PREFIX_VERSION
         if (this.encrypt) {
             this.encryptHash = this.getPasswordHash()
+        } else {
+            this.encryptHash = num2hexstring(0, CRYPTO_HASH_LEN, true)
         }
         let zero16Bstr = num2hexstring(0, 16, true)
         let zero4Bstr = num2hexstring(0, 4, true)
@@ -101,5 +106,6 @@ const getPrefixEncrypted = (prefixHex) => {
 
 module.exports = {
     FilePrefix,
+    PREFIX_VERSION,
     getPrefixEncrypted
 } 

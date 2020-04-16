@@ -2,3 +2,5 @@ node_modules/
 temp.js
 yarn.lock
 vendor/
+pdp/pkg/data*
+wallet.dat

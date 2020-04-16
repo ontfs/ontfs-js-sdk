@@ -1,17 +1,17 @@
-const { initSdk } = require('../sdk')
+const { initSdk, Sdk } = require('../sdk')
 const OntSDK = require("ontology-ts-sdk").SDK
 const { Account } = require("ontology-ts-sdk")
 const { Address } = require("ontology-ts-sdk").Crypto
-const { str2hexstr } = require("ontology-ts-sdk").utils
+const { hexstr2str } = require("ontology-ts-sdk").utils
 describe('sdk test', () => {
     const wif = "KxYkAszCkUhfnx2goy5wxSiUrbMcCFgjK87dgAvDxnwiq7hKymNL"
     const label = 'pwd'
     const password = 'pwd'
     const rpcAddr = 'http://127.0.0.1:20336'
-    let sdk
+    let sdk = new Sdk()
     const testTimeout = 20 * 1000
     const init = async () => {
-        if (sdk && sdk.ontFs) {
+        if (sdk && sdk.ontFs && sdk.ontFs.account) {
             return
         }
         const { error, result } = await OntSDK.importAccountWithWif(label, wif, password)
@@ -40,8 +40,6 @@ describe('sdk test', () => {
         await sdk.createSpace(10, 1, 600, 1586880000)
     }, testTimeout);
 
-
-
     test('test sdk get space info', async () => {
         await init()
         await expect(sdk.getSpaceInfo()).resolves.toBeDefined()
@@ -61,27 +59,25 @@ describe('sdk test', () => {
     test('test sdk store files', async () => {
         await init()
         let info = {
-            fileHash: str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa"),
-            fileDesc: str2hexstr("wallet"),
+            fileHash: "SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa",
+            fileDesc: "wallet",
             fileBlockCount: 1,
             realFileSize: 484,
             copyNumber: 1,
             firstPdp: true,
             pdpInterval: 600,
             timeExpired: 1586880009,
-            pdpParam: "01000000000000000100000000000000200000000000000019aedee05748b8af421f18388bc60c441813271207a960ea3b4a59007b159fa4",
+            pdpParam: hexstr2str("01000000000000000100000000000000200000000000000019aedee05748b8af421f18388bc60c441813271207a960ea3b4a59007b159fa4"),
             storageType: 1
         }
-
         await sdk.ontFs.storeFiles([info])
     }, testTimeout);
 
     test('test sdk get file info', async () => {
         await init()
-        const info = await sdk.getFileInfo(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa"))
-        // const info = await sdk.getFileInfo(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAz"))
+        const info = await sdk.getFileInfo("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa")
         console.log('info', info)
-        await expect(sdk.getFileInfo(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa"))).resolves.toBeDefined()
+        await expect(sdk.getFileInfo("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa")).resolves.toBeDefined()
     });
 
     test('test sdk get file list', async () => {
@@ -91,21 +87,21 @@ describe('sdk test', () => {
 
     test('test sdk renew file info', async () => {
         await init()
-        await expect(sdk.renewFile(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa"), 3600)).resolves.toBeUndefined()
+        await expect(sdk.renewFile("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa", 3600)).resolves.toBeUndefined()
     }, testTimeout);
 
     test('test sdk change file owner', async () => {
         await init()
         const addr = new Address("AN1n6Wm2mMjp5PNgMBViYxQaHsDWEn1uyx")
-        await expect(sdk.changeOwner(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa"), addr)).resolves.toBeUndefined()
+        await expect(sdk.changeOwner("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAa", addr)).resolves.toBeUndefined()
     }, testTimeout);
 
 
     test('test sdk delete files', async () => {
         await init()
         const tx = await sdk.deleteFiles([
-            str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy"),
-            str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAz")
+            "SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy",
+            "SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAz"
         ])
         console.log('tx', tx)
         // await expect().resolves.toBeUndefined()
@@ -114,7 +110,7 @@ describe('sdk test', () => {
     test('test sdk delete file', async () => {
         await init()
         await sdk.deleteFile(
-            str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd")
+            "SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"
         )
         // await expect().resolves.toBeUndefined()
     }, testTimeout);
@@ -126,7 +122,7 @@ describe('sdk test', () => {
             maxReadBlockNum: 1,
             haveReadBlockNum: 0,
         }
-        await sdk.ontFs.fileReadPledge(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"), [readPlan])
+        await sdk.ontFs.fileReadPledge("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd", [readPlan])
 
         // await expect().resolves.toBeUndefined()
     }, testTimeout);
@@ -134,30 +130,30 @@ describe('sdk test', () => {
 
     test('test sdk get read file pledge', async () => {
         await init()
-        await expect(sdk.getFileReadPledge(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))).resolves.toBeDefined()
+        await expect(sdk.getFileReadPledge("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd")).resolves.toBeDefined()
     }, testTimeout);
 
     test('test sdk cancel read file pledge', async () => {
         await init()
-        await expect(sdk.cancelFileRead(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))).resolves.toBeUndefined()
+        await expect(sdk.cancelFileRead("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd")).resolves.toBeUndefined()
     }, testTimeout);
 
 
     test('test sdk get file pdp record', async () => {
         await init()
-        await sdk.getFilePdpInfoList(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))
+        await sdk.getFilePdpInfoList("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy")
         // await expect(sdk.getFilePdpRecordList(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))).resolves.toBeDefined()
     }, testTimeout);
 
     test('test sdk challenge file', async () => {
         await init()
-        await sdk.challenge(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"), "ALQ6RWJENsELE7ATuzHz4zgHrq573xJsnM")
+        await sdk.challenge("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd", "ALQ6RWJENsELE7ATuzHz4zgHrq573xJsnM")
         // await expect().resolves.toBeUndefined()
     }, testTimeout);
 
     test('test sdk get file challenge list', async () => {
         await init()
-        await sdk.getChallengeList(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))
+        await sdk.getChallengeList("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd")
         // await expect().resolves.toBeUndefined()
     }, testTimeout);
 

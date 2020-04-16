@@ -1,19 +1,13 @@
 
-const pdp = {
-    newPdp() {
-        return null
-    }
-}
-
 const { RpcClient } = require("ontology-ts-sdk")
+const pdp = require("../pdp")
 const config = require("../config")
 const fs = require("../fs")
 const common = require("../common")
 const { sleep } = require("../utils")
 const OntFs = require("./ontfs").OntFs
 
-var Version
-var GlobalSdk
+
 
 class Sdk {
     constructor(
@@ -29,6 +23,8 @@ class Sdk {
         this.sdkConfig = _sdkConfig
         this.chain = _chain
         this.ontFs = _ontFs
+        // this.ontFs = new OntFs()
+        // this.chain = new RpcClient()
         this.fs = _fs
         this.stop = _stop
         this.pdpServer = _pdpServer
@@ -437,20 +433,27 @@ const initSdk = (sdkCfg, acc) => {
     if (!s.ontFs) {
         throw new Error("ontfs contract api init failed")
     }
+    console.log('config.DaemonConfig', config.DaemonConfig)
     if (config.DaemonConfig && config.DaemonConfig.fsRepoRoot && config.DaemonConfig.fsRepoRoot.length) {
         s.fs = fs.newFs()
     }
     return s
 }
 
-const setGloblalSdk = (sdk) => {
-    GlobalSdk = sdk
+var Global = {}
+var Version = 0
+
+const SetGlobalSdk = (sdk) => {
+    Global['sdk'] = sdk
+}
+const GlobalSdk = () => {
+    return Global['sdk']
 }
 
 module.exports = {
     Sdk,
     initSdk,
-    setGloblalSdk,
     Version,
-    GlobalSdk
+    SetGlobalSdk,
+    GlobalSdk,
 }

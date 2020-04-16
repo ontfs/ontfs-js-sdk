@@ -1,4 +1,4 @@
-const { hexstr2str, reverseHex } = require("ontology-ts-sdk").utils
+const { hexstr2str, reverseHex, str2hexstr } = require("ontology-ts-sdk").utils
 const { RpcClient } = require("ontology-ts-sdk")
 const OntfsContractTxBuilder = require("ontology-ts-sdk").OntfsContractTxBuilder
 const {
@@ -110,19 +110,30 @@ class OntFs {
     }
 
     async storeFiles(files) {
-        const tx = OntfsContractTxBuilder.buildStoreFilesTx(files, this.account.address, this.gasPrice, this.gasLimit,
+        let newFiles = []
+        for (let file of files) {
+            let newFile = file
+            newFile.fileHash = str2hexstr(file.fileHash)
+            newFile.fileDesc = str2hexstr(file.fileDesc)
+            newFile.pdpParam = file.pdpParam
+            newFiles.push(newFile)
+        }
+        const tx = OntfsContractTxBuilder.buildStoreFilesTx(newFiles, this.account.address, this.gasPrice, this.gasLimit,
             this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
     }
 
     async getFileInfo(fileHash) {
-        const tx = OntfsContractTxBuilder.buildGetFileInfoTx(fileHash)
+        const tx = OntfsContractTxBuilder.buildGetFileInfoTx(str2hexstr(fileHash))
         const result = await this.preInvokeNativeContract(tx)
         if (!result || !result.success) {
             throw new Error(hexstr2str(result.data))
         }
         const fileInfo = FileInfo.deserializeHex(result.data)
+        fileInfo.fileHash = hexstr2str(fileInfo.fileHash)
+        fileInfo.fileDesc = hexstr2str(fileInfo.fileDesc)
+        fileInfo.pdpParam = hexstr2str(fileInfo.pdpParam)
         return fileInfo
     }
 
@@ -144,6 +155,9 @@ class OntFs {
     }
 
     async renewFile(renews) {
+        for (let item of renews) {
+            item.fileHash = str2hexstr(item.fileHash)
+        }
         const tx = OntfsContractTxBuilder.buildRenewFilesTx(renews, this.account.address, this.account.address,
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
@@ -151,6 +165,9 @@ class OntFs {
     }
 
     async transferFiles(renews) {
+        for (let item of renews) {
+            item.fileHash = str2hexstr(item.fileHash)
+        }
         const tx = OntfsContractTxBuilder.buildTransferFilesTx(renews, this.account.address, this.gasPrice,
             this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
@@ -158,6 +175,9 @@ class OntFs {
     }
 
     async deleteFiles(fileHashes) {
+        for (let item of fileHashes) {
+            item = str2hexstr(item)
+        }
         const tx = OntfsContractTxBuilder.buildDeleteFilesTx(fileHashes, this.gasPrice,
             this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
@@ -169,48 +189,54 @@ class OntFs {
         for (let p of plans) {
             readPlan.push(new ReadPlan(new Address(p.nodeAddr), p.maxReadBlockNum, p.haveReadBlockNum))
         }
-        const tx = OntfsContractTxBuilder.buildFileReadPledgeTx(fileHash, readPlan, this.account.address,
+        const tx = OntfsContractTxBuilder.buildFileReadPledgeTx(str2hexstr(fileHash), readPlan, this.account.address,
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
     }
 
     async getFileReadPledge(fileHash, walletAddr) {
-        const tx = OntfsContractTxBuilder.buildGetFileReadPledgeTx(fileHash, walletAddr)
+        const tx = OntfsContractTxBuilder.buildGetFileReadPledgeTx(str2hexstr(fileHash), walletAddr)
         const result = await this.preInvokeNativeContract(tx)
         if (!result || !result.success) {
             throw new Error(hexstr2str(result.data))
         }
         const readPledge = ReadPledge.deserializeHex(result.data)
+        readPledge.fileHash = hexstr2str(readPledge.fileHash)
         return readPledge
     }
 
     async cancelFileRead(fileHash) {
-        const tx = OntfsContractTxBuilder.buildCancelFileReadTx(fileHash, this.account.address,
+        const tx = OntfsContractTxBuilder.buildCancelFileReadTx(str2hexstr(fileHash), this.account.address,
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
     }
 
     async getFilePdpRecordList(fileHash) {
-        const tx = OntfsContractTxBuilder.buildGetFilePdpRecordListTx(fileHash)
+        const tx = OntfsContractTxBuilder.buildGetFilePdpRecordListTx(str2hexstr(fileHash))
         const result = await this.preInvokeNativeContract(tx)
         if (!result || !result.success) {
             throw new Error(hexstr2str(result.data))
         }
         const list = PdpRecordList.deserializeHex(result.data)
+        if (list.pdpRecords) {
+            for (let item of list.pdpRecords) {
+                item.fileHash = hexstr2str(item.fileHash)
+            }
+        }
         return list
     }
 
     async challenge(fileHash, nodeAddr) {
-        const tx = OntfsContractTxBuilder.buildChallengeTx(fileHash, this.account.address, new Address(nodeAddr),
+        const tx = OntfsContractTxBuilder.buildChallengeTx(str2hexstr(fileHash), this.account.address, new Address(nodeAddr),
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         console.log("result", result)
         return result
     }
     async judge(fileHash, nodeAddr) {
-        const tx = OntfsContractTxBuilder.buildJudgeTx(fileHash, this.account.address, new Address(nodeAddr),
+        const tx = OntfsContractTxBuilder.buildJudgeTx(str2hexstr(fileHash), this.account.address, new Address(nodeAddr),
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
@@ -222,6 +248,11 @@ class OntFs {
             throw new Error(hexstr2str(result.data))
         }
         const list = ChallengeList.deserializeHex(result.data)
+        if (list.challenges) {
+            for (let item of list.challenges) {
+                item.fileHash = hexstr2str(item.fileHash)
+            }
+        }
         return list
     }
 }

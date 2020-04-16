@@ -22,7 +22,7 @@ const httpSend = async (address, data) => {
       method: 'POST',
       url: address,
       data,
-      timeout: HTTP_REQ_TIMEOUT,
+      timeout: HTTP_REQ_TIMEOUT * SECOND,
       headers: {
         'content-type': 'application/form-data'
       }
@@ -61,7 +61,7 @@ const httpSendWithRetry = async (msg = "", peer, retry = HTTP_REQ_RETRY, timeout
       result = await axios(options);
       return result
     } catch (error) {
-      console.log(`network error for ${index +1} times`)
+      console.log(`network error for ${index + 1} times`)
       result = error;
     }
   }
@@ -90,7 +90,7 @@ const httpBroadcast = async (address, data, needReply = false, action) => {
       method: 'POST',
       url: address[i],
       data: data,
-      timeout: HTTP_REQ_TIMEOUT,
+      timeout: HTTP_REQ_TIMEOUT * SECOND,
       cancelToken: new CancelToken((cancel) => {
         cancelLists.push(cancel);
       })
