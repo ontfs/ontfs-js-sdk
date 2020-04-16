@@ -4,6 +4,9 @@ const {
   HTTP_REQ_TIMEOUT,
   HTTP_REQ_RETRY
 } = require('../http_common.js')
+const {
+  SECOND
+} = require('../../utils/time')
 
 /**
  * 
@@ -47,7 +50,7 @@ const httpSendWithRetry = async (msg = "", peer, retry = HTTP_REQ_RETRY, timeout
     method: 'POST',
     url: peer,
     data: msg,
-    timeout: timeout,
+    timeout: timeout * SECOND,
     headers: {
       'content-type': 'application/form-data'
     }
