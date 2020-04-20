@@ -28,7 +28,7 @@ class TaskMgr {
                 try {
                     const task = await taskentity.newTaskDownload(taskID, taskOption)
                     this.downloadTaskHub[taskID] = task
-                    await task.start()
+                    task.start()
                 } catch (e) {
                     throw e
                 }
@@ -138,12 +138,12 @@ const initTaskManage = () => {
     return taskMgr
 }
 
-const GlobalTaskMgr = () => {
+const globalTaskMgr = () => {
     return Global["taskMgr"]
 }
 
 module.exports = {
-    initTaskManage,
     TaskMgr,
-    GlobalTaskMgr,
+    initTaskManage,
+    globalTaskMgr,
 }

@@ -71,7 +71,7 @@ class TaskUpload {
         }
         try {
             console.log("get space info")
-            const spaceInfo = await sdk.GlobalSdk().ontFs.getSpaceInfo()
+            const spaceInfo = await sdk.globalSdk().ontFs.getSpaceInfo()
             if (spaceInfo.restVol * 1024 < this.baseInfo.blockCount * common.CHUNK_SIZE) {
                 throw new Error("space rest volume is not enough")
             }
@@ -95,7 +95,7 @@ class TaskUpload {
                 fileEnc = true
             }
             try {
-                this.baseInfo.blockHashes = await sdk.GlobalSdk().fs.addFile(this.option.filePath, this.baseInfo.filePrefix,
+                this.baseInfo.blockHashes = await sdk.globalSdk().fs.addFile(this.option.filePath, this.baseInfo.filePrefix,
                     fileEnc, this.option.encPassword)
                 this.baseInfo.fileHash = this.baseInfo.blockHashes[0]
                 this.baseInfo.blockCount = this.baseInfo.blockHashes.length
@@ -109,15 +109,17 @@ class TaskUpload {
             await this.checkUploadTask().catch((e) => {
                 throw e
             })
-            const filePdpHash = await getFilePdpHashes(sdk.GlobalSdk().pdpServer.version,
+            console.log("here")
+            const filePdpHash = await getFilePdpHashes(sdk.globalSdk().pdpServer.version,
                 this.baseInfo.blockHashes).catch((e) => {
                     console.log(`fs GetFilePdpHashes err ${e.toString()}`)
                     throw e
                 })
+            console.log("here2")
             this.baseInfo.pdpHashData = filePdpHash.serialize()
             this.baseInfo.progress = Upload_FsGetPdpHashData
         }
-
+        console.log("here3")
         if (this.baseInfo.progress < Upload_ContractStoreFiles) {
             const fileStore = {
                 fileHash: this.baseInfo.fileHash,
@@ -131,8 +133,8 @@ class TaskUpload {
                 pdpParam: this.baseInfo.pdpHashData,
                 storageType: this.option.storageType,
             }
-
-            const tx = await sdk.GlobalSdk().ontFs.storeFiles([fileStore]).catch((e) => {
+            console.log("will store file")
+            const tx = await sdk.globalSdk().ontFs.storeFiles([fileStore]).catch((e) => {
                 throw e
             })
             console.log('fileStore', fileStore, tx)
@@ -141,7 +143,7 @@ class TaskUpload {
                 throw new Error(`contract interface StoreFile called failed`)
             }
             this.baseInfo.storeTxHash = tx
-            const blockHeightRet = await sdk.GlobalSdk().chain.getBlockHeightByTxHash(tx).catch((e) => {
+            const blockHeightRet = await sdk.globalSdk().chain.getBlockHeightByTxHash(tx).catch((e) => {
                 console.log("get height err", e)
                 throw e
             })
@@ -152,7 +154,7 @@ class TaskUpload {
         }
         console.log('base info', this.baseInfo)
         if (this.baseInfo.progress < Upload_FindReceivers) {
-            const nodeList = await sdk.GlobalSdk().ontFs.getNodeInfoList(common.DEFAULT_FS_NODES_LIST).catch((e) => {
+            const nodeList = await sdk.globalSdk().ontFs.getNodeInfoList(common.DEFAULT_FS_NODES_LIST).catch((e) => {
                 throw e
             })
 
@@ -179,7 +181,7 @@ class TaskUpload {
                 }
                 let fsNodeNetAddr = `tcp://${fsNode.nodeNetAddr}`
                 fsNodeNetAddr = utils.tcpAddrToHTTPAddr(fsNodeNetAddr)
-                await this.checkFsServerStatus(sdk.GlobalSdk().account, fsNodeNetAddr).then(() => {
+                await this.checkFsServerStatus(sdk.globalSdk().account, fsNodeNetAddr).then(() => {
                     this.baseInfo.fileReceivers[fsNodeNetAddr] = fsNodeAddr
                 }).catch((e) => { })
                 console.log(`receivers =`, this.baseInfo.fileReceivers)
@@ -198,7 +200,7 @@ class TaskUpload {
         }
 
         if (this.baseInfo.progress < Upload_FilePreTransfer) {
-            this.baseInfo.allOffset = await sdk.GlobalSdk().fs.getFileAllBlockHashAndOffset(this.baseInfo.fileHash).catch((e) => {
+            this.baseInfo.allOffset = await sdk.globalSdk().fs.getFileAllBlockHashAndOffset(this.baseInfo.fileHash).catch((e) => {
                 throw e
             })
             this.baseInfo.progress = Upload_FilePreTransfer
@@ -224,7 +226,7 @@ class TaskUpload {
                     break
                 }
                 try {
-                    const pdpRecordList = await sdk.GlobalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
+                    const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
                     console.log("pdpRecordList", pdpRecordList)
                     isPdpCommitted = (pdpRecordList && pdpRecordList.pdpRecords &&
                         pdpRecordList.pdpRecords.length == Object.keys(this.baseInfo.fileReceivers).length)
@@ -259,6 +261,7 @@ class TaskUpload {
         this.upload().then(() => {
             this.baseInfo.status = TaskFinish
         }).catch((e) => {
+            console.log(`file upload failed`, e.toString())
             this.baseInfo.progress = Upload_Error
             this.baseInfo.errorInfo = e.toString()
             this.baseInfo.status = TaskFinish
@@ -296,6 +299,7 @@ class TaskUpload {
             if (!fileAskRet.data) {
                 throw new Error(`send file ask msg err`)
             }
+            console.log("fileAskRet.data", fileAskRet.data)
             console.log(`p2p broadcast file ask msg ret `, message.decodeMsg(fileAskRet.data))
         } catch (e) {
             console.log(`wait file receivers broadcast err ${e.toString()} `)
@@ -348,7 +352,8 @@ class TaskUpload {
             throw new Error(`receive rdy msg reply err ${newFileResp.error.code}, msg ${newFileResp.error.message} `)
         }
         const respFileMsg = newFileResp.payload
-        console.log(`respFileMsg`, typeof respFileMsg, respFileMsg)
+        console.log(`respFileMsg`, blockSendDetail, peerNetAddr)
+        console.log('respFileMsg.breakpoint', respFileMsg.breakpoint)
         if (respFileMsg.breakpoint && respFileMsg.breakpoint.hash && respFileMsg.breakpoint.hash.length &&
             respFileMsg.breakpoint.index && respFileMsg.breakpoint.index < this.baseInfo.blockCount &&
             this.baseInfo.blockHashes[respFileMsg.breakpoint.index] == respFileMsg.breakpoint.hash) {
@@ -371,22 +376,22 @@ class TaskUpload {
             if (blockIndex != this.baseInfo.blockCount - 1 && toBeSentBlocks.length < common.MAX_SEND_BLOCK_COUNT) {
                 continue
             }
-            console.log("toBeSentBlocks", toBeSentBlocks)
+            // console.log("toBeSentBlocks", toBeSentBlocks)
             const blocksAck = await this.sendBlockFlightMsg(peerNetAddr, toBeSentBlocks).catch((e) => {
                 throw e
             })
             console.log("blockAck", blocksAck)
             this.cleanMsgData(blocksAck)
-            this.blockSendDetail.index = blockIndex
+            blockSendDetail.index = blockIndex
             toBeSentBlocks = []
         }
     }
 
     async generateBlockMsgData(hash, index, offset) {
-        const block = await sdk.GlobalSdk().fs.getBlockWithHash(hash).catch((e) => {
+        const block = await sdk.globalSdk().fs.getBlockWithHash(hash).catch((e) => {
             throw e
         })
-        const blockData = sdk.GlobalSdk().fs.getBlockData(block)
+        const blockData = sdk.globalSdk().fs.getBlockData(block)
         return {
             blockData: blockData,
             offset: offset,
@@ -417,14 +422,14 @@ class TaskUpload {
             Blocks: blocks,
         }
         const msg = message.newBlockFlightMsg(flights)
-        console.log("flights", flights)
-        console.log("msg", msg)
+        // console.log("flights", flights)
+        // console.log("msg", msg)
         const ret = await client.httpSend(peerAddr, msg).catch((e) => {
             console.log(`send block err ${e.toString()} `)
             throw e
         })
         if (ret.data) {
-            console.log("send block ret", decodeMsg(ret.data))
+            console.log("send block ret", message.decodeMsg(ret.data))
         }
         let blockAck = []
         for (let blk of blocks) {
@@ -440,7 +445,7 @@ class TaskUpload {
         const sessionId = getUploadSessionId(this.baseInfo.taskID, peerAddr)
         const msg = message.newFileMsg(this.baseInfo.fileHash, message.FILE_OP_UPLOAD_RDY, [
             message.withSessionId(sessionId),
-            message.withWalletAddress(sdk.GlobalSdk().walletAddress()),
+            message.withWalletAddress(sdk.globalSdk().walletAddress()),
             message.withBlocksRoot(this.baseInfo.fileHash),
             message.withTxHash(this.baseInfo.storeTxHash),
             message.withTxHeight(this.baseInfo.storeTxHeight),
@@ -486,7 +491,7 @@ class TaskUpload {
                 continue
             }
             delete this.transferInfo.blockMsgDataMap[key]
-            sdk.GlobalSdk().fs.returnBuffer(data.blockData)
+            sdk.globalSdk().fs.returnBuffer(data.blockData)
         }
     }
 }
@@ -532,7 +537,7 @@ const checkParams = (to) => {
 }
 
 const fileHasUploaded = async (fileHash) => {
-    const fi = await sdk.GlobalSdk().ontFs.getFileInfo(fileHash).catch((e) => { })
+    const fi = await sdk.globalSdk().ontFs.getFileInfo(fileHash).catch((e) => { })
     if (fi && fi.validFlag) {
         return true
     }
@@ -540,13 +545,14 @@ const fileHasUploaded = async (fileHash) => {
 }
 
 const getFilePdpHashes = async (version, blockHashes) => {
+    console.log('getFilePdpHashes blockHashes', blockHashes)
     let filePdpHash = new pdp.FilePdpHashSt(version, [])
     const blockCount = blockHashes.length
     for (let blockIndex = 0; blockIndex < blockCount; blockIndex++) {
-        const block = await sdk.GlobalSdk().fs.getBlockWithHash(blockHashes[blockIndex]).catch((e) => {
+        const block = await sdk.globalSdk().fs.getBlockWithHash(blockHashes[blockIndex]).catch((e) => {
             throw e
         })
-        const pdpBlockHash = sdk.GlobalSdk().pdpServer.fileBlockHash(block.rawData())
+        const pdpBlockHash = sdk.globalSdk().pdpServer.fileBlockHash(block.rawData())
         console.log('pdpBlockHash', pdpBlockHash)
         filePdpHash.blockPdpHashes.push(pdpBlockHash)
     }

@@ -1,8 +1,9 @@
 const { initSdk, Sdk } = require('../sdk')
 const OntSDK = require("ontology-ts-sdk").SDK
 const { Account } = require("ontology-ts-sdk")
-const { Address } = require("ontology-ts-sdk").Crypto
-const { hexstr2str } = require("ontology-ts-sdk").utils
+const { Address, Signature } = require("ontology-ts-sdk").Crypto
+const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils
+const { Passport } = require("ontology-ts-sdk/fs")
 describe('sdk test', () => {
     const wif = "KxYkAszCkUhfnx2goy5wxSiUrbMcCFgjK87dgAvDxnwiq7hKymNL"
     const label = 'pwd'
@@ -130,7 +131,8 @@ describe('sdk test', () => {
 
     test('test sdk get read file pledge', async () => {
         await init()
-        await expect(sdk.getFileReadPledge("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd")).resolves.toBeDefined()
+        const readPledge = await sdk.ontFs.getFileReadPledge("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy", sdk.account.address)
+        console.log('readPledge', readPledge)
     }, testTimeout);
 
     test('test sdk cancel read file pledge', async () => {
@@ -141,7 +143,8 @@ describe('sdk test', () => {
 
     test('test sdk get file pdp record', async () => {
         await init()
-        await sdk.getFilePdpInfoList("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy")
+        const pdpList = await sdk.getFilePdpInfoList("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAy")
+        console.log('pdpList', pdpList)
         // await expect(sdk.getFilePdpRecordList(str2hexstr("SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd"))).resolves.toBeDefined()
     }, testTimeout);
 
@@ -157,6 +160,35 @@ describe('sdk test', () => {
         // await expect().resolves.toBeUndefined()
     }, testTimeout);
 
+    test('test sdk get node info', async () => {
+        await init()
+        const nodeInfo = await sdk.ontFs.getNodeInfo("ALQ6RWJENsELE7ATuzHz4zgHrq573xJsnM")
+        console.log('nodeinfo', nodeInfo)
+    }, testTimeout);
 
+
+
+    test('test sdk gen and verify settle slice', async () => {
+        await init()
+        const settleSlice = await sdk.ontFs.genFileReadSettleSlice(
+            "SeNKDywBHnxxmyVht97oFZZEahteCuNMDS8RbBBzmLugjYAd",
+            "ALQ6RWJENsELE7ATuzHz4zgHrq573xJsnM",
+            1,
+            1
+        )
+        console.log('settleSlice', settleSlice)
+        let newSettle = {
+            fileHash: hexstr2str(settleSlice.fileHash),
+            payFrom: new Address(settleSlice.payFrom.toBase58()),
+            payTo: new Address(settleSlice.payTo.toBase58()),
+            sliceId: settleSlice.sliceId,
+            pledgeHeight: settleSlice.pledgeHeight,
+            sig: settleSlice.sig.serializeHex(),
+            pubKey: settleSlice.pubKey.serializeHex(),
+        }
+        console.log('new settle', newSettle)
+        const verified = await sdk.ontFs.verifyFileReadSettleSlice(newSettle)
+        console.log("verified", verified)
+    }, testTimeout);
 
 })

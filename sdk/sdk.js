@@ -23,8 +23,6 @@ class Sdk {
         this.sdkConfig = _sdkConfig
         this.chain = _chain
         this.ontFs = _ontFs
-        // this.ontFs = new OntFs()
-        // this.chain = new RpcClient()
         this.fs = _fs
         this.stop = _stop
         this.pdpServer = _pdpServer
@@ -272,10 +270,6 @@ class Sdk {
 
     async getFileReadPledge(fileHashStr) {
         try {
-            const fileInfo = await this.ontFs.getFileInfo(fileHashStr)
-            if (!fileInfo) {
-                throw new Error(`get file info file hash ${fileHashStr} error`)
-            }
             const pledge = await this.ontFs.getFileReadPledge(fileHashStr, this.ontFs.walletAddr)
             if (!pledge) {
                 throw new Error(`file read pledge not exist`)
@@ -443,10 +437,10 @@ const initSdk = (sdkCfg, acc) => {
 var Global = {}
 var Version = 0
 
-const SetGlobalSdk = (sdk) => {
+const setGlobalSdk = (sdk) => {
     Global['sdk'] = sdk
 }
-const GlobalSdk = () => {
+const globalSdk = () => {
     return Global['sdk']
 }
 
@@ -454,6 +448,6 @@ module.exports = {
     Sdk,
     initSdk,
     Version,
-    SetGlobalSdk,
-    GlobalSdk,
+    setGlobalSdk,
+    globalSdk,
 }

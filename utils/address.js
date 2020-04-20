@@ -7,17 +7,22 @@ const addressFromPubKeyHex = (pubKeyHex) => {
     return addr.toBase58()
 }
 
-const tcpAddrToHTTPAddr = (tcpAddr) => {
-    const tcpIndex = tcpAddr.indexOf("tcp")
-    if (tcpIndex == -1) {
-        return tcpAddr
+const tcpAddrToHTTPAddr = (oldTcpAddr, newPort = '30337') => {
+    const httpIndex = oldTcpAddr.indexOf('http')
+    if (httpIndex != -1) {
+        return oldTcpAddr
     }
-    tcpAddr = tcpAddr.replace("tcp", "http")
-    const portIndex = tcpAddr.lastIndexOf(":")
+    const tcpIndex = oldTcpAddr.indexOf("tcp")
+    if (tcpIndex != -1) {
+        oldTcpAddr = oldTcpAddr.replace("tcp", "http")
+    } else {
+        oldTcpAddr = `http://${oldTcpAddr}`
+    }
+    const portIndex = oldTcpAddr.lastIndexOf(":")
     if (portIndex == -1) {
-        return tcpAddr
+        return oldTcpAddr
     }
-    const newAddr = `${tcpAddr.substr(0, portIndex)}:30337`
+    const newAddr = `${oldTcpAddr.substr(0, portIndex)}:${newPort}`
     return newAddr
 }
 

@@ -55,7 +55,6 @@ const httpSendWithRetry = async (msg = "", peer, retry = HTTP_REQ_RETRY, timeout
       'content-type': 'application/form-data'
     }
   }
-
   for (let index = 0; index < retry; index++) {
     try {
       result = await axios(options);
@@ -98,16 +97,17 @@ const httpBroadcast = async (address, data, needReply = false, action) => {
     const promisTask = new Promise((resolve) => {
       try {
         axios(options).then(async res => {
-          resolve({
-            addr: options.url,
-            err: null
-          });
           // if (needReply) {
-          const finished = action(res, options.url);
+          const finished = await action(res, options.url);
           if (finished) {
             cancelLists.map(cancel => { // if no need to request peer (finished === true) , return current result and cancel all request
               cancel();
             })
+          } else {
+            resolve({
+              addr: options.url,
+              err: null
+            });
           }
           // }
         }).catch((err) => {

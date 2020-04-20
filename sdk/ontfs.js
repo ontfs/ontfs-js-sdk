@@ -1,7 +1,9 @@
-const { hexstr2str, reverseHex, str2hexstr } = require("ontology-ts-sdk").utils
+const { hexstr2str, reverseHex, str2hexstr, StringReader } = require("ontology-ts-sdk").utils
 const { RpcClient } = require("ontology-ts-sdk")
+const { Address, Signature, PublicKey } = require("ontology-ts-sdk").Crypto
 const OntfsContractTxBuilder = require("ontology-ts-sdk").OntfsContractTxBuilder
 const {
+    FsNodeInfo,
     FsNodeInfoList,
     SpaceInfo,
     FileInfo,
@@ -11,6 +13,7 @@ const {
     ReadPledge,
     PdpRecordList,
     ChallengeList,
+    FileReadSettleSlice,
 } = require("ontology-ts-sdk/fs")
 const { sleep } = require("../utils")
 const common = require("../common")
@@ -31,7 +34,7 @@ class OntFs {
     async preInvokeNativeContract(tx) {
         const rawTx = tx.serialize()
         const ret = await this.rpcClient.sendRawTransaction(rawTx, true)
-        console.log('ret', ret)
+        // console.log('ret', ret)
         const result = FsResult.deserializeHex(ret.result.Result)
         return result
     }
@@ -199,6 +202,7 @@ class OntFs {
         const tx = OntfsContractTxBuilder.buildGetFileReadPledgeTx(str2hexstr(fileHash), walletAddr)
         const result = await this.preInvokeNativeContract(tx)
         if (!result || !result.success) {
+            // console.log('data', hexstr2str(result.data))
             throw new Error(hexstr2str(result.data))
         }
         const readPledge = ReadPledge.deserializeHex(result.data)
@@ -254,6 +258,37 @@ class OntFs {
             }
         }
         return list
+    }
+
+    async getNodeInfo(walletAddr) {
+        const tx = OntfsContractTxBuilder.buildNodeQueryTx(new Address(walletAddr))
+        const result = await this.preInvokeNativeContract(tx)
+        if (!result || !result.success) {
+            throw new Error(hexstr2str(result.data))
+        }
+        const nodeInfo = FsNodeInfo.deserializeHex(result.data)
+        return nodeInfo
+    }
+
+    async verifyFileReadSettleSlice(settleSlice) {
+        const sig = Signature.deserializeHex(settleSlice.sig)
+        const pubKey = PublicKey.deserializeHex(new StringReader(settleSlice.pubKey))
+        const fileReadSettleSlice = new FileReadSettleSlice(
+            str2hexstr(settleSlice.fileHash),
+            settleSlice.payFrom,
+            settleSlice.payTo,
+            settleSlice.sliceId,
+            settleSlice.pledgeHeight,
+            sig,
+            pubKey)
+        return fileReadSettleSlice.verify()
+    }
+
+    async genFileReadSettleSlice(fileHash, peerWalletAddr, sliceId, blockHeight) {
+        const privateKey = this.account.exportPrivateKey(this.password)
+        const settleSlice = FileReadSettleSlice.genFileReadSettleSlice(str2hexstr(fileHash), new Address(peerWalletAddr),
+            sliceId, blockHeight, privateKey)
+        return settleSlice
     }
 }
 

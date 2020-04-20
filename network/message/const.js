@@ -49,6 +49,10 @@ const MSG_TYPE_BLOCK_FLIGHTS = "blockflights"
 const MSG_TYPE_FILE = "file"
 const MSG_TYPE_PAYMENT = "payment"
 
+
+const PAYMENT_OP_PAY = 1 // client pay the server for blocks
+const PAYMENT_OP_PAY_ACK = 2 // server ack payment from client
+
 module.exports = {
     MESSAGE_VERSION,
     MSG_ERROR_CODE_NONE,
@@ -90,6 +94,6 @@ module.exports = {
     MSG_TYPE_BLOCK_FLIGHTS,
     MSG_TYPE_FILE,
     MSG_TYPE_PAYMENT,
-
-
+    PAYMENT_OP_PAY,
+    PAYMENT_OP_PAY_ACK,
 }

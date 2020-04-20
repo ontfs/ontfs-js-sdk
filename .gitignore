@@ -4,3 +4,8 @@ yarn.lock
 vendor/
 pdp/pkg/data*
 wallet.dat
+test/Download
+test/blocks
+test/test.zip
+test/repo
+examples/*/test*

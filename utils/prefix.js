@@ -93,8 +93,8 @@ class FilePrefix {
 
     verifyEncryptPassword(password) {
         const encrypt = password + this.encryptSalt
-        const hash = sha256(encrypt).toString()
-        return hash == this.encryptHash
+        const hash = sha256(encrypt.toString()).toString()
+        return hash == str2hexstr(this.encryptHash)
     }
 }
 
@@ -107,5 +107,6 @@ const getPrefixEncrypted = (prefixHex) => {
 module.exports = {
     FilePrefix,
     PREFIX_VERSION,
+    PREFIX_LEN,
     getPrefixEncrypted
 } 
