@@ -11,12 +11,11 @@ const Upload_AddTask = 0
 const Upload_FsAddFile = 1
 const Upload_FsGetPdpHashData = 2
 const Upload_ContractStoreFiles = 3
-const Upload_FindReceivers = 4
-const Upload_FilePreTransfer = 5
-const Upload_FileTransferBlocks = 6
-const Upload_WaitPdpRecords = 7
-const Upload_Done = 8
-const Upload_Error = 9
+const Upload_FilePreTransfer = 4
+const Upload_FileTransferBlocks = 5
+const Upload_WaitPdpRecords = 6
+const Upload_Done = 7
+const Upload_Error = 8
 
 const newTaskUpload = (taskID, option, baseInfo, transferInfo) => {
     if (!baseInfo && !transferInfo) {
@@ -33,7 +32,6 @@ const newTaskUpload = (taskID, option, baseInfo, transferInfo) => {
         taskUpload.baseInfo = {
             taskID: taskID,
             progress: Upload_AddTask,
-            fileReceivers: {},
             allOffset: {}
         }
     }
@@ -109,17 +107,14 @@ class TaskUpload {
             await this.checkUploadTask().catch((e) => {
                 throw e
             })
-            console.log("here")
             const filePdpHash = await getFilePdpHashes(sdk.globalSdk().pdpServer.version,
                 this.baseInfo.blockHashes).catch((e) => {
                     console.log(`fs GetFilePdpHashes err ${e.toString()}`)
                     throw e
                 })
-            console.log("here2")
             this.baseInfo.pdpHashData = filePdpHash.serialize()
             this.baseInfo.progress = Upload_FsGetPdpHashData
         }
-        console.log("here3")
         if (this.baseInfo.progress < Upload_ContractStoreFiles) {
             const fileStore = {
                 fileHash: this.baseInfo.fileHash,
@@ -133,7 +128,6 @@ class TaskUpload {
                 pdpParam: this.baseInfo.pdpHashData,
                 storageType: this.option.storageType,
             }
-            console.log("will store file")
             const tx = await sdk.globalSdk().ontFs.storeFiles([fileStore]).catch((e) => {
                 throw e
             })
@@ -153,7 +147,14 @@ class TaskUpload {
             this.baseInfo.progress = Upload_ContractStoreFiles
         }
         console.log('base info', this.baseInfo)
-        if (this.baseInfo.progress < Upload_FindReceivers) {
+        if (this.baseInfo.progress < Upload_FilePreTransfer) {
+            this.baseInfo.allOffset = await sdk.globalSdk().fs.getFileAllBlockHashAndOffset(this.baseInfo.fileHash).catch((err) => {
+                throw new Error(`[Upload] GetFileAllBlockHashAndOffset error: ${err.toString()}`)
+            })
+            this.baseInfo.progress = Upload_FilePreTransfer
+        }
+        if (this.baseInfo.progress < Upload_FileTransferBlocks) {
+            let fileReceivers = {}
             const nodeList = await sdk.globalSdk().ontFs.getNodeInfoList(common.DEFAULT_FS_NODES_LIST).catch((e) => {
                 throw e
             })
@@ -179,36 +180,25 @@ class TaskUpload {
                      >= node's MinPdpInterval(${fsNode.minPdpInterval})`)
                     continue
                 }
-                let fsNodeNetAddr = `tcp://${fsNode.nodeNetAddr}`
-                fsNodeNetAddr = utils.tcpAddrToHTTPAddr(fsNodeNetAddr)
+                const fsNodeNetAddr = common.getHTTPAddrFromNodeNetAddr(fsNode.nodeNetAddr)
                 await this.checkFsServerStatus(sdk.globalSdk().account, fsNodeNetAddr).then(() => {
-                    this.baseInfo.fileReceivers[fsNodeNetAddr] = fsNodeAddr
+                    fileReceivers[fsNodeNetAddr] = fsNodeAddr
                 }).catch((e) => { })
-                console.log(`receivers =`, this.baseInfo.fileReceivers)
-                if (this.baseInfo.fileReceivers && Object.keys(this.baseInfo.fileReceivers).length == this.option.copyNum) {
+                console.log(`receivers =`, fileReceivers)
+                if (fileReceivers && Object.keys(fileReceivers).length == this.option.copyNum) {
                     break
                 }
             }
-            let receiverLen = 0
-            if (this.baseInfo.fileReceivers) {
-                receiverLen = Object.keys(this.baseInfo.fileReceivers).length
+            if (Object.keys(fileReceivers).length < this.option.copyNum) {
+                throw new Error(`find fs receivers count(${Object.keys(fileReceivers).length}) less than copyNum(${this.option.copyNum})`)
             }
-            if (receiverLen < this.option.copyNum) {
-                throw new Error(`find fs receivers count(${receiverLen}) less than copyNum(${this.option.copyNum})`)
-            }
-            this.baseInfo.progress = Upload_FindReceivers
-        }
-
-        if (this.baseInfo.progress < Upload_FilePreTransfer) {
-            this.baseInfo.allOffset = await sdk.globalSdk().fs.getFileAllBlockHashAndOffset(this.baseInfo.fileHash).catch((e) => {
+            await this.blocksSend(fileReceivers).catch((e) => {
                 throw e
             })
-            this.baseInfo.progress = Upload_FilePreTransfer
+            console.log("block send this.baseInfo.allOffse", this.baseInfo)
+            console.log(`Task Id: ${this.baseInfo.taskID} FileHash: ${this.baseInfo.fileHash}, BlocksSend Done.`)
+            this.baseInfo.progress = Upload_FileTransferBlocks
         }
-        await this.blocksSend().catch((e) => {
-            throw e
-        })
-        console.log("block send this.baseInfo.allOffse", this.baseInfo)
 
         if (this.baseInfo.progress < Upload_WaitPdpRecords) {
             let waitPdpSecond = 0
@@ -229,7 +219,7 @@ class TaskUpload {
                     const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
                     console.log("pdpRecordList", pdpRecordList)
                     isPdpCommitted = (pdpRecordList && pdpRecordList.pdpRecords &&
-                        pdpRecordList.pdpRecords.length == Object.keys(this.baseInfo.fileReceivers).length)
+                        pdpRecordList.pdpRecords.length == Object.keys(this.option.copyNum).length)
                 } catch (e) {
                     console.log(`get file pdp record list err ${e.toString()}`)
                     checkPdpErr = e
@@ -245,6 +235,7 @@ class TaskUpload {
             }
             this.baseInfo.progress = Upload_WaitPdpRecords
         }
+        this.baseInfo.progress = Upload_Done
         console.log("pdp finish")
     }
 
@@ -307,37 +298,34 @@ class TaskUpload {
         }
     }
 
-    async blocksSend() {
-        if (this.baseInfo.progress < Upload_FileTransferBlocks) {
-            let promiseList = []
-            for (let peerNetAddr in this.baseInfo.fileReceivers) {
-                const peerAddr = this.baseInfo.fileReceivers[peerNetAddr]
-                const peerUploadInfo = {
-                    index: 0,
-                    peerWalletAddr: peerAddr,
-                }
-                const peerUploadNotify = {}
-                this.transferInfo.blockSendDetails[peerNetAddr] = peerUploadInfo
-                this.transferInfo.blockSendNotify[peerNetAddr] = peerUploadNotify
-                // const sessionId = getUploadSessionId(this.baseInfo.taskID, peerNetAddr)
-                const promise = new Promise((resolve, reject) => {
-                    this.sendBlockToPeer(peerNetAddr).then(() => {
-                        resolve()
-                    }).catch((e) => {
-                        console.log(`send block to peer error ${e.toString()} `)
-                        resolve()
-                    })
+    async blocksSend(fileReceivers) {
+        let promiseList = []
+        console.log('blocksSend', fileReceivers)
+        for (let peerNetAddr in fileReceivers) {
+            const peerAddr = fileReceivers[peerNetAddr]
+            const peerUploadInfo = {
+                index: 0,
+                peerWalletAddr: peerAddr,
+            }
+            const peerUploadNotify = {}
+            this.transferInfo.blockSendDetails[peerNetAddr] = peerUploadInfo
+            this.transferInfo.blockSendNotify[peerNetAddr] = peerUploadNotify
+            // const sessionId = getUploadSessionId(this.baseInfo.taskID, peerNetAddr)
+            const promise = new Promise((resolve, reject) => {
+                this.sendBlockToPeer(peerNetAddr).then(() => {
+                    resolve()
+                }).catch((e) => {
+                    console.log(`send block to peer error ${e.toString()} `)
+                    resolve()
                 })
-                promiseList.push(promise)
-            }
-            this.baseInfo.progress = Upload_FileTransferBlocks
-            console.log("this.baseInfo.progress", this.baseInfo.progress)
-            try {
-                await Promise.all(promiseList)
-                this.baseInfo.progress = Upload_Done
-            } catch (e) {
+            })
+            promiseList.push(promise)
+        }
+        console.log("this.baseInfo.progress", this.baseInfo.progress)
+        try {
+            await Promise.all(promiseList)
+        } catch (e) {
 
-            }
         }
     }
 

@@ -28,5 +28,4 @@ const tcpAddrToHTTPAddr = (oldTcpAddr, newPort = '30337') => {
 
 module.exports = {
     addressFromPubKeyHex,
-    tcpAddrToHTTPAddr
 }

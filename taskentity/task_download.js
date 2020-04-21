@@ -87,7 +87,14 @@ class TaskDownload {
                 if (!nodeInfo) {
                     continue
                 }
-                nodeAddrs.push(utils.tcpAddrToHTTPAddr(nodeInfo.nodeNetAddr))
+                const nodeHttpAddr = common.getHTTPAddrFromNodeNetAddr(nodeInfo.nodeNetAddr)
+                if (!nodeHttpAddr || nodeHttpAddr == "") {
+                    console.log(`GetTcpAddrFromNodeNetAddr ${nodeInfo.nodeNetAddr} error:` +
+                        ` server(${nodeInfo.nodeAddr.tBase58()}) doesn't support tcp protocol`)
+                    continue
+
+                }
+                nodeAddrs.push(nodeHttpAddr)
                 walletAddrs.push(walletAddrs, pdpRecord.nodeAddr)
             }
             if (!nodeAddrs.length || !walletAddrs.length) {
@@ -111,24 +118,24 @@ class TaskDownload {
         await this.pledge().catch((err) => {
             throw err
         })
-        this.transferInfo.blockDownloadInfo.combinedBlockNum = 0
-        this.transferInfo.blockDownloadInfo.isFileEncrypted = utils.getPrefixEncrypted(this.baseInfo.filePrefix)
-        this.transferInfo.blockDownloadInfo.hasCutPrefix = false
+        this.transferInfo.combineInfo.combinedBlockNum = 0
+        this.transferInfo.combineInfo.isFileEncrypted = utils.getPrefixEncrypted(this.baseInfo.filePrefix)
+        this.transferInfo.combineInfo.hasCutPrefix = false
         const fullFilePath = path.join(config.DaemonConfig.fsFileRoot, this.option.fileHash)
-        this.transferInfo.blockDownloadInfo.fullFilePath = fullFilePath
+        this.transferInfo.combineInfo.fullFilePath = fullFilePath
 
         console.log('createDownloadFile', config.DaemonConfig.fsFileRoot, fullFilePath)
         await createDownloadFile(config.DaemonConfig.fsFileRoot, fullFilePath).catch((err) => {
-            console.log('create err', err)
+            console.log('[Combine] createDownloadFile error:', err)
             throw err
         })
         console.log("create success")
         const file = fs.openSync(fullFilePath, 'r+', 0o666)
         console.log("open success", fullFilePath)
         if (!file) {
-            throw new Error(`create file failed`)
+            throw new Error(`[Combine] createDownloadFile error file is nil`)
         }
-        this.transferInfo.blockDownloadInfo.fileStream = file
+        this.transferInfo.combineInfo.fileStream = file
         let promiseList = []
         for (let peerNetAddr of Object.keys(this.transferInfo.blockDownloadInfo)) {
             const peerDownloadInfo = this.transferInfo.blockDownloadInfo[peerNetAddr]
@@ -166,6 +173,7 @@ class TaskDownload {
                     this.transferInfo.microTasks[taskIndex].status = types.BlockTaskComplete
                 }
                 this.fileDownloadOk(peerNetAddr)
+                this.transferInfo.blockDownloadInfo[peerNetAddr].routineStatus = types.RoutineExit
                 resolve()
             })
             promiseList.push(promise)
@@ -176,8 +184,14 @@ class TaskDownload {
         console.log('DownloadBlockFlightsFromPeer finished')
         await this.combine().catch((err) => {
             console.log("combine err", err)
+            fs.closeSync(file)
+            this.baseInfo.errorInfo = err.toString()
+            this.transferInfo.blockDownloadNotify.finished = false
+            throw err
         })
         fs.closeSync(file)
+        this.baseInfo.progress = Download_Done
+        this.transferInfo.blockDownloadNotify.finished = true
     }
     initMicroTasks() {
         for (let index = 0; index < this.baseInfo.fileBlockCount; index += common.MAX_REQ_BLOCK_COUNT) {
@@ -238,6 +252,10 @@ class TaskDownload {
         if (!res || !res.data) {
             return false
         }
+        if (this.transferInfo.blockDownloadInfo &&
+            Object.keys(this.transferInfo.blockDownloadInfo).length >= this.option.maxPeerCnt) {
+            return true
+        }
         console.log('res.data', res.data)
         const msg = message.decodeMsg(res.data)
         console.log('msg', msg)
@@ -289,7 +307,7 @@ class TaskDownload {
                 console.log(`contract interface FileReadPledge called failed, err ${err.toString()}`)
             })
         if (!readPledge) {
-            console.log("contract interface FileReadPledge called failed, readPledge is nil")
+            console.log("responseProcess GetFileReadPledge return nil")
         }
         try {
             const curBlockHeight = await sdk.globalSdk().chain.getBlockHeight()
@@ -324,18 +342,13 @@ class TaskDownload {
             return false
         }
 
-        if (!this.transferInfo.blockDownloadInfo ||
-            Object.keys(this.transferInfo.blockDownloadInfo).length < this.option.maxPeerCnt) {
-            this.transferInfo.blockDownloadInfo[addr] = {
-                index: 0,
-                peerWallet: fileMsg.payInfo.walletAddress,
-                sliceId: lastSliceId,
-                totalCount: lastSliceId,
-            }
-            return false
-        } else {
-            return true
+        this.transferInfo.blockDownloadInfo[addr] = {
+            index: 0,
+            peerWallet: fileMsg.payInfo.walletAddress,
+            sliceId: lastSliceId,
+            totalCount: 0,
         }
+        return false
     }
 
     async getValidServers(account) {
@@ -422,14 +435,15 @@ class TaskDownload {
             ` receive ${blockFlightsMsg.blocks ? blockFlightsMsg.blocks.length : 0} blocks from peer: ${peerNetAddr}`)
         let blocksResp = []
         for (let blockMsg of blockFlightsMsg.blocks) {
-            if (!blocksReqM[keyOfBlockHashAndIndex(blockMsg.hash, blockMsg.index)]) {
+            const blockRespKey = keyOfBlockHashAndIndex(blockMsg.hash, blockMsg.index)
+            if (!blocksReqM[blockRespKey]) {
                 console.log(`block ${blockMsg.hash}-${blockMsg.index} is not match any request task`)
-                continue
+                throw new Error(`block ${blockRespKey} is not match request task`)
             }
             const block = sdk.globalSdk().fs.encodedToBlockWithCid(blockMsg.data, blockMsg.hash)
             if (!block || block.cid() != blockMsg.hash) {
                 console.log(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
-                continue
+                throw new Error(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
             }
             blocksResp.push({
                 hash: blockMsg.hash,
@@ -443,7 +457,7 @@ class TaskDownload {
         const blocksRespCount = blocksResp.length
         if (blocksRespCount != blocksReq.length) {
             console.log(`blocksResp is not match request`)
-            throw new Error(`blocksResp is not match request`)
+            throw new Error(`blocksRespCount(${blocksRespCount}) is not match blocksReqCount(${blocksReq.length})`)
         }
         let blockHashes = []
         for (let req of reqBlocks) {
@@ -451,8 +465,8 @@ class TaskDownload {
         }
         console.log('blockHashes', blockHashes)
         peerTransferInfo.totalCount += blocksRespCount
-        await this.payForBlocks(peerNetAddr, peerWalletAddr, peerTransferInfo.totalCount, blockHashes,
-            blocksResp[0].paymentId).catch((err) => {
+        await this.payForBlocks(peerNetAddr, peerWalletAddr, peerTransferInfo.sliceId + peerTransferInfo.totalCount,
+            blockHashes, blocksResp[0].paymentId).catch((err) => {
                 throw err
             })
         return blocksResp
@@ -460,10 +474,12 @@ class TaskDownload {
 
     async fileDownloadOk(peerNetAddr) {
         const sessionId = getDownloadSessionId(this.baseInfo.taskID, peerNetAddr)
-        const fileDownloadOkMsg = message.newFileMsg(this.option.fileHash, message.FILE_OP_DOWNLOAD_OK, [
-            message.withSessionId(sessionId),
-            message.withWalletAddress(sdk.globalSdk().walletAddress())
-        ])
+        const fileDownloadOkMsg = message.newFileMsg(this.option.fileHash,
+            message.FILE_OP_DOWNLOAD_OK,
+            [
+                message.withSessionId(sessionId),
+                message.withWalletAddress(sdk.globalSdk().walletAddress())
+            ])
         await client.httpBroadcast([peerNetAddr], fileDownloadOkMsg, false, null).then(() => { }).catch((err) => {
             console.log(`fileDownloadOk msg P2pBroadcast error`)
         })
@@ -510,9 +526,9 @@ class TaskDownload {
     }
 
     async combine() {
-        let hasCutPrefix = this.transferInfo.blockDownloadInfo.hasCutPrefix
-        const isFileEncrypted = this.transferInfo.blockDownloadInfo.isFileEncrypted
-        const file = this.transferInfo.blockDownloadInfo.fileStream
+        let hasCutPrefix = this.transferInfo.combineInfo.hasCutPrefix
+        const isFileEncrypted = this.transferInfo.combineInfo.isFileEncrypted
+        const file = this.transferInfo.combineInfo.fileStream
         const value = this.transferInfo.blockDownloadNotify.respNotify
         if (value) {
             console.log(`received block ${this.option.fileHash}-${value.hash}-${value.index} from ` +
@@ -520,6 +536,7 @@ class TaskDownload {
             const block = sdk.globalSdk().fs.encodedToBlockWithCid(value.block, value.hash)
             if (block.cid() != value.hash) {
                 console.log(`receive a unmatched hash block ${block.cid()} ${value.hash}`)
+                throw new Error(`receive a unmatched hash block ${block.cid()} ${value.hash}`)
             }
             const links = sdk.globalSdk().fs.getBlockLinks(block)
             // const links = []
@@ -531,7 +548,7 @@ class TaskDownload {
                     data.substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix) {
                     data = data.substr(this.baseInfo.filePrefix.length)
                     hasCutPrefix = true
-                    this.transferInfo.blockDownloadInfo.hasCutPrefix = true
+                    this.transferInfo.combineInfo.hasCutPrefix = true
                     console.log('cut prefix')
                 }
                 let writeAtPos = value.offset
@@ -544,12 +561,21 @@ class TaskDownload {
             }
             console.log(`${this.option.fileHash}-${value.hash}-${value.index} set downloaded`)
         }
-        this.transferInfo.blockDownloadInfo.combinedBlockNum++
-        if (this.transferInfo.blockDownloadInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
+        this.transferInfo.combineInfo.combinedBlockNum++
+        if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
+            let exitDownloadRoutineCount = 0
+            for (let peerDownloadInfo of this.transferInfo.blockDownloadInfo) {
+                if (peerDownloadInfo.routineStatus == types.RoutineExit) {
+                    exitDownloadRoutineCount += 1
+                }
+            }
+            if (exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo)) {
+                throw new Error("[Combine] all download routine exited but blocks is not complete")
+            }
             return
         }
         this.baseInfo.progress = Download_FsBlocksDownloadOver
-        const fullFilePath = this.transferInfo.blockDownloadInfo.fullFilePath
+        const fullFilePath = this.transferInfo.combineInfo.fullFilePath
         if (!this.option.decryptPwd || !this.option.decryptPwd || !isFileEncrypted) {
             console.log('fullFilePath', fullFilePath, this.option.outFilePath)
             fs.renameSync(fullFilePath, this.option.outFilePath)
@@ -558,16 +584,14 @@ class TaskDownload {
                 throw err
             })
         }
-        this.baseInfo.progress = Download_Done
-        this.transferInfo.blockDownloadNotify.finished = true
     }
 
 }
 
-const newTaskDownload = (taskID, option, baseInfo, transferInfo) => {
+const newTaskDownload = async (taskID, option, baseInfo, transferInfo) => {
     if (!baseInfo && !transferInfo) {
         try {
-            checkDownloadParams(option)
+            await checkDownloadParams(option)
         } catch (err) {
             throw err
         }
@@ -594,6 +618,7 @@ const newTaskDownload = (taskID, option, baseInfo, transferInfo) => {
     } else {
         const transferInfo = {}
         transferInfo.blockDownloadInfo = {}
+        transferInfo.combineInfo = {}
         transferInfo.blockDownloadNotify = {
             finished: {},
             respNotify: {},
@@ -603,15 +628,25 @@ const newTaskDownload = (taskID, option, baseInfo, transferInfo) => {
     return taskDownload
 }
 
-const checkDownloadParams = (to) => {
+const checkDownloadParams = async (to) => {
     if (!to.inOrder) {
         throw new Error("[TaskDownloadOption] checkParams param inOrder should be true")
     }
+    if (!to.fileHash || !to.fileHash.length) {
+        throw new Error("[TaskDownloadOption] checkParams param fileHash error")
+    }
+    const fileInfo = await sdk.globalSdk().ontFs.getFileInfo(to.fileHash).catch((err) => {
+        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist`)
+    })
+    if (!fileInfo) {
+        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist`)
+    }
+
     const dir = path.dirname(to.outFilePath)
     if (dir == ".") {
         to.outFilePath = path.join(config.DaemonConfig.fsFileRoot, to.outFilePath)
     } else if (!common.pathExisted(dir)) {
-        throw new Error(`out file path err: directory ${dir} is not exist`)
+        throw new Error(`[TaskDownloadOption] checkParams out file path err: directory ${dir} is not exist`)
     }
 
     if (common.pathExisted(to.outFilePath)) {

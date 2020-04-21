@@ -297,10 +297,7 @@ class Sdk {
 
     async cancelFileRead(fileHashStr) {
         try {
-            const fileInfo = await this.ontFs.getFileInfo(fileHashStr)
-            if (!fileInfo) {
-                throw new Error(`get file info file hash ${fileHashStr} error`)
-            }
+
             const pledge = await this.ontFs.getFileReadPledge(fileHashStr, this.ontFs.walletAddr)
             if (!pledge) {
                 throw new Error(`get file read pledge error`)

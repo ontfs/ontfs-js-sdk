@@ -178,10 +178,11 @@ class OntFs {
     }
 
     async deleteFiles(fileHashes) {
+        let newFileHashes = []
         for (let item of fileHashes) {
-            item = str2hexstr(item)
+            newFileHashes.push(str2hexstr(item))
         }
-        const tx = OntfsContractTxBuilder.buildDeleteFilesTx(fileHashes, this.gasPrice,
+        const tx = OntfsContractTxBuilder.buildDeleteFilesTx(newFileHashes, this.gasPrice,
             this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result

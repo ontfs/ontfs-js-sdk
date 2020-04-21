@@ -70,6 +70,28 @@ const toArrayReverse = (hex) => {
 }
 
 
+const getTcpAddrFromNodeNetAddr = (nodeNetAddr) => {
+    const addrs = nodeNetAddr.split(";")
+    for (let addr of addrs) {
+        if (addr.indexOf("tcp://") != -1) {
+            return addr
+        }
+    }
+    return ""
+}
+
+
+const getHTTPAddrFromNodeNetAddr = (nodeNetAddr) => {
+    const addrs = nodeNetAddr.split(";")
+    for (let addr of addrs) {
+        if (addr.indexOf("http://") != -1) {
+            return addr
+        }
+    }
+    return ""
+}
+
+
 module.exports = {
     VERSION,
     PRECISION_ONG,
@@ -83,5 +105,7 @@ module.exports = {
     parseAssetAmount,
     formatOng,
     parseOng,
-    toArrayReverse
+    toArrayReverse,
+    getTcpAddrFromNodeNetAddr,
+    getHTTPAddrFromNodeNetAddr
 }
