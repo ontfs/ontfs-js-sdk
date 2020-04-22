@@ -17,6 +17,10 @@ describe('fs service', () => {
         await fsSvr.start()
     })
 
+    afterAll(async () => {
+        await fsSrv.close()
+    })
+
     test('add file', async () => {
         const filePath = './test/test.zip'
         const hashes = await fsSvr.addFile(filePath, "", false, "")
