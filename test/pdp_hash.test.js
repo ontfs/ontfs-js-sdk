@@ -2,8 +2,8 @@ const { newPdp, FilePdpHashSt } = require("../pdp")
 const { str2hexstr, hexstr2str } = require("ontology-ts-sdk").utils
 describe('pdp hash test', () => {
     const pdpVersion = 1
-    test('test pdp hash', () => {
-        const pdp = newPdp(pdpVersion)
+    test('test pdp hash', async () => {
+        const pdp = await newPdp(pdpVersion)
         let str = '3031303030303030303030303030303030303030303030303030303030303030303030303030' +
             '30303030303030303030303030303030303030303030303030303030303030303030303030303030303030' +
             '30303030303030303030303030303030303030303030303030303030303030303030303030303030303030' +
@@ -19,9 +19,9 @@ describe('pdp hash test', () => {
             '63363233373565653637323561306137633435646234633230396161323861633038616139383564666336' +
             '333437353761386465383961326636616165222c227369676e6174757265536368656d65223a2253484132' +
             '3536776974684543445341222c22697344656661756c74223a747275652c226c6f636b223a66616c73657d5d7d'
-        const hexResult = pdp.fileBlockHash(str)
+        const hexResult = pdp.genUniqueIdWithFileBlocks([str])
         console.log('hex', hexResult)
-        expect(hexResult).toEqual('19aedee05748b8af421f18388bc60c441813271207a960ea3b4a59007b159fa4')
+        expect(hexResult).toEqual('01000000000000003d8e8df3996536b3f6a36cd559dd704f8372c82833ea8c71cca5e253a3dba1ce')
     });
 
     test('test file pdp serialize', () => {

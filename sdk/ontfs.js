@@ -21,6 +21,15 @@ const common = require("../common")
 
 class OntFs {
 
+    /**
+     *Creates an instance of OntFs.
+     * @param {Account} _account account object
+     * @param {string} _pwd password for account
+     * @param {string} _chainRpcAddr ontology chain rpc address. e.g http://127.0.0.1:20336
+     * @param {number} [_gasPrice=500] gas price for smart contract transaction
+     * @param {number} [_gasLimit=20000] gas limit for smart contract transaction
+     * @memberof OntFs 
+     */
     constructor(_account, _pwd, _chainRpcAddr, _gasPrice = 500, _gasLimit = 20000) {
         this.account = _account
         this.walletAddr = _account.address

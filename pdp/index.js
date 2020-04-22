@@ -1,28 +1,38 @@
-const bls = require("./pkg/bls12381")
-const blockLength = 4 * 1024
-const { num2hexstring, bool2VarByte, str2hexstr, StringReader, hexstr2str } = require("ontology-ts-sdk").utils
+const { num2hexstring } = require("ontology-ts-sdk").utils
+const fs = require('fs');
+const path = require("path")
+const buf = fs.readFileSync(path.join(__dirname, './fileunique.wasm'));
+const utils = require("../utils")
+require("./wasm_exec.js")
 
 class Pdp {
     constructor(_version) {
         this.version = _version
     }
-    fileBlockHash(blockData) {
-        const dataLen = blockData ? blockData.length : 0
-        if (dataLen < blockLength * 2) {
-            const remainZeroLen = blockLength * 2 - dataLen
-            for (let i = 0; i < remainZeroLen; i = i + 2) {
-                blockData += '00'
-            }
+    genUniqueIdWithFileBlocks(blocks) {
+        if (!Array.isArray(blocks)) {
+            return ''
         }
-        const data = blockData.substr(0, blockLength * 2)
-        return bls.bls_hash(data)
+        let allHash = blocks.join('|')
+        console.log('allHash', allHash)
+        return fileUnique(allHash)
     }
 }
 
-const newPdp = (version) => {
-    return new Pdp(version)
+const newPdp = async (version) => {
+    const p = new Pdp(version)
+    const go = new Go()
+    await WebAssembly.instantiate(new Uint8Array(buf), go.importObject).then(async (res) => {
+        console.log('instance', res.instance)
+        go.run(res.instance).then((res) => {
+        }).catch((err) => {
+        })
+        await utils.sleep(3000)
+    }).catch((err) => {
+        console.log('err', err)
+    });
+    return p
 }
-
 
 class FilePdpHashSt {
     constructor(_version, _blockPdpHashes) {
@@ -48,6 +58,6 @@ class FilePdpHashSt {
 
 module.exports = {
     Pdp,
+    FilePdpHashSt,
     newPdp,
-    FilePdpHashSt
 }

@@ -80,4 +80,33 @@ describe('task manager', () => {
         }
     }, testTimeout);
 
+    test('test notify process task', async () => {
+        let obj = {}
+
+        obj.notify = (block) => {
+            console.log('notify block', block)
+            return new Promise((resolve, reject) => {
+                obj.notifyCh = resolve
+                resolve(block)
+            })
+        }
+        obj.f = async () => {
+            while (1) {
+                const data = await obj.notify()
+                console.log('receive data', data)
+            }
+            console.log("func done")
+        }
+
+        obj.f().then((resp) => {
+            console.log('then', resp)
+        }).catch((err) => {
+            console.log('err', err)
+        })
+
+        obj.notify("1").then(() => { }).catch(() => { })
+        await utils.sleep(20000)
+
+    }, testTimeout);
+
 })

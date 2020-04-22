@@ -107,12 +107,11 @@ class TaskUpload {
             await this.checkUploadTask().catch((e) => {
                 throw e
             })
-            const filePdpHash = await getFilePdpHashes(sdk.globalSdk().pdpServer.version,
-                this.baseInfo.blockHashes).catch((e) => {
-                    console.log(`fs GetFilePdpHashes err ${e.toString()}`)
-                    throw e
-                })
-            this.baseInfo.pdpHashData = filePdpHash.serialize()
+            const fileUniqueId = await getFileUniqueId(this.baseInfo.blockHashes).catch((e) => {
+                console.log(`fs GetFilePdpHashes err ${e.toString()}`)
+                throw e
+            })
+            this.baseInfo.pdpHashData = fileUniqueId
             this.baseInfo.progress = Upload_FsGetPdpHashData
         }
         if (this.baseInfo.progress < Upload_ContractStoreFiles) {
@@ -325,7 +324,7 @@ class TaskUpload {
         try {
             await Promise.all(promiseList)
         } catch (e) {
-
+            throw e
         }
     }
 
@@ -532,19 +531,22 @@ const fileHasUploaded = async (fileHash) => {
     return false
 }
 
-const getFilePdpHashes = async (version, blockHashes) => {
-    console.log('getFilePdpHashes blockHashes', blockHashes)
-    let filePdpHash = new pdp.FilePdpHashSt(version, [])
+const getFileUniqueId = async (blockHashes) => {
+    console.log('getFileUniqueId blockHashes', blockHashes)
+    let blocks = []
     const blockCount = blockHashes.length
     for (let blockIndex = 0; blockIndex < blockCount; blockIndex++) {
         const block = await sdk.globalSdk().fs.getBlockWithHash(blockHashes[blockIndex]).catch((e) => {
             throw e
         })
-        const pdpBlockHash = sdk.globalSdk().pdpServer.fileBlockHash(block.rawData())
-        console.log('pdpBlockHash', pdpBlockHash)
-        filePdpHash.blockPdpHashes.push(pdpBlockHash)
+        blocks.push(block.rawData())
     }
-    return filePdpHash
+    const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks).catch((err) => {
+        throw err
+    })
+    console.log('uniqId', uniqueId)
+    throw new Error("test")
+    return uniqueId
 }
 
 

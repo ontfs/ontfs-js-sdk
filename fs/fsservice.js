@@ -44,21 +44,21 @@ class FsService {
 
   async addFile(filePath, filePrefix, encrypt, password) {
     var data = fs.readFileSync(filePath);
-    if (encrypt) {
-      var cipher = Crypto.createCipher('aes-256-cbc', password);
-      data = Buffer.concat([cipher.update(data), cipher.final()]);
-    }
+    // if (encrypt) {
+    //   var cipher = Crypto.createCipher('aes-256-cbc', password);
+    //   data = Buffer.concat([cipher.update(data), cipher.final()]);
+    // }
 
-    //add prefix at the beginning
-    const prefixBuf = Buffer.alloc(MAX_PREFIX_BUFFER_LENGTH);
-    const prefixBufLength = prefixBuf.write(filePrefix);
-    if (prefixBufLength > MAX_PREFIX_BUFFER_LENGTH) {
-      return
-    }
-    const prefixBufHead = Buffer.alloc(MAX_PREFIX_LENGTH_LENGTH)
-    prefixBufHead.write(prefixBufLength.toString())
-    const fullDataBuf = Buffer.concat([prefixBufHead, prefixBuf, data])
-
+    // //add prefix at the beginning
+    // const prefixBuf = Buffer.alloc(MAX_PREFIX_BUFFER_LENGTH);
+    // const prefixBufLength = prefixBuf.write(filePrefix);
+    // if (prefixBufLength > MAX_PREFIX_BUFFER_LENGTH) {
+    //   return
+    // }
+    // const prefixBufHead = Buffer.alloc(MAX_PREFIX_LENGTH_LENGTH)
+    // prefixBufHead.write(prefixBufLength.toString())
+    // const fullDataBuf = Buffer.concat([prefixBufHead, prefixBuf, data])
+    const fullDataBuf = data
     for await (const file of importer([{ path: filePath, content: fullDataBuf }], this.ipld, this.opts)) {
       const result = await exporter(file.cid, this.ipld)
       if (result.unixfs.type == 'file') {
@@ -189,14 +189,14 @@ async function* bfsTraverse(ipld, rootCid, offsets, maxDepth, uniqueOnly) { // e
       // Look at each link, parent and the new depth
       for (const link of await getLinks(ipld, parent.cid)) {
         const chiNode = await ipld.get(link.cid)
-        if (chiNode.Links.length == 0) {
+        if (!chiNode.Links || chiNode.Links.length == 0) {
           offsets[link.cid.toString()] = offset
           offset += CHUNK_SIZE
         }
         yield {
           parent: parent,
           node: link,
-          isLeaf: chiNode.Links.length == 0,
+          isLeaf: !chiNode.Links || chiNode.Links.length == 0,
           isDuplicate: uniqueOnly && seen.has(link.cid.toString())
         }
 

@@ -61,7 +61,7 @@ const startSDK = async () => {
     }
     const account = Account.parseJson(result)
     // init global sdk
-    const s = initSdk(sdkCfg, account)
+    const s = await initSdk(sdkCfg, account)
     setGlobalSdk(s)
     return true
 }

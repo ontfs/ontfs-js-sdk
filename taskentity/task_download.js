@@ -98,7 +98,7 @@ class TaskDownload {
                 walletAddrs.push(walletAddrs, pdpRecord.nodeAddr)
             }
             if (!nodeAddrs.length || !walletAddrs.length) {
-                throw new Error(`no available fs nodes to download file: get nodes infomation error`)
+                throw new Error(`no available fs nodes to download file: get nodes information error`)
             }
             this.baseInfo.fileBlockCount = fileInfo.fileBlockCount
             this.baseInfo.fileDesc = fileInfo.fileDesc

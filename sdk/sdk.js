@@ -412,11 +412,11 @@ class Sdk {
 
 }
 
-const initSdk = (sdkCfg, acc) => {
+const initSdk = async (sdkCfg, acc) => {
     const s = new Sdk()
     s.sdkConfig = sdkCfg
     s.chain = new RpcClient(sdkCfg.chainRpcAddr)
-    s.pdpServer = pdp.newPdp(sdkCfg.pdpVersion)
+    s.pdpServer = await pdp.newPdp(sdkCfg.pdpVersion)
     if (acc) {
         s.account = acc
     }

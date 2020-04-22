@@ -11,7 +11,6 @@
     "bignumber.js": "^9.0.0",
     "bytes": "^3.1.0",
     "deferred": "^0.7.11",
-    "ontology-ts-sdk": "^1.1.0",
     "ipfs-block": "^0.8.1",
     "ipfs-block-service": "^0.16.0",
     "ipfs-repo": "^1.0.1",
@@ -19,7 +18,8 @@
     "ipfs-unixfs-importer": "^1.0.3",
     "ipld": "^0.25.3",
     "ipld-dag-pb": "^0.18.3",
-    "ipld-in-memory": "^3.0.2"
+    "ipld-in-memory": "^3.0.2",
+    "ontology-ts-sdk": "^1.1.0"
   },
   "devDependencies": {
     "jest": "^25.2.7"
