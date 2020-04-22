@@ -63,6 +63,7 @@ const startSDK = async () => {
     // init global sdk
     const s = await initSdk(sdkCfg, account)
     setGlobalSdk(s)
+    await s.start()
     return true
 }
 

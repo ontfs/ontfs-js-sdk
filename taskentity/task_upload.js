@@ -95,14 +95,15 @@ class TaskUpload {
             try {
                 this.baseInfo.blockHashes = await sdk.globalSdk().fs.addFile(this.option.filePath, this.baseInfo.filePrefix,
                     fileEnc, this.option.encPassword)
+                console.log('hash', this.baseInfo.blockHashes)
                 this.baseInfo.fileHash = this.baseInfo.blockHashes[0]
                 this.baseInfo.blockCount = this.baseInfo.blockHashes.length
                 this.baseInfo.progress = Upload_FsAddFile
             } catch (e) {
+                console.log('sharding file err', e.toString())
                 throw e
             }
         }
-
         if (this.baseInfo.progress < Upload_FsGetPdpHashData) {
             await this.checkUploadTask().catch((e) => {
                 throw e
@@ -112,6 +113,7 @@ class TaskUpload {
                 throw e
             })
             this.baseInfo.pdpHashData = fileUniqueId
+            console.log('fileUniqueId', fileUniqueId)
             this.baseInfo.progress = Upload_FsGetPdpHashData
         }
         if (this.baseInfo.progress < Upload_ContractStoreFiles) {
@@ -127,6 +129,7 @@ class TaskUpload {
                 pdpParam: this.baseInfo.pdpHashData,
                 storageType: this.option.storageType,
             }
+            console.log('fileStore', fileStore)
             const tx = await sdk.globalSdk().ontFs.storeFiles([fileStore]).catch((e) => {
                 throw e
             })
@@ -395,7 +398,7 @@ class TaskUpload {
             block.Hash = block.hash
             block.Index = block.index
             block.Offset = block.offset
-            block.Data = utils.hex2base64str(block.data)
+            block.Data = block.data.toString('base64')
             delete block['hash']
             delete block['index']
             delete block['offset']
@@ -409,8 +412,8 @@ class TaskUpload {
             Blocks: blocks,
         }
         const msg = message.newBlockFlightMsg(flights)
-        // console.log("flights", flights)
-        // console.log("msg", msg)
+        console.log("flights", flights)
+        console.log("msg", msg)
         const ret = await client.httpSend(peerAddr, msg).catch((e) => {
             console.log(`send block err ${e.toString()} `)
             throw e
@@ -537,15 +540,16 @@ const getFileUniqueId = async (blockHashes) => {
     const blockCount = blockHashes.length
     for (let blockIndex = 0; blockIndex < blockCount; blockIndex++) {
         const block = await sdk.globalSdk().fs.getBlockWithHash(blockHashes[blockIndex]).catch((e) => {
+            console.log('get block err', blockHashes[blockIndex], e.toString())
             throw e
         })
-        blocks.push(block.rawData())
+        blocks.push(block.rawData().toString('hex'))
     }
+    console.log('blocks', blocks)
     const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks).catch((err) => {
         throw err
     })
     console.log('uniqId', uniqueId)
-    throw new Error("test")
     return uniqueId
 }
 

@@ -32,8 +32,8 @@ class Sdk {
         return common.VERSION
     }
 
-    start() {
-        return this.fs.start()
+    async start() {
+        return await this.fs.start()
     }
 
     stop() {

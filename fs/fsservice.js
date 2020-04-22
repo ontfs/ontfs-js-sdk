@@ -44,24 +44,15 @@ class FsService {
 
   async addFile(filePath, filePrefix, encrypt, password) {
     var data = fs.readFileSync(filePath);
-    // if (encrypt) {
-    //   var cipher = Crypto.createCipher('aes-256-cbc', password);
-    //   data = Buffer.concat([cipher.update(data), cipher.final()]);
-    // }
-
-    // //add prefix at the beginning
-    // const prefixBuf = Buffer.alloc(MAX_PREFIX_BUFFER_LENGTH);
-    // const prefixBufLength = prefixBuf.write(filePrefix);
-    // if (prefixBufLength > MAX_PREFIX_BUFFER_LENGTH) {
-    //   return
-    // }
-    // const prefixBufHead = Buffer.alloc(MAX_PREFIX_LENGTH_LENGTH)
-    // prefixBufHead.write(prefixBufLength.toString())
-    // const fullDataBuf = Buffer.concat([prefixBufHead, prefixBuf, data])
-    const fullDataBuf = data
+    if (encrypt) {
+      var cipher = Crypto.createCipher('aes-256-cbc', password);
+      data = Buffer.concat([cipher.update(data), cipher.final()]);
+    }
+    //add prefix at the beginning
+    const fullDataBuf = Buffer.concat([Buffer.from(filePrefix), data])
     for await (const file of importer([{ path: filePath, content: fullDataBuf }], this.ipld, this.opts)) {
       const result = await exporter(file.cid, this.ipld)
-      if (result.unixfs.type == 'file') {
+      if (!result.unixfs || result.unixfs.type == 'file') {
         return result
       }
     }
@@ -122,7 +113,9 @@ class FsService {
 
   async getBlockWithHash(cidStr) {
     const blockcid = new CID(cidStr)
+    console.log('block cid', blockcid)
     const block = await this.ipld.get(blockcid)
+    console.log('data', block._data)
     return new Block(block._data, blockcid)
   }
 

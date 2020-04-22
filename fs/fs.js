@@ -21,13 +21,21 @@ class Fs {
         // return this.fs.stop()
     }
 
-    addFile(fileName, filePrefix, encrypt, password) {
-        return this.fs.addFile(fileName, filePrefix, encrypt, password)
+    async addFile(fileName, filePrefix, encrypt, password) {
+        const root = await this.fs.addFile(fileName, filePrefix, encrypt, password)
+        let all = [root.cid.toString()]
+        const others = await this.fs.getAllFileCids(root.cid)
+        for (let blk of others) {
+            all.push(blk.toString())
+        }
+        return all
     }
 
-
-    getFileAllBlockHashAndOffset(rootHash) {
-        return this.fs.getFileAllBlockHashAndOffset(rootHash)
+    async getFileAllBlockHashAndOffset(rootHash) {
+        let offsets = {}
+        offsets[rootHash] = 0
+        let others = await this.fs.getFileAllBlockHashAndOffset(rootHash)
+        return Object.assign(offsets, others)
     }
 
     encodedToBlockWithCid(data, hash) {
@@ -43,8 +51,8 @@ class Fs {
         return block.rawData()
     }
 
-    getBlockWithHash(hash) {
-        return this.fs.getBlockWithHash(hash)
+    async getBlockWithHash(hash) {
+        return await this.fs.getBlockWithHash(hash)
     }
 
     getBlockData(block) {
@@ -136,13 +144,16 @@ const newFs = () => {
     const options = {
         cidVersion: 0,
         codec: 'dag-pb',
-        leafType: 'file', // 'raw'
-        strategy: 'trickle' // dag tree balanced to leaves, strategy used in golang version
+        rawLeaves: true,
+        leafType: 'raw', // 'raw'
+        strategy: 'balanced' // dag tree balanced to leaves, strategy used in golang version
     }
-    // const fsSrv = new FsService(fsConfig.repoRoot, options)
+    console.log('repo', fsConfig.repoRoot, options)
+    const fsSrv = new FsService(fsConfig.repoRoot, options)
     // let closeCh = new Deferred()
-    // let service = new Fs(fsSrv, cfg, closeCh)
-    let service = new MockFs()
+    let closeCh
+    let service = new Fs(fsSrv, cfg, closeCh)
+    // let service = new MockFs()
     return service
 }
 
