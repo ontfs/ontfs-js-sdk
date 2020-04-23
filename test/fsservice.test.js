@@ -69,8 +69,7 @@ describe('fs service', () => {
     })
 
     test('write file', async () => {
-        const filePath = './test/go1.12.16.linux-amd64.tar.gz'
-        // const filePath = './test/wallet.dat'
+        const filePath = './test/Zoom.pkg'
         prefix = "helloworld"
         const hashes = await fsSvr.addFile(filePath, prefix, false, "")
         console.log('hashes', hashes)

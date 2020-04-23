@@ -63,6 +63,7 @@ const main = async () => {
     }
     const tx = await globalSdk().ontFs.deleteFiles([argv.fileHash])
     console.log('delete file tx: ', tx)
+    globalSdk().stop()
 }
 
 main()

@@ -16,9 +16,10 @@ class Fs {
         return await this.fs.initIpld()
     }
 
-    close() {
-        this.closeCh.resolve()
+    async close() {
+        // this.closeCh.resolve()
         // return this.fs.stop()
+        await this.fs.close()
     }
 
     async addFile(fileName, filePrefix, encrypt, password) {
