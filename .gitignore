@@ -10,3 +10,5 @@ test/test.zip
 test/repo
 examples/*/test*
 test/Qm*
+test/*tar.gz
+examples/upload-file/*.pkg

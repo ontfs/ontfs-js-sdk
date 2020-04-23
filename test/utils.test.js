@@ -110,12 +110,13 @@ describe('prefix test', () => {
         const str = fs.readFileSync("./test/blocks/block1").toString()
         console.log('hex', utils.cryptoHex2base64str(str) == utils.cryptoHex2base64str(str))
     })
+    const CryptoJS = require("crypto-js")
 
     test('base64str2str', async () => {
-        const str = `122c0a2401010220647d4ca8c659ce58f5d3078eea3e40bac639863e57256147dad3ba26e50c9a50120018808010122c0a2401010220bb3b6bd47b88cb7ec16cc4304af539a539ceb478bf00f11235a965fca0cc8483120018808010122c0a2401010220bc5f828076c8d5c8d715802094a46f6b1125484fcb5bc5c4ef21ec40616575f2120018a8fd0c`
+        const base64str = `CooFCAISggUwMTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGU0MDEwMDAwMDAwMDAwMDAwMDAwMDAwMHsibmFtZSI6Ik15V2FsbGV0IiwidmVyc2lvbiI6IjEuMSIsInNjcnlwdCI6eyJwIjo4LCJuIjoxNjM4NCwiciI6OCwiZGtMZW4iOjY0fSwiYWNjb3VudHMiOlt7ImFkZHJlc3MiOiJBTFpYTjhWS3VONjN4YXNzQVVFMjlTRzF2S0hUZjNXdVZGIiwiZW5jLWFsZyI6ImFlcy0yNTYtZ2NtIiwia2V5IjoiM0dFZ29IUmV1ZU9uUTdoSW01dlMwdlFxL3RnLzI3NjA2WU1obVlyU1kyN3g1VGVmb1FScVNualB3dDc4WFZyTSIsImFsZ29yaXRobSI6IkVDRFNBIiwic2FsdCI6IkxnV3JYYkpPTDhOOURSano0cm9kb2c9PSIsInBhcmFtZXRlcnMiOnsiY3VydmUiOiJQLTI1NiJ9LCJsYWJlbCI6InB3ZCIsInB1YmxpY0tleSI6IjAzZTU1YzYyMzc1ZWU2NzI1YTBhN2M0NWRiNGMyMDlhYTI4YWMwOGFhOTg1ZGZjNjM0NzU3YThkZTg5YTJmNmFhZSIsInNpZ25hdHVyZVNjaGVtZSI6IlNIQTI1NndpdGhFQ0RTQSIsImlzRGVmYXVsdCI6dHJ1ZSwibG9jayI6ZmFsc2V9XX0YggU=`
         // const base64str = utils.hex2base64str(str)
         // console.log('64', base64str)
-        // console.log('str', utils.base64str2str(base64str) == str)
+        // console.log('str', utils.base64str2utf8str(base64str).toString('hex'))
         // const str2 = `{
         //     "MessageId": 3299747308398666000, 
         //     "Header": {
@@ -129,7 +130,8 @@ describe('prefix test', () => {
         // }`
         // const msg = message.decodeMsg(str2)
         // console.log('msg', msg)
-        console.log('data', Buffer.from(str, 'hex').toString())
+        console.log('hex', CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString())
+        // console.log('data', Buffer.from(utils.base64str2str(base64str), 'hex').toString())
     })
 
 

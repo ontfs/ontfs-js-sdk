@@ -14,7 +14,6 @@ class Pdp {
             return ''
         }
         let allHash = blocks.join('|')
-        console.log('allHash', allHash)
         return fileUnique(allHash)
     }
 }
@@ -23,7 +22,6 @@ const newPdp = async (version) => {
     const p = new Pdp(version)
     const go = new Go()
     await WebAssembly.instantiate(new Uint8Array(buf), go.importObject).then(async (res) => {
-        console.log('instance', res.instance)
         go.run(res.instance).then((res) => {
         }).catch((err) => {
         })

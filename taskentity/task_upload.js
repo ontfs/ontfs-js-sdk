@@ -219,9 +219,9 @@ class TaskUpload {
                 }
                 try {
                     const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
-                    console.log("pdpRecordList", pdpRecordList)
                     isPdpCommitted = (pdpRecordList && pdpRecordList.pdpRecords &&
-                        pdpRecordList.pdpRecords.length == Object.keys(this.option.copyNum).length)
+                        pdpRecordList.pdpRecords.length == this.option.copyNum)
+                    console.log("pdpRecordList", pdpRecordList, isPdpCommitted, this.option.copyNum)
                 } catch (e) {
                     console.log(`get file pdp record list err ${e.toString()}`)
                     checkPdpErr = e
@@ -368,6 +368,7 @@ class TaskUpload {
             }
             // console.log("toBeSentBlocks", toBeSentBlocks)
             const blocksAck = await this.sendBlockFlightMsg(peerNetAddr, toBeSentBlocks).catch((e) => {
+                console.log(`send block flight msg err`, e.toString())
                 throw e
             })
             console.log("blockAck", blocksAck)
@@ -399,6 +400,7 @@ class TaskUpload {
             block.Index = block.index
             block.Offset = block.offset
             block.Data = block.data.toString('base64')
+            // console.log('block data ', block.hash, block.data.toString('hex'))
             delete block['hash']
             delete block['index']
             delete block['offset']
@@ -412,8 +414,8 @@ class TaskUpload {
             Blocks: blocks,
         }
         const msg = message.newBlockFlightMsg(flights)
-        console.log("flights", flights)
-        console.log("msg", msg)
+        // console.log("flights", flights)
+        // console.log("msg", msg)
         const ret = await client.httpSend(peerAddr, msg).catch((e) => {
             console.log(`send block err ${e.toString()} `)
             throw e
@@ -543,12 +545,10 @@ const getFileUniqueId = async (blockHashes) => {
             console.log('get block err', blockHashes[blockIndex], e.toString())
             throw e
         })
-        blocks.push(block.rawData().toString('hex'))
+        blocks.push(block._data.toString('hex'))
     }
-    console.log('blocks', blocks)
-    const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks).catch((err) => {
-        throw err
-    })
+    console.log('blocks', blocks.length)
+    const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks)
     console.log('uniqId', uniqueId)
     return uniqueId
 }

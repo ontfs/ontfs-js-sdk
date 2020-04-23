@@ -65,7 +65,7 @@ const startSDK = async () => {
         walletPwd: password,
         chainRpcAddr: rpcAddr,
         gasPrice: 500,
-        gasLimit: 40000,
+        gasLimit: 400000,
         pdpVersion: 1
     }
     config.DaemonConfig = {

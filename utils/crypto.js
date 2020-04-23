@@ -28,6 +28,11 @@ const str2base64 = (str) => {
 }
 
 
+const cryptoStr2Hex = (str) => {
+    return CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse((str)))
+}
+
+
 const base64str2utf8str = (base64str) => {
     return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8)
 }
@@ -35,6 +40,10 @@ const base64str2utf8str = (base64str) => {
 const base64str2str = (base64str) => {
     // return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8)
     return CryptoJS.enc.Base64.parse(base64str).toString()
+}
+
+const base64str2hex = (base64str) => {
+    return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString()
 }
 
 const hex2base64str = (hex) => {
@@ -82,5 +91,7 @@ module.exports = {
     hexstr2Bytes,
     address2bytestr,
     base64str2utf8str,
-    hex2utf8str
+    hex2utf8str,
+    cryptoStr2Hex,
+    base64str2hex
 }

@@ -33,7 +33,7 @@ class Fs {
 
     async getFileAllBlockHashAndOffset(rootHash) {
         let offsets = {}
-        offsets[rootHash] = 0
+        offsets[`${rootHash}-0`] = 0
         let others = await this.fs.getFileAllBlockHashAndOffset(rootHash)
         return Object.assign(offsets, others)
     }
@@ -47,22 +47,12 @@ class Fs {
         return links
     }
 
-    blockData(block) {
-        return block.rawData()
-    }
-
     async getBlockWithHash(hash) {
         return await this.fs.getBlockWithHash(hash)
     }
 
     getBlockData(block) {
         return this.fs.getBlockData(block)
-    }
-
-    getBlock(hash) {
-        const c = cid.Decode(hash)
-        const block = this.fs.getBlock(c)
-        return block
     }
 
     aesDecryptFile(file, password, outputPath, prefixLen) {
@@ -79,58 +69,6 @@ class Fs {
 }
 
 
-class MockFs {
-    addFile(fileName, filePrefix, encrypt, password) {
-        return ["Sk9yV47GxazE6vPYWHmPCV85YeM8nPpiTHsnjXrkU8NZUCmD", "SeNK9dipjf4ehPsW29mr8SWg9sTo6gxQtrfmCRuDxiNy5Lf9",
-            "SeNKFUL2irD5uut1f3SRCXdK34ytpbwCQxe1KMt9pbHgaHHC", "SeNKFYnMYpUt7XHBUjh24TYk71h7vyByXSJR4jVUifxAXVsF"]
-    }
-    async getBlockWithHash(hash) {
-        const index = ["Sk9yV47GxazE6vPYWHmPCV85YeM8nPpiTHsnjXrkU8NZUCmD", "SeNK9dipjf4ehPsW29mr8SWg9sTo6gxQtrfmCRuDxiNy5Lf9",
-            "SeNKFUL2irD5uut1f3SRCXdK34ytpbwCQxe1KMt9pbHgaHHC", "SeNKFYnMYpUt7XHBUjh24TYk71h7vyByXSJR4jVUifxAXVsF"].indexOf(hash)
-        const data = ffs.readFileSync(`/Users/zhijie/go/src/github.com/ontio/ontfs-js-sdk/test/blocks/block${index}`).toString()
-        const block = {
-            rawData() {
-                return data
-            },
-            cid() {
-                return hash
-            }
-        }
-        return block
-    }
-    async getFileAllBlockHashAndOffset() {
-        return {
-            "Sk9yV47GxazE6vPYWHmPCV85YeM8nPpiTHsnjXrkU8NZUCmD-0": 0,
-            "SeNK9dipjf4ehPsW29mr8SWg9sTo6gxQtrfmCRuDxiNy5Lf9-1": 0,
-            "SeNKFUL2irD5uut1f3SRCXdK34ytpbwCQxe1KMt9pbHgaHHC-2": 262144,
-            "SeNKFYnMYpUt7XHBUjh24TYk71h7vyByXSJR4jVUifxAXVsF-3": 524288,
-        }
-    }
-    getBlockData(block) {
-        return block.rawData()
-    }
-    encodedToBlockWithCid(data, hash) {
-        return {
-            rawData() {
-                return data
-            },
-            cid() {
-                return hash
-            }
-        }
-    }
-    getBlockLinks(block) {
-        if (block.cid() == "Sk9yV47GxazE6vPYWHmPCV85YeM8nPpiTHsnjXrkU8NZUCmD") {
-            return ["SeNK9dipjf4ehPsW29mr8SWg9sTo6gxQtrfmCRuDxiNy5Lf9",
-                "SeNKFUL2irD5uut1f3SRCXdK34ytpbwCQxe1KMt9pbHgaHHC",
-                "SeNKFYnMYpUt7XHBUjh24TYk71h7vyByXSJR4jVUifxAXVsF"]
-        }
-        return []
-    }
-    returnBuffer() {
-
-    }
-}
 
 const newFs = () => {
     let cfg = config.DaemonConfig
@@ -145,7 +83,9 @@ const newFs = () => {
         cidVersion: 0,
         codec: 'dag-pb',
         rawLeaves: true,
-        leafType: 'raw', // 'raw'
+        leafType: "raw",
+        // rawLeaves: false,
+        // leafType: 'file', // 'raw'
         strategy: 'balanced' // dag tree balanced to leaves, strategy used in golang version
     }
     console.log('repo', fsConfig.repoRoot, options)
@@ -153,12 +93,10 @@ const newFs = () => {
     // let closeCh = new Deferred()
     let closeCh
     let service = new Fs(fsSrv, cfg, closeCh)
-    // let service = new MockFs()
     return service
 }
 
 module.exports = {
     Fs,
     newFs,
-    MockFs
 }

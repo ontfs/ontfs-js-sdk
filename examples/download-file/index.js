@@ -75,14 +75,13 @@ const main = async () => {
         return
     }
     // init upload option
-    const option = new types.TaskUploadOption()
+    const option = new types.TaskDownloadOption()
     option.fileHash = argv.fileHash
     option.inOrder = true
     option.maxPeerCnt = argv.maxPeerCnt ? argv.maxPeerCnt : 10
-    option.outFilePath = argv.outFilePath
+    option.outFilePath = argv.outFilePath ? argv.outFilePath : "./" + argv.fileHash
     option.decryptPwd = argv.decryptPwd != undefined ? argv.decryptPwd : ''
     console.log('option', option)
-    return
     // add task
     const taskID = await globalTaskMgr().addTask(option).catch((e) => {
         console.log('e', e)
@@ -93,7 +92,7 @@ const main = async () => {
         await utils.sleep(1000)
         const task = globalTaskMgr().getDownloadTaskByTaskId(taskID)
         if (task && task.baseInfo.progress == 3) {
-            console.log(`file ${fileHash} download success`)
+            console.log(`file ${argv.fileHash} download success`)
             break
         }
     }

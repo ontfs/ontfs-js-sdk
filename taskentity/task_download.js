@@ -130,6 +130,7 @@ class TaskDownload {
             throw err
         })
         console.log("create success")
+        await utils.sleep(2000)
         const file = fs.openSync(fullFilePath, 'r+', 0o666)
         console.log("open success", fullFilePath)
         if (!file) {
@@ -143,7 +144,12 @@ class TaskDownload {
             const promise = new Promise(async (resolve, reject) => {
                 let promiseErr
                 while (true) {
-                    const { blocksReq, taskIndex } = await this.getBlocksReq()
+                    const blocksReqObj = await this.getBlocksReq()
+                    if (!blocksReqObj) {
+                        console.log(`DownloadBlockFlightsFromPeer getBlocksReq return nil`)
+                        break
+                    }
+                    const { blocksReq, taskIndex } = blocksReqObj
                     if (!blocksReq) {
                         console.log(`DownloadBlockFlightsFromPeer getBlocksReq return nil`)
                         break
@@ -182,16 +188,23 @@ class TaskDownload {
             console.log(`promise download block flights from peer ${err.toString()}`)
         })
         console.log('DownloadBlockFlightsFromPeer finished')
-        await this.combine().catch((err) => {
-            console.log("combine err", err)
+        this.transferInfo.blockDownloadNotify.respNotify = null
+        if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
+            await this.combine().catch((err) => {
+                console.log("combine err", err)
+                fs.closeSync(file)
+                this.baseInfo.errorInfo = err.toString()
+                this.transferInfo.blockDownloadNotify.finished = false
+                throw err
+            })
             fs.closeSync(file)
-            this.baseInfo.errorInfo = err.toString()
-            this.transferInfo.blockDownloadNotify.finished = false
-            throw err
-        })
-        fs.closeSync(file)
-        this.baseInfo.progress = Download_Done
-        this.transferInfo.blockDownloadNotify.finished = true
+            this.baseInfo.progress = Download_Done
+            this.transferInfo.blockDownloadNotify.finished = true
+        } else {
+            fs.closeSync(file)
+            this.baseInfo.progress = Download_Done
+            this.transferInfo.blockDownloadNotify.finished = true
+        }
     }
     initMicroTasks() {
         for (let index = 0; index < this.baseInfo.fileBlockCount; index += common.MAX_REQ_BLOCK_COUNT) {
@@ -420,6 +433,7 @@ class TaskDownload {
             console.log("resp.data", resp.data)
             throw new Error(`receive invalid msg from peer ${peerNetAddr}`)
         }
+        console.log('resp.data', resp.data)
         const msg = message.decodeMsg(resp.data)
         console.log('send download block flights msg, resp', msg)
         // return
@@ -440,15 +454,18 @@ class TaskDownload {
                 console.log(`block ${blockMsg.hash}-${blockMsg.index} is not match any request task`)
                 throw new Error(`block ${blockRespKey} is not match request task`)
             }
-            const block = sdk.globalSdk().fs.encodedToBlockWithCid(blockMsg.data, blockMsg.hash)
-            if (!block || block.cid() != blockMsg.hash) {
+            console.log('received blockMsg.data', blockMsg.data)
+            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(blockMsg.data, 'hex'), blockMsg.hash)
+            console.log('encode block ', blockMsg.data, blockMsg.hash)
+            console.log('encode block result ', block)
+            if (!block || block.cid.toString() != blockMsg.hash) {
                 console.log(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
                 throw new Error(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
             }
             blocksResp.push({
                 hash: blockMsg.hash,
                 index: blockMsg.index,
-                block: utils.hex2utf8str(blockMsg.data),
+                block: blockMsg.data,
                 offset: blockMsg.offset,
                 paymentId: blockFlightsMsg.payment.paymentId,
                 peerAddr: peerNetAddr,
@@ -460,7 +477,7 @@ class TaskDownload {
             throw new Error(`blocksRespCount(${blocksRespCount}) is not match blocksReqCount(${blocksReq.length})`)
         }
         let blockHashes = []
-        for (let req of reqBlocks) {
+        for (let req of blocksReq) {
             blockHashes.push(req.Hash)
         }
         console.log('blockHashes', blockHashes)
@@ -530,43 +547,49 @@ class TaskDownload {
         const isFileEncrypted = this.transferInfo.combineInfo.isFileEncrypted
         const file = this.transferInfo.combineInfo.fileStream
         const value = this.transferInfo.blockDownloadNotify.respNotify
+
         if (value) {
             console.log(`received block ${this.option.fileHash}-${value.hash}-${value.index} from ` +
                 `${value.peerAddr}`)
-            const block = sdk.globalSdk().fs.encodedToBlockWithCid(value.block, value.hash)
-            if (block.cid() != value.hash) {
-                console.log(`receive a unmatched hash block ${block.cid()} ${value.hash}`)
-                throw new Error(`receive a unmatched hash block ${block.cid()} ${value.hash}`)
+            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(value.block, 'hex'), value.hash)
+            // console.log('encode block ', block.data.toString(), value.hash)
+            // console.log('encode block result ', block)
+            if (block.cid.toString() != value.hash) {
+                console.log(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
+                throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
             }
-            const links = sdk.globalSdk().fs.getBlockLinks(block)
-            // const links = []
+            console.log('get links of block', block.cid)
+            const links = sdk.globalSdk().fs.getBlockLinks(block).catch((err) => {
+                console.log('get block link err', block.cid, err.toString())
+            })
             if (!links || !links.length) {
-                // let data = sdk.globalSdk().fs.getBlockData(block)
-                let data = value.block
-                console.log("data len 100", data.substr(0, 200))
-                if (!isFileEncrypted && !hasCutPrefix && data.length > this.baseInfo.filePrefix.length &&
-                    data.substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix) {
-                    data = data.substr(this.baseInfo.filePrefix.length)
-                    hasCutPrefix = true
-                    this.transferInfo.combineInfo.hasCutPrefix = true
-                    console.log('cut prefix')
-                }
+                let data = sdk.globalSdk().fs.getBlockData(block)
+                // console.log("data len", data.toString().substr(0, this.baseInfo.filePrefix.length), data.toString().substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix)
                 let writeAtPos = value.offset
-                if (value.offset > 0 && !isFileEncrypted) {
+                if (!isFileEncrypted && !hasCutPrefix && data.length > this.baseInfo.filePrefix.length &&
+                    data.toString().substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix) {
+                    data = data.slice(this.baseInfo.filePrefix.length)
+                    hasCutPrefix = true
+                    console.log('cut prefix', data, data.toString())
+                    this.transferInfo.combineInfo.hasCutPrefix = true
+                }
+                if (value.offset > 0 && !isFileEncrypted && hasCutPrefix) {
                     writeAtPos = value.offset - this.baseInfo.filePrefix.length
                 }
-                console.log(`block ${block.cid()} block-len ${data.length}, offset ${value.offset}` +
+                console.log(`block ${block.cid.toString()} block-len ${data.length}, offset ${value.offset}` +
                     ` prefix ${this.baseInfo.filePrefix}, pos ${writeAtPos}`)
-                fs.writeSync(file, data, writeAtPos)
+                fs.writeSync(file, data, 0, data.length, writeAtPos)
             }
             console.log(`${this.option.fileHash}-${value.hash}-${value.index} set downloaded`)
         }
         this.transferInfo.combineInfo.combinedBlockNum++
         if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
             let exitDownloadRoutineCount = 0
-            for (let peerDownloadInfo of this.transferInfo.blockDownloadInfo) {
-                if (peerDownloadInfo.routineStatus == types.RoutineExit) {
-                    exitDownloadRoutineCount += 1
+            if (this.transferInfo.blockDownloadInfo) {
+                for (let peerDownloadInfo of this.transferInfo.blockDownloadInfo) {
+                    if (peerDownloadInfo.routineStatus == types.RoutineExit) {
+                        exitDownloadRoutineCount += 1
+                    }
                 }
             }
             if (exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo)) {
@@ -623,6 +646,7 @@ const newTaskDownload = async (taskID, option, baseInfo, transferInfo) => {
             finished: {},
             respNotify: {},
         }
+        transferInfo.microTasks = []
         taskDownload.transferInfo = transferInfo
     }
     return taskDownload
