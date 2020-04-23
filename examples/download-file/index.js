@@ -91,13 +91,15 @@ const main = async () => {
     while (true) {
         await utils.sleep(1000)
         const task = globalTaskMgr().getDownloadTaskByTaskId(taskID)
-        if (task && task.baseInfo.progress == 3) {
+        if (task && task.baseInfo.progress == 4) {
             console.log(`file ${argv.fileHash} download success`)
             break
         }
     }
     console.log('done')
-    globalSdk().stop()
+    await globalSdk().stop().catch((err) => {
+        console.log('stop err', err.toString())
+    })
 }
 
 main()

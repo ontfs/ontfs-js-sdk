@@ -400,7 +400,6 @@ class TaskUpload {
             block.Index = block.index
             block.Offset = block.offset
             block.Data = block.data.toString('base64')
-            // console.log('block data ', block.hash, block.data.toString('hex'))
             delete block['hash']
             delete block['index']
             delete block['offset']
@@ -545,7 +544,7 @@ const getFileUniqueId = async (blockHashes) => {
             console.log('get block err', blockHashes[blockIndex], e.toString())
             throw e
         })
-        blocks.push(block._data.toString('hex'))
+        blocks.push(block.rawData.toString('hex'))
     }
     console.log('blocks', blocks.length)
     const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks)

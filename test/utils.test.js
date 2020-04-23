@@ -134,5 +134,10 @@ describe('prefix test', () => {
         // console.log('data', Buffer.from(utils.base64str2str(base64str), 'hex').toString())
     })
 
+    test('address2bytestr', async () => {
+        const addr = new Address('ALZXN8VKuN63xassAUE29SG1vKHTf3WuVF')
+        console.log('bytes', utils.address2bytestr(addr))
+    })
+
 
 })

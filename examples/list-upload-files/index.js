@@ -5,18 +5,7 @@ const { initSdk, setGlobalSdk, globalSdk } = require("../../sdk")
 const types = require("../../types")
 const utils = require("../../utils")
 const config = require("../../config")
-const argv = require('yargs')
-    .usage('Usage: $0 <cmd> [options]')
-    .option('f', {
-        string: true,
-        description: '`<hash>` of file to be delete',
-        alias: 'fileHash'
-    })
-    .option('h', {
-        alias: 'help',
-        description: 'display help message'
-    })
-    .help('help').argv
+const fs = require("fs")
 
 const startSDK = async () => {
     // init config
@@ -28,7 +17,7 @@ const startSDK = async () => {
         walletPwd: password,
         chainRpcAddr: rpcAddr,
         gasPrice: 500,
-        gasLimit: 40000,
+        gasLimit: 400000,
         pdpVersion: 1
     }
     config.DaemonConfig = {
@@ -58,11 +47,10 @@ const main = async () => {
         console.log('start sdk failed')
         return
     }
-    if (!argv.fileHash) {
-        return
-    }
-    const tx = await globalSdk().ontFs.deleteFiles([argv.fileHash])
-    console.log('delete file tx: ', tx)
+    const files = await globalSdk().ontFs.getFileList()
+    console.log('files', files)
+
+    console.log('done')
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })

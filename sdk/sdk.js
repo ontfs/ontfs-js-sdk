@@ -24,7 +24,7 @@ class Sdk {
         this.chain = _chain
         this.ontFs = _ontFs
         this.fs = _fs
-        this.stop = _stop
+        this.isStop = _stop
         this.pdpServer = _pdpServer
     }
 
@@ -36,14 +36,14 @@ class Sdk {
         return await this.fs.start()
     }
 
-    stop() {
+    async stop() {
         if (this.fs) {
-            const err = this.fs.close()
+            const err = await this.fs.close()
             if (err) {
                 throw err
             }
         }
-        this.stop = true
+        this.isStop = true
     }
 
     currentAccount() {

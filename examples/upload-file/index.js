@@ -132,7 +132,9 @@ const main = async () => {
         }
     }
     console.log('done')
-    globalSdk().stop()
+    await globalSdk().stop().catch((err) => {
+        console.log('stop err', err.toString())
+    })
 }
 
 main()

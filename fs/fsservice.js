@@ -129,14 +129,23 @@ class FsService {
    */
   async getBlockWithHash(cidStr) {
     const blockCid = new CID(cidStr)
-    const block = await this.ipld.get(blockCid)
-    if (block._data) {
-      return new Block(block._data, blockCid)
+    const blk = await this.ipld.get(blockCid)
+    if (blk._data) {
+      if (blockCid.codec == 'dag-pb') {
+        const block = new Block(blk.serialize(), blockCid)
+        block.rawData = blk.serialize()
+        return block
+      }
+      const block = new Block(blk._data, blockCid)
+      block.rawData = blk._data
+      return block
     }
-    if (Buffer.isBuffer(block)) {
-      return new Block(block, blockCid)
+    if (Buffer.isBuffer(blk)) {
+      const block = new Block(blk, blockCid)
+      block.rawData = blk
+      return block
     }
-    return block
+    return
   }
 
   /**

@@ -138,15 +138,15 @@ class TaskDownload {
         }
         this.transferInfo.combineInfo.fileStream = file
         let promiseList = []
-        for (let peerNetAddr of Object.keys(this.transferInfo.blockDownloadInfo)) {
-            const peerDownloadInfo = this.transferInfo.blockDownloadInfo[peerNetAddr]
+        for (let [peerNetAddr, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
             console.log(`StartRoutine (${peerDownloadInfo.peerWallet} ${peerNetAddr})`)
             const promise = new Promise(async (resolve, reject) => {
-                let promiseErr
+                const routineInfo = `TaskId: ${this.baseInfo.taskID} FileHash: ${this.option.fileHash}` +
+                    ` Node[${peerDownloadInfo.peerWallet} ${peerNetAddr}]`
                 while (true) {
                     const blocksReqObj = await this.getBlocksReq()
                     if (!blocksReqObj) {
-                        console.log(`DownloadBlockFlightsFromPeer getBlocksReq return nil`)
+                        console.log(`${routineInfo} DownloadBlockFlightsFromPeer getBlocksReq return nil`)
                         break
                     }
                     const { blocksReq, taskIndex } = blocksReqObj
@@ -157,20 +157,16 @@ class TaskDownload {
                     const blocksResp = await this.downloadBlockFlightsFromPeer(
                         peerNetAddr, peerDownloadInfo.peerWallet, blocksReq).catch((err) => {
                             console.log(`DownloadBlockFlightsFromPeer error: ${err.toString()}`)
-                            promiseErr = err
+                            // promiseErr = err
                         })
-                    console.log('blockResponses', blocksResp ? blocksResp.length : 0, promiseErr)
-                    if (promiseErr) {
-                        this.transferInfo.microTasks[taskIndex].status = types.BlockTaskUnStart
-                        break
-                    }
+                    console.log('blockResponses', blocksResp ? blocksResp.length : 0)
                     if (!blocksResp) {
-                        console.log("DownloadBlockFlightsFromPeer error: blocksResp is nil")
+                        console.log(`${routineInfo} DownloadBlockFlightsFromPeer error: blocksResp is nil`)
                         this.transferInfo.microTasks[taskIndex].status = types.BlockTaskUnStart
                         break
                     }
                     for (let blockResp of blocksResp) {
-                        console.log(`Process BlockResp: ${blockResp.index}, ${blockResp.hash}`)
+                        console.log(`${routineInfo} Process BlockResp: ${blockResp.index}, ${blockResp.hash}`)
                         this.transferInfo.blockDownloadNotify.respNotify = blockResp
                         await this.combine().catch((err) => {
                             console.log("combine err", err)
@@ -180,6 +176,7 @@ class TaskDownload {
                 }
                 this.fileDownloadOk(peerNetAddr)
                 this.transferInfo.blockDownloadInfo[peerNetAddr].routineStatus = types.RoutineExit
+                console.log(`ExitRoutine ${routineInfo}`)
                 resolve()
             })
             promiseList.push(promise)
@@ -187,7 +184,7 @@ class TaskDownload {
         await Promise.all(promiseList).catch((err) => {
             console.log(`promise download block flights from peer ${err.toString()}`)
         })
-        console.log('DownloadBlockFlightsFromPeer finished')
+        console.log('DownloadBlockFlightsFromPeer finished', this.transferInfo.combineInfo.combinedBlockNum, this.baseInfo.fileBlockCount)
         this.transferInfo.blockDownloadNotify.respNotify = null
         if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
             await this.combine().catch((err) => {
@@ -326,14 +323,24 @@ class TaskDownload {
             const curBlockHeight = await sdk.globalSdk().chain.getBlockHeight()
             console.log('last slice id', lastSliceId, fileMsg.payInfo.latestPayment)
             if (readPledge && readPledge.expiredHeight <= curBlockHeight) {
+                console.log('check expired height')
                 for (let plan of readPledge.readPlans) {
                     if (plan.nodeAddr.toBase58() == fileMsg.payInfo.walletAddress) {
                         lastSliceId = plan.HaveReadBlockNum
                     }
                 }
             } else if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
-                // test last payment
-                settleSlice = JSON.parse(fileMsg.payInfo.latestPayment)
+                const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
+                settleSlice = {
+                    fileHash: utils.base64str2utf8str(sliceObj.FileHash),
+                    payFrom: utils.bytes2address(sliceObj.PayFrom),
+                    payTo: utils.bytes2address(sliceObj.PayTo),
+                    sliceId: sliceObj.SliceId,
+                    pledgeHeight: sliceObj.PledgeHeight,
+                    sig: utils.base64str2hex(sliceObj.Sig),
+                    pubKey: utils.base64str2hex(sliceObj.PubKey),
+                }
+                console.log('check payment', fileMsg.payInfo.latestPayment, settleSlice)
                 if (settleSlice.fileHash != this.option.fileHash) {
                     console.log(`file hash in the settle slice ${settleSlice.fileHash} is 
                     not same as in the msg ${this.option.fileHash}`)
@@ -352,6 +359,7 @@ class TaskDownload {
                 lastSliceId = settleSlice.sliceId
             }
         } catch (err) {
+            console.log('process response err', err)
             return false
         }
 
@@ -361,6 +369,7 @@ class TaskDownload {
             sliceId: lastSliceId,
             totalCount: 0,
         }
+        console.log('response process', this.transferInfo.blockDownloadInfo)
         return false
     }
 
@@ -388,9 +397,7 @@ class TaskDownload {
 
     async pledge() {
         let readPlan = []
-        const peers = Object.keys(this.transferInfo.blockDownloadInfo)
-        for (let peerAddr of peers) {
-            const peerDownloadInfo = this.transferInfo.blockDownloadInfo[peerAddr]
+        for (let [peerAddr, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
             let plan = {
                 nodeAddr: peerDownloadInfo.peerWallet,
                 maxReadBlockNum: this.baseInfo.fileBlockCount,
@@ -433,10 +440,9 @@ class TaskDownload {
             console.log("resp.data", resp.data)
             throw new Error(`receive invalid msg from peer ${peerNetAddr}`)
         }
-        console.log('resp.data', resp.data)
+        // console.log('resp.data', resp.data)
         const msg = message.decodeMsg(resp.data)
-        console.log('send download block flights msg, resp', msg)
-        // return
+        // console.log('send download block flights msg, resp', msg)
         if (!msg) {
             console.log("resp.data", resp.data)
             throw new Error(`receive invalid msg from peer ${peerNetAddr}`)
@@ -454,10 +460,10 @@ class TaskDownload {
                 console.log(`block ${blockMsg.hash}-${blockMsg.index} is not match any request task`)
                 throw new Error(`block ${blockRespKey} is not match request task`)
             }
-            console.log('received blockMsg.data', blockMsg.data)
+            // console.log('received blockMsg.data', blockMsg.data)
             const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(blockMsg.data, 'hex'), blockMsg.hash)
-            console.log('encode block ', blockMsg.data, blockMsg.hash)
-            console.log('encode block result ', block)
+            // console.log('encode block ', blockMsg.data, blockMsg.hash)
+            // console.log('encode block result ', block)
             if (!block || block.cid.toString() != blockMsg.hash) {
                 console.log(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
                 throw new Error(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
@@ -484,7 +490,7 @@ class TaskDownload {
         peerTransferInfo.totalCount += blocksRespCount
         await this.payForBlocks(peerNetAddr, peerWalletAddr, peerTransferInfo.sliceId + peerTransferInfo.totalCount,
             blockHashes, blocksResp[0].paymentId).catch((err) => {
-                throw err
+                // throw err
             })
         return blocksResp
     }
@@ -523,13 +529,13 @@ class TaskDownload {
             Sig: utils.hex2base64str(fileReadSlice.sig.serializeHex()),
             PubKey: utils.hex2base64str(fileReadSlice.pubKey.serializeHex()),
         }
-        console.log('fileReadSlice', fileReadSlice, fileReadSlice.sig.serializeHex(), fileReadSlice.pubKey.serializeHex())
-        console.log('sliceData', sliceData)
+        // console.log('fileReadSlice', fileReadSlice, fileReadSlice.sig.serializeHex(), fileReadSlice.pubKey.serializeHex())
+        // console.log('sliceData', sliceData)
 
         const msg = message.newPaymentMsg(fileReadSlice.payFrom.toBase58(), fileReadSlice.payTo.toBase58(),
             message.PAYMENT_OP_PAY, paymentId, this.option.fileHash, blockHashes, sliceData,
             [message.withWalletAddress(sdk.globalSdk().walletAddress())])
-        console.log('payment msg', msg)
+        // console.log('payment msg', msg)
 
         const ret = await client.httpSendWithRetry(msg, peerNetAddr, common.MAX_NETWORK_REQUEST_RETRY,
             common.P2P_REQUEST_WAIT_REPLY_TIMEOUT).catch((err) => {
@@ -559,8 +565,9 @@ class TaskDownload {
                 throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
             }
             console.log('get links of block', block.cid)
-            const links = sdk.globalSdk().fs.getBlockLinks(block).catch((err) => {
-                console.log('get block link err', block.cid, err.toString())
+            const links = await sdk.globalSdk().fs.getBlockLinks(block).catch((err) => {
+                // get block link err CID(bafkreicfixwb3aausd56kyf7urdljk4ggkpv6cnvao5pjnhw6jdaesfq3u) Error: Invalid version, must be a number equal to 1 or 0
+                // console.log('get block link err', block.cid, err.toString())
             })
             if (!links || !links.length) {
                 let data = sdk.globalSdk().fs.getBlockData(block)
@@ -570,7 +577,7 @@ class TaskDownload {
                     data.toString().substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix) {
                     data = data.slice(this.baseInfo.filePrefix.length)
                     hasCutPrefix = true
-                    console.log('cut prefix', data, data.toString())
+                    console.log('cut prefix')
                     this.transferInfo.combineInfo.hasCutPrefix = true
                 }
                 if (value.offset > 0 && !isFileEncrypted && hasCutPrefix) {
@@ -585,14 +592,14 @@ class TaskDownload {
         this.transferInfo.combineInfo.combinedBlockNum++
         if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
             let exitDownloadRoutineCount = 0
-            if (this.transferInfo.blockDownloadInfo) {
-                for (let peerDownloadInfo of this.transferInfo.blockDownloadInfo) {
-                    if (peerDownloadInfo.routineStatus == types.RoutineExit) {
-                        exitDownloadRoutineCount += 1
-                    }
+            console.log('this.transferInfo.blockDownloadInfo', this.transferInfo == undefined, this.transferInfo.blockDownloadInfo == undefined)
+            for (let [_, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
+                if (peerDownloadInfo.routineStatus == types.RoutineExit) {
+                    exitDownloadRoutineCount += 1
                 }
             }
-            if (exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo)) {
+            if (this.transferInfo.blockDownloadInfo &&
+                exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo)) {
                 throw new Error("[Combine] all download routine exited but blocks is not complete")
             }
             return
