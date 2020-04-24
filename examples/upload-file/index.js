@@ -99,7 +99,7 @@ const main = async () => {
     // init upload option
     const option = new types.TaskUploadOption()
     option.filePath = argv.filePath || __dirname + "/test.zip"
-    option.fileDesc = argv.fileDesc || "test.zip"
+    option.fileDesc = argv.desc || "test.zip"
     const stat = fs.statSync(option.filePath)
     option.fileSize = stat.size
     option.storageType = argv.storageType ? argv.storageType : 1

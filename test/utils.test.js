@@ -1,6 +1,7 @@
 const utils = require("../utils")
 const { CurveLabel, KeyParameters, KeyType, PrivateKey, SignatureScheme, Signature, PublicKey } = require("ontology-ts-sdk").Crypto
 const { str2hexstr, reverseHex } = require("ontology-ts-sdk").utils
+const { serializeVarUint } = require("ontology-ts-sdk/fs/utils")
 const { Address } = require("ontology-ts-sdk").Crypto
 const Deferred = require("deferred")
 const fs = require("fs")
@@ -138,6 +139,17 @@ describe('prefix test', () => {
         const addr = new Address('ALZXN8VKuN63xassAUE29SG1vKHTf3WuVF')
         console.log('bytes', utils.address2bytestr(addr))
     })
+
+    test('serializeVarUint', async () => {
+
+        for (let i = 0; i < 36; i++) {
+            const value = 1 << i
+            console.log(`2 ^ ${i} = ${value - 1} ${serializeVarUint(value - 1)}`)
+            console.log(`2 ^ ${i} = ${value} ${serializeVarUint(value)}`)
+            console.log(`2 ^ ${i} = ${value + 1} ${serializeVarUint(value + 1)} `)
+        }
+    })
+
 
 
 })

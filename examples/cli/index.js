@@ -69,7 +69,7 @@ const uploadFile = async (argv) => {
     // init upload option
     const option = new types.TaskUploadOption()
     option.filePath = argv.filePath || __dirname + "/test.zip"
-    option.fileDesc = argv.fileDesc || "test.zip"
+    option.fileDesc = argv.desc || "test.zip"
     const stat = fs.statSync(option.filePath)
     option.fileSize = stat.size
     option.storageType = argv.storeType != undefined ? argv.storeType : 1
@@ -154,6 +154,9 @@ const deleteFile = async (argv) => {
     }
     const tx = await globalSdk().ontFs.deleteFiles([argv.fileHash])
     console.log('delete file tx: ', tx)
+    const info = await globalSdk().ontFs.getFileInfo(argv.fileHash).catch((err) => { })
+    console.log(`delete file ${info ? 'fail' : 'success'}`)
+
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })
@@ -196,9 +199,15 @@ const createSpace = async (argv) => {
         return
     }
     // 10, 1, 600, 1586880000
-    console.log('parseBytes', argv.spaceVolume, bytes.parseBytes(argv.spaceVolume) / 1024)
+    var reg = /^\d+$/;
+    let spaceVolume = 0
+    if (!reg.test(argv.spaceVolume)) {
+        spaceVolume = parseInt(bytes.parseBytes(argv.spaceVolume) / 1024)
+    } else {
+        spaceVolume = argv.spaceVolume
+    }
     const tx = await globalSdk().ontFs.createSpace(
-        parseInt(bytes.parseBytes(argv.spaceVolume) / 1024),
+        spaceVolume,
         argv.spaceCopyNum,
         argv.pdpInterval,
         parseInt(Date.parse(argv.spaceTimeExpired) / 1000))
