@@ -9,7 +9,7 @@ describe('sdk test', () => {
     const label = 'pwd'
     const password = 'pwd'
     const rpcAddr = 'http://127.0.0.1:20336'
-    let sdk = new Sdk()
+    let sdk
     const testTimeout = 20 * 1000
     const init = async () => {
         if (sdk && sdk.ontFs && sdk.ontFs.account) {
@@ -24,10 +24,14 @@ describe('sdk test', () => {
             gasPrice: 500,
             gasLimit: 40000
         }
-        sdk = initSdk(testCfg, account)
+        sdk = await initSdk(testCfg, account)
     }
+    beforeAll(async () => {
+        await init()
+    })
     test('test sdk get node lists', async () => {
-        await expect(sdk.getFsNodesList(3)).resolves.toBeDefined();
+        const nodeList = await sdk.getFsNodesList(3)
+        console.log('nodeList', nodeList)
     });
 
     test('test sdk wait for tx confirmed', async () => {

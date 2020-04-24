@@ -34,6 +34,9 @@ describe('task manager', () => {
         const s = initSdk(sdkCfg, account)
         setGlobalSdk(s)
     }
+    beforeAll(async () => {
+        await init()
+    })
     test('test add upload task', async () => {
         await init()
         expect(globalTaskMgr()).toBeDefined()
