@@ -78,7 +78,7 @@ const uploadFile = async (argv) => {
     option.pdpInterval = argv.pdpInterval || 600
     option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
         (parseInt(new Date().getTime() / 1000) + 86400) // default 1 day
-    option.encPassword = argv.encryptPwd ? argv.encryptPwd : ""
+    option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
     console.log('option', option)
     // add task
     const taskID = await globalTaskMgr().addTask(option).catch((e) => {
@@ -312,7 +312,6 @@ const uploadFileCmd = {
         .option(flags.timeExpired.name, flags.timeExpired)
         .option(flags.copyNum.name, flags.copyNum)
         .option(flags.storeType.name, flags.storeType)
-        .option(flags.encrypt.name, flags.encrypt)
         .option(flags.encryptPwd.name, flags.encryptPwd)
     ,
     handler: async (argv) => {

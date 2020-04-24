@@ -108,7 +108,7 @@ const main = async () => {
     option.pdpInterval = argv.pdpInterval || 600
     option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
         (parseInt(new Date().getTime() / 1000) + 86400) // default 1 day
-    option.encPassword = argv.encryptPwd ? argv.encryptPwd : ""
+    option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
     console.log('option', option)
     // add task
     const taskID = await globalTaskMgr().addTask(option).catch((e) => {
