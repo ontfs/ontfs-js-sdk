@@ -402,12 +402,32 @@ class Sdk {
     }
 
     decryptFile(fullFilePath, decryptPwd, outFilePath) {
-
+        this.decryptDownloadedFile(fullFilePath, decryptPwd, outFilePath)
 
     }
 
-    decryptDownloadedFile(fullFilePath, decryptPwd, outFilePath) {
-
+    async decryptDownloadedFile(fullFilePath, decryptPwd, outFilePath) {
+        if (!decryptPwd || !decryptPwd.length) {
+            throw new Error(`no decrypt password`)
+        }
+        // to do test
+        const readStream = fs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN });
+        const filePrefix = new utils.FilePrefix()
+        let prefix = ""
+        for await (const chunk of readStream) {
+            prefix = chunk
+            console.log("read first n prefix :", prefix)
+            filePrefix.fromString(prefix)
+        }
+        readStream.close()
+        if (!filePrefix.encrypt) {
+            console.log(`file not encrypt`)
+            return
+        }
+        if (!filePrefix.verifyEncryptPassword(decryptPwd)) {
+            throw new Error(`wrong password`)
+        }
+        this.fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, PREFIX_LEN)
     }
 
 }

@@ -23,12 +23,11 @@ describe('fs service', () => {
     })
 
     test('add file', async () => {
-        const filePath = './test/Zoom.pkg'
-        // const prefix = "helloworld"
-        const prefix = "010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f8b25010000000000000000"
-        const hashes = await fsSvr.addFile(filePath, prefix, false, "")
+        const filePath = './test/wallet.dat'
+        const prefix = "helloworld"
+        const hashes = await fsSvr.addFile(filePath, prefix, true, "123456")
         rootHash = hashes[0]
-        console.log('cidOffsets', hashes)
+        console.log('hashes', hashes)
     }, testTimeout)
 
 
@@ -142,11 +141,22 @@ describe('fs service', () => {
         const hexResult = pdp.genUniqueIdWithFileBlocks(datas)
         console.log('hex', hexResult)
     }, testTimeout)
-    // it('encrypt file', () => {
-    //     fsSvr.encrypt(fileName, password, encFileName)
-    // })
 
-    // it('decrypt file', () => {
-    //     fsSvr.decrypt(fileName, password, decFileName)
-    // })
+    test('encrypt file and decrypt', () => {
+        fsSvr.aesEncryptFile("./test/wallet.dat", "123", "./test/wallet_enc.dat")
+        fsSvr.aesDecryptFile("./test/wallet_enc.dat", "123", "./test/wallet_dec.dat", 0)
+    })
+
+    test('decrypt file', async () => {
+        const filePath = './test/test.zip'
+        prefix = "helloworld"
+        password = "123"
+        encrypt = true
+        const hashes = await fsSvr.addFile(filePath, prefix, encrypt, password)
+        const block = await fsSvr.getBlockWithHash(hashes[0])
+        encPath = "./test/file_enc"
+        decPath = "./test/file_dec"
+        fs.writeFileSync(encPath, block.rawData)
+        fsSvr.aesDecryptFile(encPath, password, decPath, prefix.length)
+    })
 })

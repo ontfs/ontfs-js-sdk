@@ -6,7 +6,7 @@ const PASSWORD_MAX_LEN = 16
 const CRYPT_SALT_LEN = 16
 const CRYPTO_HASH_LEN = 32
 const REVERSED_LEN = 4
-const PREFIX_LEN = 15
+const PREFIX_LEN = 158
 
 class FilePrefix {
     constructor(

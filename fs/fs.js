@@ -56,12 +56,12 @@ class Fs {
         return this.fs.getBlockData(block)
     }
 
-    aesDecryptFile(file, password, outputPath, prefixLen) {
-        // TODO
+    aesEncryptFile(file, password, outputPath) {
+        return this.fs.encrypt(file, password, outputPath)
     }
 
-    aesEncryptFile(file, password, outputPath) {
-        // TODO
+    aesDecryptFile(file, password, outputPath, prefixLen) {
+        return this.fs.decrypt(file, password, outputPath, prefixLen)
     }
 
     returnBuffer(buffer) {

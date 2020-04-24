@@ -73,7 +73,7 @@ class TaskUpload {
             if (spaceInfo.restVol * 1024 < this.baseInfo.blockCount * common.CHUNK_SIZE) {
                 throw new Error("space rest volume is not enough")
             }
-            if (this.option.copyNum != spaceInfo.copyNum) {
+            if (this.option.copyNum != spaceInfo.copyNumber) {
                 throw new Error(`copyNum must be equal with space copyNum`)
             }
             this.option.pdpInterval = spaceInfo.pdpInterval

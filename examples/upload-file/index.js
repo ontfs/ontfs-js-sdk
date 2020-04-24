@@ -28,14 +28,14 @@ const argv = require('yargs')
         description: `copy Number of file storage`,
         alias: 'copyNum'
     })
-    .option('p', {
+    .option('pwd', {
         string: true,
         description: `encrypt file password`,
         alias: 'encryptPwd'
     })
     .option('fp', {
         boolean: true,
-        description: `ontFs server need commit first pdp or not, \nif not, client can download file earlier,\n default: true`,
+        description: `ontFs server need commit first pdp or not, \nif not, client can download file earlier, \n default: true`,
         alias: 'firstPdp',
         default: true,
     })
@@ -78,6 +78,7 @@ const startSDK = async () => {
     // import account by wif private key
     const { error, result } = await OntSDK.importAccountWithWif(label, wif, password)
     if (error != 0) {
+        console.log('import account err', error)
         return false
     }
     const account = Account.parseJson(result)
@@ -107,8 +108,8 @@ const main = async () => {
     option.pdpInterval = argv.pdpInterval || 600
     option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
         (parseInt(new Date().getTime() / 1000) + 86400) // default 1 day
-    option.encPassword = argv.encPassword || ""
-    console.log('option', option, stat.size, argv.firstPdp)
+    option.encPassword = argv.encryptPwd ? argv.encryptPwd : ""
+    console.log('option', option)
     // add task
     const taskID = await globalTaskMgr().addTask(option).catch((e) => {
         console.log('e', e)

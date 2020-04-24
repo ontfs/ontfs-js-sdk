@@ -19,25 +19,23 @@ $ yarn install (or npm install)
 ```
 
 
-
-#### Built and run with Dockerfile
-
-```shell
-$ docker built -t ontfsclient:0.0.1 .
-$ docker run -it ontfsclient:0.0.1 bash
-```
-
-
-
 #### Examples
 
+
+
+##### Create wallet
+
+```shell
+$ cd ./examples/cli
+$ node index.js account create --password=pwd
+```
 
 
 ##### Upload files
 
 ```shell
-$ cd ./examples/upload-file
-$ node index.js --filePath=./test.dat --name=test -copyNum=1 --timeExpired="2020-04-25 00:00:00" --firstPdp=true --storeType=1 --pdpInterval=600
+$ cd ./examples/cli
+$ node index.js file upload --filePath=./test.dat --desc=test -copyNum=1 --timeExpired="2020-04-25 00:00:00" --firstPdp=true --storeType=1 --pdpInterval=600
 ```
 
 
@@ -45,7 +43,7 @@ $ node index.js --filePath=./test.dat --name=test -copyNum=1 --timeExpired="2020
 ##### Download file
 
 ```shell
-$ cd ./examples/download-file
-$ node index.js --fileHash=bafkreih7wrw5icnbfq2cxl2jcpplgdwgxyxte4hnreg2i5qcxnzyr6xlma --outFilePath=./Downloads/test.dat
+$ cd ./examples/cli
+$ node index.js file download --fileHash=bafkreih7wrw5icnbfq2cxl2jcpplgdwgxyxte4hnreg2i5qcxnzyr6xlma --outFilePath=./Downloads/test.dat
 ```
 

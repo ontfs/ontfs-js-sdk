@@ -197,10 +197,10 @@ class FsService {
             throw new Error(exception.message);
         }
     }
-
-    decrypt(filePath, password, outPath) {
+    decrypt(filePath, password, outPath, prefixLen) {
         try {
             var data = fs.readFileSync(filePath);
+            data = data.slice(prefixLen)
             var decipher = Crypto.createDecipher("aes-256-cbc", password);
             var decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
             fs.writeFileSync(outPath, decrypted);

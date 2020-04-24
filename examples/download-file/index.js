@@ -23,7 +23,7 @@ const argv = require('yargs')
         description: `max peer count for download`,
         alias: 'maxPeerCnt'
     })
-    .option('p', {
+    .option('pwd', {
         string: true,
         description: `decrypt file password`,
         alias: 'decryptPwd'
