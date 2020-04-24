@@ -82,7 +82,7 @@ class OntFs {
         throw new Error(`timeout after ${timeout} (s)`)
     }
 
-    async getNodeInfoList(limit) {
+    async getNodeInfoList(limit = 1) {
         const tx = OntfsContractTxBuilder.buildGetNodeInfoListTx(limit)
         const result = await this.preInvokeNativeContract(tx)
         let nodeInfoList = FsNodeInfoList.deserializeHex(result.data)

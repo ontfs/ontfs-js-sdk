@@ -444,7 +444,7 @@ const initSdk = async (sdkCfg, acc) => {
     if (!s.ontFs) {
         throw new Error("ontfs contract api init failed")
     }
-    console.log('config.DaemonConfig', config.DaemonConfig)
+    // console.log('config.DaemonConfig', config.DaemonConfig)
     if (config.DaemonConfig && config.DaemonConfig.fsRepoRoot && config.DaemonConfig.fsRepoRoot.length) {
         s.fs = fs.newFs()
     }

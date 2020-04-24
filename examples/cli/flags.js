@@ -208,4 +208,16 @@ module.exports = {
         name: "spaceTimeExpired",
         desc: "expired time, example format : \"2020-11-12 14:20:53\"",
     },
+
+    maxReadBlockNum: {
+        type: 'number',
+        name: "maxReadBlockNum",
+        desc: "maxReadBlockNum",
+    },
+    haveReadBlockNum: {
+        type: 'number',
+        name: "haveReadBlockNum",
+        desc: "haveReadBlockNum",
+    },
+
 }

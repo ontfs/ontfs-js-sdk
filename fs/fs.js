@@ -89,7 +89,7 @@ const newFs = () => {
         // leafType: 'file', // 'raw'
         strategy: 'balanced' // dag tree balanced to leaves, strategy used in golang version
     }
-    console.log('repo', fsConfig.repoRoot, options)
+    // console.log('repo', fsConfig.repoRoot, options)
     const fsSrv = new FsService(fsConfig.repoRoot, options)
     // let closeCh = new Deferred()
     let closeCh
