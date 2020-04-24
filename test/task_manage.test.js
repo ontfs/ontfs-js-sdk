@@ -8,6 +8,7 @@ const types = require("../types")
 const utils = require("../utils")
 const config = require("../config")
 const { Account } = require("ontology-ts-sdk")
+const { decryptDownloadedFile } = require("../taskentity/task_download")
 describe('task manager', () => {
     const wif = "KxYkAszCkUhfnx2goy5wxSiUrbMcCFgjK87dgAvDxnwiq7hKymNL"
     const label = 'pwd'
@@ -31,8 +32,9 @@ describe('task manager', () => {
         const { error, result } = await OntSDK.importAccountWithWif(label, wif, password)
         expect(error).toEqual(0)
         const account = Account.parseJson(result)
-        const s = initSdk(sdkCfg, account)
+        const s = await initSdk(sdkCfg, account)
         setGlobalSdk(s)
+        console.log('init sdk done')
     }
     beforeAll(async () => {
         await init()
@@ -51,8 +53,6 @@ describe('task manager', () => {
         option.timeExpired = 1588089600
         option.encPassword = ""
         option.whiteList = []
-        console.log('option', option)
-        return
         const taskID = await globalTaskMgr().addTask(option).catch((e) => {
             console.log('e', e)
         })
@@ -111,5 +111,9 @@ describe('task manager', () => {
         await utils.sleep(20000)
 
     }, testTimeout);
+
+    test('test decrypt download file', async () => {
+        await decryptDownloadedFile("./test/QmTxcLjRfoinR85z87QfYHY1VNRMxek9ErqmPxgwYPRjej", "123456", "./test/f1")
+    }, testTimeout)
 
 })

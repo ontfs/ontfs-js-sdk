@@ -700,16 +700,17 @@ const createDownloadFile = async (dir, filePath) => {
 }
 
 const decryptDownloadedFile = async (fullFilePath, decryptPwd, outFilePath) => {
+    console.log(`decrypt download file ${fullFilePath}, pwd ${decryptPwd}, out ${outFilePath}`)
     if (!decryptPwd || !decryptPwd.length) {
         throw new Error(`no decrypt password`)
     }
     // to do test
-    const readStream = fs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN });
+    const readStream = fs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN - 1 });
     const filePrefix = new utils.FilePrefix()
     let prefix = ""
     for await (const chunk of readStream) {
         prefix = chunk
-        console.log("read first n prefix :", prefix)
+        console.log("read first n prefix :", prefix, prefix.length)
         filePrefix.fromString(prefix)
     }
     readStream.close()
@@ -721,9 +722,13 @@ const decryptDownloadedFile = async (fullFilePath, decryptPwd, outFilePath) => {
         throw new Error(`wrong password`)
     }
 
-    await sdk.globalSdk().fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, prefix.length).catch((err) => {
-        throw err
-    })
+    try {
+        await sdk.globalSdk().fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, prefix.length)
+    } catch (e) {
+        console.log('decrypt file err', e)
+        throw e
+    }
+
 }
 
 
@@ -734,4 +739,5 @@ const keyOfBlockHashAndIndex = (hash, index) => {
 module.exports = {
     newTaskDownload,
     TaskDownload,
+    decryptDownloadedFile
 }
