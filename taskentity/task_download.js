@@ -667,10 +667,10 @@ const checkDownloadParams = async (to) => {
         throw new Error("[TaskDownloadOption] checkParams param fileHash error")
     }
     const fileInfo = await sdk.globalSdk().ontFs.getFileInfo(to.fileHash).catch((err) => {
-        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist`)
+        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist, err ${err.toString()}`)
     })
     if (!fileInfo) {
-        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist`)
+        throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist, err ${err.toString()}`)
     }
 
     const dir = path.dirname(to.outFilePath)

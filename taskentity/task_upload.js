@@ -528,7 +528,9 @@ const checkParams = (to) => {
 }
 
 const fileHasUploaded = async (fileHash) => {
-    const fi = await sdk.globalSdk().ontFs.getFileInfo(fileHash).catch((e) => { })
+    const fi = await sdk.globalSdk().ontFs.getFileInfo(fileHash).catch((e) => {
+        console.log("get file info err", e.toString())
+    })
     if (fi && fi.validFlag) {
         return true
     }
@@ -544,9 +546,12 @@ const getFileUniqueId = async (blockHashes) => {
             console.log('get block err', blockHashes[blockIndex], e.toString())
             throw e
         })
-        blocks.push(block.rawData.toString('hex'))
+        const blockHex = block.rawData.toString('hex').substr(0, 64 * 2)
+        // console.log('push data', blockHex)
+        blocks.push(blockHex)
     }
-    console.log('blocks', blocks.length)
+    console.log(`blocks ${blocks.length} calculating file unique id`)
+    // 64 bytes
     const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks)
     console.log('uniqId', uniqueId)
     return uniqueId

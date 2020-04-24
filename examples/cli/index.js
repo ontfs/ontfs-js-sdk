@@ -10,7 +10,6 @@ const { initSdk, setGlobalSdk, globalSdk } = require("../../sdk")
 const types = require("../../types")
 const bytes = require("../../common/humanize/bytes")
 const config = require("../../config")
-
 const createWallet = async (label, password) => {
     const wallet = await Wallet.create('')
     const privateKey = Crypto.PrivateKey.random()
@@ -41,7 +40,7 @@ const startSDK = async (argv) => {
         walletPwd: password,
         chainRpcAddr: rpcAddr,
         gasPrice: 500,
-        gasLimit: 400000,
+        gasLimit: 4000000,
         pdpVersion: 1
     }
     config.DaemonConfig = {
