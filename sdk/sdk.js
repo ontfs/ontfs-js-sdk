@@ -7,6 +7,7 @@ const common = require("../common")
 const utils = require("../utils")
 const OntFs = require("./ontfs").OntFs
 
+const ffs = require("fs")
 class Sdk {
     constructor(
         _account,
@@ -399,7 +400,7 @@ class Sdk {
             throw new Error(`no decrypt password`)
         }
         // to do test
-        const readStream = fs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN });
+        const readStream = ffs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN });
         const filePrefix = new utils.FilePrefix()
         let prefix = ""
         for await (const chunk of readStream) {
