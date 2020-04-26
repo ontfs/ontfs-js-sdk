@@ -76,7 +76,6 @@ class TaskUpload {
             if (this.option.copyNum != spaceInfo.copyNumber) {
                 throw new Error(`copyNum must be equal with space copyNum`)
             }
-            this.option.pdpInterval = spaceInfo.pdpInterval
             this.option.timeExpired = spaceInfo.timeExpired
         } catch (e) {
             console.log(`get space info error ${e.toString()}`)
@@ -124,7 +123,6 @@ class TaskUpload {
                 realFileSize: this.option.fileSize,
                 copyNumber: this.option.copyNum,
                 firstPdp: this.option.firstPdp,
-                pdpInterval: this.option.pdpInterval,
                 timeExpired: this.option.timeExpired,
                 pdpParam: this.baseInfo.pdpHashData,
                 storageType: this.option.storageType,
@@ -175,11 +173,6 @@ class TaskUpload {
                 if (fsNode.restVol * 1024 < this.baseInfo.blockCount * common.CHUNK_SIZE) {
                     console.log(`"CheckFsServerStatus ${fsNodeAddr} error: fsNode.RestVol(${fsNode.restVol * 1024})
                      >= fileSize(${this.baseInfo.blockCount * common.CHUNK_SIZE})"`)
-                    continue
-                }
-                if (this.option.pdpInterval < fsNode.minPdpInterval) {
-                    console.log(`CheckFsServerStatus  ${fsNodeAddr}error: PdpInterval(${this.option.pdpInterval})
-                     >= node's MinPdpInterval(${fsNode.minPdpInterval})`)
                     continue
                 }
                 const fsNodeNetAddr = common.getHTTPAddrFromNodeNetAddr(fsNode.nodeNetAddr)
@@ -512,6 +505,7 @@ const checkParams = (to) => {
         throw new Error(`[TaskUploadOption] CheckParams file size out of limit,
             max support ${ common.MAX_UPLOAD_FILE_SIZE} in kb unit`)
     }
+    console.log('to', to)
     if (parseInt((new Date().getTime()) / 1000) >= to.timeExpired) {
         throw new Error("[TaskUploadOption] CheckParams file expired time error")
     }

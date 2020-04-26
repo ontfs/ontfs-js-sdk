@@ -90,8 +90,8 @@ class OntFs {
         return nodeInfoList
     }
 
-    async createSpace(volume, copyNum, pdpInterval, timeExpired) {
-        const tx = OntfsContractTxBuilder.buildCreateSpaceTx(this.account.address, volume, copyNum, pdpInterval, timeExpired,
+    async createSpace(volume, copyNum, timeExpired) {
+        const tx = OntfsContractTxBuilder.buildCreateSpaceTx(this.account.address, volume, copyNum, timeExpired,
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         // console.log('result ', result)

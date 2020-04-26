@@ -44,11 +44,6 @@ const argv = require('yargs')
         description: `store type, 0 means space tenant model, 1 means file model`,
         alias: 'storeType'
     })
-    .option('i', {
-        number: true,
-        description: `file pdp interval`,
-        alias: 'pdpInterval'
-    })
     .option('h', {
         alias: 'help',
         description: 'display help message'
@@ -105,9 +100,20 @@ const main = async () => {
     option.storageType = argv.storageType ? argv.storageType : 1
     option.copyNum = argv.copyNum ? argv.copyNum : 1
     option.firstPdp = argv.firstPdp != undefined ? argv.firstPdp : true
-    option.pdpInterval = argv.pdpInterval || 600
+    const nowTimeStamp = parseInt(new Date().getTime() / 1000)
     option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
-        (parseInt(new Date().getTime() / 1000) + 86400) // default 1 day
+        (nowTimeStamp + 86400) // default 1 day
+
+
+    if (option.timeExpired < nowTimeStamp) {
+        console.log(`file time expired less than now ${nowTimeStamp}`)
+        return
+    }
+    const minHour = 4
+    if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
+        console.log(`file time expired less than ${minHour} hours`)
+        return
+    }
     option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
     console.log('option', option)
     // add task

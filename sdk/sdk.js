@@ -170,7 +170,6 @@ class Sdk {
                     volume: common.formatVolumeStringFromKb(nodeInfo.volume),
                     restVol: common.formatVolumeStringFromKb(nodeInfo.restVol),
                     serviceTime: common.formatTimeStringFromUnixTime(nodeInfo.serviceTime),
-                    minPdpInterval: nodeInfo.minPdpInterval,
                     nodeAddr: nodeInfo.nodeAddr.toBase58(),
                     nodeNetAddr: nodeInfo.nodeNetAddr,
                 })
@@ -181,13 +180,6 @@ class Sdk {
             throw e
         }
     }
-
-    checkFsNodesNetworkAvaliable(nodeAddrs) {
-        for (let fsNodeAddr of nodeAddrs) {
-            client.P2pConnect(fsNodeAddr)
-        }
-    }
-
 
     async getFileInfo(fileHashStr) {
         try {
@@ -202,11 +194,11 @@ class Sdk {
                     copyNumber: fi.copyNumber,
                     payAmount: common.formatOng(fi.payAmount),
                     restAmount: common.formatOng(fi.restAmount),
-                    fileCost: common.formatOng(fi.fileCost),
                     firstPdp: fi.firstPdp,
-                    pdpInterval: fi.pdpInterval,
                     timeStart: common.formatTimeStringFromUnixTime(fi.timeStart),
                     timeExpired: common.formatTimeStringFromUnixTime(fi.timeExpired),
+                    beginHeight: fi.beginHeight,
+                    expiredHeight: fi.expireHeight ? fi.expireHeight : 0,
                     pdpParam: fi.pdpParam,
                     validFlag: fi.validFlag,
                     storageType: fi.storageType,
@@ -326,9 +318,7 @@ class Sdk {
                     nodeAddr: pr.nodeAddr.toBase58(),
                     fileHash: pr.fileHash,
                     fileOwner: pr.fileOwner.toBase58(),
-                    pdpCount: pr.pdpCount,
                     lastPdpTime: common.formatTimeStringFromUnixTime(pr.lastPdpTime),
-                    nextHeight: pr.nextHeight,
                     settleFlag: pr.settleFlag,
                 })
             }

@@ -69,8 +69,21 @@ const uploadFile = async (argv) => {
     option.copyNum = argv.copyNum ? argv.copyNum : 1
     option.firstPdp = argv.firstPdp != undefined ? argv.firstPdp : true
     option.pdpInterval = argv.pdpInterval || 600
+
+    const nowTimeStamp = parseInt(new Date().getTime() / 1000)
     option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
-        (parseInt(new Date().getTime() / 1000) + 86400) // default 1 day
+        (nowTimeStamp + 86400) // default 1 day
+
+
+    if (option.timeExpired < nowTimeStamp) {
+        console.log(`file time expired less than now ${nowTimeStamp}`)
+        return
+    }
+    const minHour = 4
+    if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
+        console.log(`file time expired less than ${minHour} hours`)
+        return
+    }
     option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
     console.log('option', option)
     // add task
@@ -452,7 +465,6 @@ const uploadFileCmd = {
         .option(flags.filePath.name, flags.filePath)
         .option(flags.fileDesc.name, flags.fileDesc)
         .option(flags.firstPdp.name, flags.firstPdp)
-        .option(flags.pdpInterval.name, flags.pdpInterval)
         .option(flags.timeExpired.name, flags.timeExpired)
         .option(flags.copyNum.name, flags.copyNum)
         .option(flags.storeType.name, flags.storeType)

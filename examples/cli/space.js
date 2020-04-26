@@ -87,7 +87,6 @@ const createSpace = async (argv) => {
     const tx = await globalSdk().ontFs.createSpace(
         spaceVolume,
         argv.spaceCopyNum,
-        argv.pdpInterval,
         parseInt(Date.parse(argv.spaceTimeExpired) / 1000))
     console.log('create space tx: ', tx)
     const events = await globalSdk().chain.getSmartCodeEvent(tx)
@@ -161,7 +160,6 @@ const createSpaceCmd = {
     command: 'create',
     desc: 'create a space',
     builder: (yargs) => yargs
-        .option(flags.pdpInterval.name, flags.pdpInterval)
         .option(flags.spaceVolume.name, flags.spaceVolume)
         .option(flags.spaceCopyNum.name, flags.spaceCopyNum)
         .option(flags.spaceTimeExpired.name, flags.spaceTimeExpired),
