@@ -91,6 +91,19 @@ const getHTTPAddrFromNodeNetAddr = (nodeNetAddr) => {
     return ""
 }
 
+const formatDateLocaleString = (date) => {
+    let str = date.toLocaleString('zh', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    })
+    str = str.replace(/\//g, '-')
+    return str
+}
 
 module.exports = {
     VERSION,
@@ -107,5 +120,6 @@ module.exports = {
     parseOng,
     toArrayReverse,
     getTcpAddrFromNodeNetAddr,
-    getHTTPAddrFromNodeNetAddr
+    getHTTPAddrFromNodeNetAddr,
+    formatDateLocaleString
 }

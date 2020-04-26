@@ -1,7 +1,7 @@
 const accountCmd = require("./account")
 const spaceCmd = require("./space")
 const fileCmd = require("./file")
-const nodeCmd = require("./node")
+const nodeCmd = require("./fsnode")
 
 require('yargs')
     .usage('Usage: $0 <cmd> [options]')

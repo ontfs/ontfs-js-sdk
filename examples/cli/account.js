@@ -5,6 +5,10 @@ const path = require("path")
 const flags = require("./flags")
 
 const createWallet = async (label, password) => {
+    if (!password || !password.length) {
+        console.log('create account failed, missing password')
+        return
+    }
     const wallet = await Wallet.create('')
     const privateKey = Crypto.PrivateKey.random()
     var account = Account.create(privateKey, password, label)

@@ -68,7 +68,7 @@ const getNodeInfoList = async (argv) => {
                 profit: nodeInfo.profit,
                 volume: common.formatVolumeStringFromKb(nodeInfo.volume),
                 restVol: common.formatVolumeStringFromKb(nodeInfo.restVol),
-                serviceTime: common.formatTimeStringFromUnixTime(nodeInfo.serviceTime),
+                serviceTime: common.formatDateLocaleString(new Date(nodeInfo.serviceTime * 1000)),
                 nodeAddr: nodeInfo.nodeAddr.toBase58(),
                 nodeNetAddr: nodeInfo.nodeNetAddr,
             }

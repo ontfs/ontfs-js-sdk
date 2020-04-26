@@ -62,6 +62,13 @@ const getSpace = async (argv) => {
     if (!space) {
         console.log('space not exist')
     } else {
+        space.spaceOwner = space.spaceOwner.toBase58()
+        space.volume = common.formatVolumeStringFromKb(space.volume)
+        space.restVol = common.formatVolumeStringFromKb(space.restVol)
+        space.payAmount = common.formatOng(space.payAmount)
+        space.restAmount = common.formatOng(space.restAmount)
+        space.timeStart = common.formatDateLocaleString(new Date(space.timeStart * 1000));
+        space.timeExpired = common.formatDateLocaleString(new Date(space.timeExpired * 1000))
         console.log('get space : ', space)
     }
     await globalSdk().stop().catch((err) => {

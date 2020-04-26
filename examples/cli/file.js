@@ -183,7 +183,17 @@ const getFileList = async (argv) => {
         return
     }
     const files = await globalSdk().ontFs.getFileList()
-    console.log('files', files)
+
+    if (files.filesH) {
+        let printList = []
+        for (let item of files.filesH) {
+            printList.push(item.fHash)
+        }
+        console.log(printList)
+    } else {
+        console.log('files', files)
+    }
+
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })
@@ -257,6 +267,9 @@ const getFileInfo = async (argv) => {
         })
         return
     } else {
+        fileInfo.timeStart = common.formatDateLocaleString(fileInfo.timeStart)
+        fileInfo.timeExpired = common.formatDateLocaleString(fileInfo.timeExpired)
+        fileInfo.pdpParam = Buffer.from(fileInfo.pdpParam).toString('base64')
         console.log(fileInfo)
     }
     await globalSdk().stop().catch((err) => {
@@ -379,7 +392,7 @@ const getFilePdpInfoList = async (argv) => {
         console.log('start sdk failed')
         return
     }
-    const pdpInfos = await globalSdk().ontFs.getFilePdpInfoList(argv.fileHash).catch((err) => { })
+    const pdpInfos = await globalSdk().getFilePdpInfoList(argv.fileHash).catch((err) => { })
     if (!pdpInfos) {
         console.log(`${argv.fileHash} pdp records not exist`)
     } else {
@@ -674,7 +687,7 @@ const getChallengeListFileCmd = {
     ,
     handler: async (argv) => {
         argv._handled = true
-        await getFile(argv)
+        await getChallengeList(argv)
     }
 }
 
