@@ -231,10 +231,10 @@ const renewFile = async (argv) => {
         })
         return
     }
-    const tx = await globalSdk().ontFs.renewFile({
+    const tx = await globalSdk().ontFs.renewFile([{
         fileHash: argv.fileHash,
         renewTime: fileInfo.timeExpired + argv.addTime,
-    })
+    }])
     console.log('renew file tx: ', tx)
     const events = await globalSdk().chain.getSmartCodeEvent(tx)
     if (events && events.result.Notify && events.result.Notify.length) {
@@ -656,6 +656,7 @@ const challengeFileCmd = {
     desc: 'detects the presence of a specified file on a node',
     builder: (yargs) => yargs
         .option(flags.fileHash.name, flags.fileHash)
+        .option(flags.nodeAddr.name, flags.nodeAddr)
     ,
     handler: async (argv) => {
         argv._handled = true

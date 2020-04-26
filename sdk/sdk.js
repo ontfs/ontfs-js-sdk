@@ -400,10 +400,10 @@ class Sdk {
             throw new Error(`no decrypt password`)
         }
         // to do test
-        const readStream = ffs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN });
+        const readStream = ffs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN - 1 });
         const filePrefix = new utils.FilePrefix()
         let prefix = ""
-        for await (const chunk of readStream) {
+        for await (let chunk of readStream) {
             prefix = chunk
             console.log("read first n prefix :", prefix)
             filePrefix.fromString(prefix)
@@ -416,7 +416,7 @@ class Sdk {
         if (!filePrefix.verifyEncryptPassword(decryptPwd)) {
             throw new Error(`wrong password`)
         }
-        this.fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, PREFIX_LEN)
+        this.fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, utils.PREFIX_LEN)
     }
 
 }
