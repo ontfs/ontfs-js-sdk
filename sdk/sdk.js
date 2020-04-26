@@ -4,10 +4,8 @@ const pdp = require("../pdp")
 const config = require("../config")
 const fs = require("../fs")
 const common = require("../common")
-const { sleep } = require("../utils")
+const utils = require("../utils")
 const OntFs = require("./ontfs").OntFs
-
-
 
 class Sdk {
     constructor(
@@ -81,7 +79,7 @@ class Sdk {
             timeout = 1
         }
         for (let i = 0; i < timeout; i++) {
-            await sleep(1000)
+            await utils.sleep(1000)
             let curBlockHeigh = await this.chain.getBlockHeight()
             if ((curBlockHeigh - blockHeight) >= blockCount) {
                 return true
