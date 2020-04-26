@@ -360,6 +360,7 @@ class Sdk {
             }
             return challengeList
         } catch (e) {
+            console.log('er', e.toString())
             throw e
         }
     }

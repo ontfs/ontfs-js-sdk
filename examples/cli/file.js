@@ -285,7 +285,7 @@ const changeFileOwner = async (argv) => {
         console.log('start sdk failed')
         return
     }
-    const tx = await globalSdk().changeOwner(argv.fileHash, argv.walletAddr).catch((err) => { })
+    const tx = await globalSdk().changeOwner(argv.fileHash, new Address(argv.walletAddr)).catch((err) => { })
     const events = await globalSdk().chain.getSmartCodeEvent(tx)
     if (events && events.result.Notify && events.result.Notify.length) {
         for (let n of events.result.Notify) {
@@ -671,10 +671,11 @@ const judgeFileCmd = {
     desc: 'judge the challenge of a specified file on a node',
     builder: (yargs) => yargs
         .option(flags.fileHash.name, flags.fileHash)
+        .option(flags.nodeAddr.name, flags.nodeAddr)
     ,
     handler: async (argv) => {
         argv._handled = true
-        await getFile(argv)
+        await judge(argv)
     }
 }
 
@@ -706,7 +707,7 @@ const fileCmd = {
         .command(listFileCmd)
         .command(getFileInfoCmd)
         .command(changeFileOwnerCmd)
-        .command(pledgeFileCmd)
+        // .command(pledgeFileCmd)
         .command(getFileReadPledgeCmd)
         .command(cancelReadPledgeFileCmd)
         .command(getFilePdpInfoCmd)

@@ -256,7 +256,7 @@ class OntFs {
         return result
     }
     async getFileChallengeList(fileHash) {
-        const tx = OntfsContractTxBuilder.buildGetFileChallengeListTx(fileHash, this.account.address)
+        const tx = OntfsContractTxBuilder.buildGetFileChallengeListTx(str2hexstr(fileHash), this.account.address)
         const result = await this.preInvokeNativeContract(tx)
         if (!result || !result.success) {
             throw new Error(hexstr2str(result.data))
