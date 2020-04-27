@@ -59,56 +59,123 @@ const uploadFile = async (argv) => {
         console.log('start sdk failed')
         return
     }
-    // init upload option
-    const option = new types.TaskUploadOption()
-    option.filePath = argv.filePath || __dirname + "/test.zip"
-    option.fileDesc = argv.desc || "test.zip"
-    const stat = fs.statSync(option.filePath)
-    option.fileSize = stat.size
-    option.storageType = argv.storeType != undefined ? argv.storeType : 1
-    option.copyNum = argv.copyNum ? argv.copyNum : 1
-    option.firstPdp = argv.firstPdp != undefined ? argv.firstPdp : true
-    option.pdpInterval = argv.pdpInterval || 600
-
-    const nowTimeStamp = parseInt(new Date().getTime() / 1000)
-    option.timeExpired = argv.timeExpired ? parseInt(Date.parse(argv.timeExpired) / 1000) :
-        (nowTimeStamp + 86400) // default 1 day
-
-
-    if (option.timeExpired < nowTimeStamp) {
-        console.log(`file time expired less than now ${nowTimeStamp}`)
-        return
-    }
-    const minHour = 4
-    if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
-        console.log(`file time expired less than ${minHour} hours`)
-        return
-    }
-    option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
-    console.log('option', option)
-    // add task
-    const taskID = await globalTaskMgr().addTask(option).catch((e) => {
-        console.log('e', e)
-    })
-    console.log('add upload task success, taskID', taskID)
-    // poll check if node has store the file commit PDP prove
-    while (true) {
-        await utils.sleep(1000)
-        const task = globalTaskMgr().getUploadTaskByTaskId(taskID)
-        if (!task.baseInfo.fileHash) {
-            console.log("task not found", task.baseInfo)
-            continue
-        }
-        const pdpRecordList = await globalSdk().ontFs.getFilePdpRecordList(task.baseInfo.fileHash).catch((err) => {
-        })
-        if (pdpRecordList && pdpRecordList.pdpRecords && pdpRecordList.pdpRecords.length) {
-            console.log(`storage node has store the file ${task.baseInfo.fileHash}`, pdpRecordList)
-            break
+    const filePaths = []
+    if (argv.filePath) {
+        if (Array.isArray(argv.filePath)) {
+            filePaths.push(...argv.filePath)
         } else {
-            console.log(`storage node have not stored the file ${task.baseInfo.fileHash}`)
+            filePaths.push(argv.filePath)
         }
     }
-    console.log('done')
+    const descs = []
+    if (argv.desc) {
+        if (Array.isArray(argv.desc)) {
+            descs.push(...argv.desc)
+        } else {
+            descs.push(argv.desc)
+        }
+    }
+
+    const storeTypes = []
+    if (argv.storeType) {
+        if (Array.isArray(argv.storeType)) {
+            storeTypes.push(...argv.storeType)
+        } else {
+            storeTypes.push(argv.storeType)
+        }
+    }
+    const copyNums = []
+    if (argv.copyNum) {
+        if (Array.isArray(argv.copyNum)) {
+            copyNums.push(...argv.copyNum)
+        } else {
+            copyNums.push(argv.copyNum)
+        }
+    }
+    const firstPdps = []
+    if (argv.firstPdp) {
+        if (Array.isArray(argv.firstPdp)) {
+            firstPdps.push(...argv.firstPdp)
+        } else {
+            firstPdps.push(argv.firstPdp)
+        }
+    }
+    const timeExpireds = []
+    if (argv.timeExpired) {
+        if (Array.isArray(argv.timeExpired)) {
+            timeExpireds.push(...argv.timeExpired)
+        } else {
+            timeExpireds.push(argv.timeExpired)
+        }
+    }
+    const encryptPwds = []
+    if (argv.encryptPwd) {
+        if (Array.isArray(argv.encryptPwd)) {
+            encryptPwds.push(...argv.encryptPwd)
+        } else {
+            encryptPwds.push(argv.encryptPwd)
+        }
+    }
+    const promises = []
+    for (let index in filePaths) {
+        const promise = new Promise(async (resolve, reject) => {
+            // init upload option
+            const option = new types.TaskUploadOption()
+            option.filePath = filePaths && filePaths.length && filePaths.length > index ? filePaths[index] : __dirname + "/test.zip"
+            option.fileDesc = descs && descs.length && descs.length > index ? descs[index] : "test.zip"
+            const stat = fs.statSync(option.filePath)
+            option.fileSize = stat.size
+            option.storageType = storeTypes && storeTypes.length && storeTypes.length > index ? storeTypes[index] : 1
+            option.copyNum = copyNums && copyNums.length && copyNums.length > index ? copyNums[index] : 1
+            option.firstPdp = firstPdps && firstPdps.length && firstPdps.length > index ? firstPdps[index] : true
+            const nowTimeStamp = parseInt(new Date().getTime() / 1000)
+            option.timeExpired = timeExpireds && timeExpireds.length && timeExpireds.length > index ? parseInt(Date.parse(timeExpireds[index]) / 1000) :
+                (nowTimeStamp + 86400) // default 1 day
+            if (option.timeExpired < nowTimeStamp) {
+                console.log(`file time expired less than now ${nowTimeStamp}`)
+                resolve()
+                return
+            }
+            const minHour = 4
+            if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
+                console.log(`file time expired less than ${minHour} hours`)
+                resolve()
+                return
+            }
+            option.encPassword = encryptPwds && encryptPwds.length && encryptPwds.length > index ? encryptPwds[index] : ""
+            console.log('upload option', option)
+            // add task
+            const taskID = await globalTaskMgr().addTask(option).catch((e) => {
+                console.log('e', e)
+            })
+            console.log('add upload task success, taskID', taskID)
+            // poll check if node has store the file commit PDP prove
+            while (true) {
+                await utils.sleep(1000)
+                const task = globalTaskMgr().getUploadTaskByTaskId(taskID)
+                if (!task.baseInfo.fileHash) {
+                    console.log("task not found", task.baseInfo)
+                    continue
+                }
+                const pdpRecordList = await globalSdk().ontFs.getFilePdpRecordList(task.baseInfo.fileHash).catch((err) => {
+                })
+                if (pdpRecordList && pdpRecordList.pdpRecords && pdpRecordList.pdpRecords.length) {
+                    console.log(`storage node has store the file ${task.baseInfo.fileHash}`, pdpRecordList)
+                    break
+                } else {
+                    console.log(`storage node have not stored the file ${task.baseInfo.fileHash}`)
+                }
+            }
+            console.log('done')
+            resolve()
+        })
+        promises.push(promise)
+    }
+
+    await Promise.all(promises).catch((err) => {
+        console.log('promise all failed')
+    })
+
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })
@@ -122,29 +189,77 @@ const downloadFile = async (argv) => {
         console.log('start sdk failed')
         return
     }
-    // init upload option
-    const option = new types.TaskDownloadOption()
-    option.fileHash = argv.fileHash
-    option.inOrder = true
-    option.maxPeerCnt = argv.maxPeerCnt ? argv.maxPeerCnt : 10
-    option.outFilePath = argv.outFilePath ? argv.outFilePath : "./" + argv.fileHash
-    option.decryptPwd = argv.decryptPwd != undefined ? argv.decryptPwd : ''
-    console.log('option', option)
-    // add task
-    const taskID = await globalTaskMgr().addTask(option).catch((e) => {
-        console.log('e', e)
-    })
-    console.log('add download task success, taskID', taskID)
-    // poll check if file has downloaded
-    while (true) {
-        await utils.sleep(1000)
-        const task = globalTaskMgr().getDownloadTaskByTaskId(taskID)
-        if (task && task.baseInfo.progress == 4) {
-            console.log(`file ${argv.fileHash} download success`)
-            break
+    if (!argv.fileHash) {
+        console.log('missing file hash')
+        return
+    }
+    const fileHashes = []
+    const maxPeerCnts = []
+    const outFilePaths = []
+    const decryptPwds = []
+    if (argv.fileHash) {
+        if (Array.isArray(argv.fileHash)) {
+            fileHashes.push(...argv.fileHash)
+        } else {
+            fileHashes.push(argv.fileHash)
         }
     }
-    console.log('done')
+    if (argv.maxPeerCnt) {
+        if (Array.isArray(argv.maxPeerCnt)) {
+            maxPeerCnts.push(...argv.maxPeerCnt)
+        } else {
+            maxPeerCnts.push(argv.maxPeerCnt)
+        }
+    }
+    if (argv.outFilePath) {
+        if (Array.isArray(argv.outFilePath)) {
+            outFilePaths.push(...argv.outFilePath)
+        } else {
+            outFilePaths.push(argv.outFilePath)
+        }
+    }
+    if (argv.decryptPwd) {
+        if (Array.isArray(argv.decryptPwd)) {
+            decryptPwds.push(...argv.decryptPwd)
+        } else {
+            decryptPwds.push(argv.decryptPwd)
+        }
+    }
+
+    const promises = []
+    for (let index in fileHashes) {
+        const promise = new Promise(async (resolve, reject) => {
+            // init upload option
+            const option = new types.TaskDownloadOption()
+            const hash = fileHashes[index]
+            option.fileHash = hash
+            option.inOrder = true
+            option.maxPeerCnt = maxPeerCnts && maxPeerCnts.length && maxPeerCnts.length > index ? maxPeerCnts[index] : 10
+            option.outFilePath = outFilePaths && outFilePaths.length && outFilePaths.length > index ? outFilePaths[index] : "./" + hash
+            option.decryptPwd = decryptPwds && decryptPwds.length && decryptPwds.length > index ? decryptPwds[index] : ''
+            console.log('option', option)
+            // add task
+            const taskID = await globalTaskMgr().addTask(option).catch((e) => {
+                console.log('e', e)
+            })
+            console.log('add download task success, taskID', taskID)
+            // poll check if file has downloaded
+            while (true) {
+                await utils.sleep(1000)
+                const task = globalTaskMgr().getDownloadTaskByTaskId(taskID)
+                if (task && task.baseInfo.progress == 4) {
+                    console.log(`file ${hash} download success`)
+                    break
+                }
+            }
+            console.log(`done`)
+            resolve()
+        })
+        promises.push(promise)
+    }
+    await Promise.all(promises).catch((err) => {
+        console.log('promise all err', err)
+    })
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })
@@ -495,14 +610,14 @@ const downloadFileCmd = {
     desc: 'download a file',
     builder: (yargs) => yargs
         .option(flags.fileHash.name, flags.fileHash)
-        .option(flags.inorder.name, flags.inorder)
+        // .option(flags.inorder.name, flags.inorder)
         .option(flags.decryptPwd.name, flags.decryptPwd)
         .option(flags.maxPeerCnt.name, flags.maxPeerCnt)
         .option(flags.outFilePath.name, flags.outFilePath)
     ,
     handler: async (argv) => {
-        argv._handled = true
         await downloadFile(argv)
+        argv._handled = true
     }
 }
 
