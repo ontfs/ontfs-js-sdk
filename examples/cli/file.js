@@ -60,7 +60,7 @@ const uploadFile = async (argv) => {
         return
     }
     const filePaths = []
-    if (argv.filePath) {
+    if (argv.filePath != undefined) {
         if (Array.isArray(argv.filePath)) {
             filePaths.push(...argv.filePath)
         } else {
@@ -68,7 +68,7 @@ const uploadFile = async (argv) => {
         }
     }
     const descs = []
-    if (argv.desc) {
+    if (argv.desc != undefined) {
         if (Array.isArray(argv.desc)) {
             descs.push(...argv.desc)
         } else {
@@ -77,7 +77,7 @@ const uploadFile = async (argv) => {
     }
 
     const storeTypes = []
-    if (argv.storeType) {
+    if (argv.storeType != undefined) {
         if (Array.isArray(argv.storeType)) {
             storeTypes.push(...argv.storeType)
         } else {
@@ -85,7 +85,7 @@ const uploadFile = async (argv) => {
         }
     }
     const copyNums = []
-    if (argv.copyNum) {
+    if (argv.copyNum != undefined) {
         if (Array.isArray(argv.copyNum)) {
             copyNums.push(...argv.copyNum)
         } else {
@@ -93,7 +93,7 @@ const uploadFile = async (argv) => {
         }
     }
     const firstPdps = []
-    if (argv.firstPdp) {
+    if (argv.firstPdp != undefined) {
         if (Array.isArray(argv.firstPdp)) {
             firstPdps.push(...argv.firstPdp)
         } else {
@@ -101,7 +101,7 @@ const uploadFile = async (argv) => {
         }
     }
     const timeExpireds = []
-    if (argv.timeExpired) {
+    if (argv.timeExpired != undefined) {
         if (Array.isArray(argv.timeExpired)) {
             timeExpireds.push(...argv.timeExpired)
         } else {
@@ -109,7 +109,7 @@ const uploadFile = async (argv) => {
         }
     }
     const encryptPwds = []
-    if (argv.encryptPwd) {
+    if (argv.encryptPwd != undefined) {
         if (Array.isArray(argv.encryptPwd)) {
             encryptPwds.push(...argv.encryptPwd)
         } else {
@@ -144,6 +144,7 @@ const uploadFile = async (argv) => {
             }
             option.encPassword = encryptPwds && encryptPwds.length && encryptPwds.length > index ? encryptPwds[index] : ""
             console.log('upload option', option)
+            return
             // add task
             const taskID = await globalTaskMgr().addTask(option).catch((e) => {
                 console.log('e', e)
@@ -197,28 +198,28 @@ const downloadFile = async (argv) => {
     const maxPeerCnts = []
     const outFilePaths = []
     const decryptPwds = []
-    if (argv.fileHash) {
+    if (argv.fileHash != undefined) {
         if (Array.isArray(argv.fileHash)) {
             fileHashes.push(...argv.fileHash)
         } else {
             fileHashes.push(argv.fileHash)
         }
     }
-    if (argv.maxPeerCnt) {
+    if (argv.maxPeerCnt != undefined) {
         if (Array.isArray(argv.maxPeerCnt)) {
             maxPeerCnts.push(...argv.maxPeerCnt)
         } else {
             maxPeerCnts.push(argv.maxPeerCnt)
         }
     }
-    if (argv.outFilePath) {
+    if (argv.outFilePath != undefined) {
         if (Array.isArray(argv.outFilePath)) {
             outFilePaths.push(...argv.outFilePath)
         } else {
             outFilePaths.push(argv.outFilePath)
         }
     }
-    if (argv.decryptPwd) {
+    if (argv.decryptPwd != undefined) {
         if (Array.isArray(argv.decryptPwd)) {
             decryptPwds.push(...argv.decryptPwd)
         } else {
