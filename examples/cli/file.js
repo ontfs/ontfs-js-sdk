@@ -144,7 +144,6 @@ const uploadFile = async (argv) => {
             }
             option.encPassword = encryptPwds && encryptPwds.length && encryptPwds.length > index ? encryptPwds[index] : ""
             console.log('upload option', option)
-            return
             // add task
             const taskID = await globalTaskMgr().addTask(option).catch((e) => {
                 console.log('e', e)
