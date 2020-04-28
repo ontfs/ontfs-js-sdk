@@ -99,12 +99,7 @@ module.exports = {
         desc: "copy Number of file storage",
         default: 3,
     },
-    pdpInterval: {
-        type: 'number',
-        name: "pdpInterval",
-        desc: "file pdp interval",
-        default: 4 * 60 * 60,
-    },
+
     encrypt: {
         type: 'boolean',
         name: "encrypt",

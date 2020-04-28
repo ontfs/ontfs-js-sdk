@@ -200,7 +200,7 @@ class OntFs {
     async fileReadPledge(fileHash, plans) {
         let readPlan = []
         for (let p of plans) {
-            readPlan.push(new ReadPlan(new Address(p.nodeAddr), p.maxReadBlockNum, p.haveReadBlockNum))
+            readPlan.push(new ReadPlan(new Address(p.nodeAddr), p.maxReadBlockNum, p.haveReadBlockNum, 0))
         }
         const tx = OntfsContractTxBuilder.buildFileReadPledgeTx(str2hexstr(fileHash), readPlan, this.account.address,
             this.gasPrice, this.gasLimit, this.account.address)

@@ -49,7 +49,6 @@ describe('task manager', () => {
         option.storageType = 1
         option.copyNum = 1
         option.firstPdp = true
-        option.pdpInterval = 600
         option.timeExpired = 1588089600
         option.encPassword = ""
         option.whiteList = []

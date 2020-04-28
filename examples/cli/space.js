@@ -91,21 +91,16 @@ const createSpace = async (argv) => {
     } else {
         spaceVolume = argv.spaceVolume
     }
-    const tx = await globalSdk().ontFs.createSpace(
+    const info = await globalSdk().createSpace(
         spaceVolume,
         argv.spaceCopyNum,
-        parseInt(Date.parse(argv.spaceTimeExpired) / 1000))
-    console.log('create space tx: ', tx)
-    const events = await globalSdk().chain.getSmartCodeEvent(tx)
-    if (events && events.result.Notify && events.result.Notify.length) {
-        for (let n of events.result.Notify) {
-            if (n.ContractAddress == common.ONTFS_CONTRACT_ADDRESS) {
-                console.log(utils.base64str2utf8str(n.States))
-            }
-        }
-    } else {
-        console.log(`create space success`)
+        parseInt(Date.parse(argv.spaceTimeExpired) / 1000)).catch((err) => {
+            console.log('create space failed', err)
+        })
+    if (info) {
+        console.log(`create space success`, info)
     }
+
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })

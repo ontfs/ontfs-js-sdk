@@ -35,7 +35,7 @@ $ node index.js account create --password=pwd
 
 ```shell
 $ cd ./examples/cli
-$ node index.js file upload --filePath=./test.dat --desc=test -copyNum=1 --timeExpired="2020-04-25 00:00:00" --firstPdp=true --storeType=1 --pdpInterval=600
+$ node index.js file upload --filePath=./test.dat --desc=test -copyNum=1 --timeExpired="2020-04-25 00:00:00" --firstPdp=true --storeType=1 
 ```
 
 **batch upload files**

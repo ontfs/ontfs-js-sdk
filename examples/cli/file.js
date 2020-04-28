@@ -116,6 +116,7 @@ const uploadFile = async (argv) => {
             encryptPwds.push(argv.encryptPwd)
         }
     }
+    console.log('filePaths', filePaths)
     const promises = []
     for (let index in filePaths) {
         const promise = new Promise(async (resolve, reject) => {
@@ -455,7 +456,8 @@ const pledge = async (argv) => {
         haveReadBlockNum: argv.haveReadBlockNum,
     }
     readPlan.push(plan)
-    const tx = await sdk.globalSdk().ontFs.fileReadPledge(argv.fileHash, readPlan).catch((err) => {
+    console.log('make read pledge', argv.fileHash, readPlan)
+    const tx = await globalSdk().ontFs.fileReadPledge(argv.fileHash, readPlan).catch((err) => {
         console.log(`read file pledge err: ${err.toString()}`)
         throw err
     })

@@ -89,7 +89,7 @@ class Sdk {
         throw new Error(`timeout after ${timeout} (s)`)
     }
 
-    async createSpace(volume, copyNum, pdpInterval, timeExpired) {
+    async createSpace(volume, copyNum, timeExpired) {
         try {
             if (copyNum > common.MAX_COPY_NUM) {
                 throw new Error(`max copy num limit ${common.MAX_COPY_NUM}, (copyNum: ${copyNum})`)
@@ -99,7 +99,7 @@ class Sdk {
             if (nodeCount < copyNum) {
                 throw new Error(`create space failed, nodeCount ${nodeCount} is less than copyNum ${copyNum}`)
             }
-            const tx = await this.ontFs.createSpace(volume, copyNum, pdpInterval, timeExpired)
+            const tx = await this.ontFs.createSpace(volume, copyNum, timeExpired)
             if (!tx) {
                 throw new Error(`create space err`)
             }
@@ -268,8 +268,6 @@ class Sdk {
             const readPledge = {
                 fileHash: pledge.fileHash,
                 downloader: pledge.downloader.toBase58(),
-                blockHeight: pledge.blockHeight,
-                expireHeight: pledge.expireHeight,
                 restMoney: pledge.restMoney,
                 readPlans: [],
             }
@@ -278,6 +276,7 @@ class Sdk {
                     nodeAddr: plan.nodeAddr.toBase58(),
                     maxReadBlockNum: plan.maxReadBlockNum,
                     haveReadBlockNum: plan.haveReadBlockNum,
+                    numOfSettlements: plan.numOfSettlements
                 })
             }
             return readPledge

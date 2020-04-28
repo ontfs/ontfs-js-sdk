@@ -310,26 +310,10 @@ class TaskDownload {
             console.log(`get download ack, no payInfo`)
             return false
         }
-        let settleSlice = {}
-        let lastSliceId = 0
-        const readPledge = await sdk.globalSdk().ontFs.getFileReadPledge(this.option.fileHash,
-            sdk.globalSdk().account.address).catch((err) => {
-                console.log(`contract interface FileReadPledge called failed, err ${err.toString()}`)
-            })
-        if (!readPledge) {
-            console.log("responseProcess GetFileReadPledge return nil")
-        }
+
+        let latestSliceId = 0
         try {
-            const curBlockHeight = await sdk.globalSdk().chain.getBlockHeight()
-            console.log('last slice id', lastSliceId, fileMsg.payInfo.latestPayment)
-            if (readPledge && readPledge.expiredHeight <= curBlockHeight) {
-                console.log('check expired height')
-                for (let plan of readPledge.readPlans) {
-                    if (plan.nodeAddr.toBase58() == fileMsg.payInfo.walletAddress) {
-                        lastSliceId = plan.HaveReadBlockNum
-                    }
-                }
-            } else if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
+            if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
                 const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
                 settleSlice = {
                     fileHash: utils.base64str2utf8str(sliceObj.FileHash),
@@ -356,7 +340,7 @@ class TaskDownload {
                     console.log(`check sign in the settle slice failed`)
                     return false
                 }
-                lastSliceId = settleSlice.sliceId
+                latestSliceId = settleSlice.sliceId
             }
         } catch (err) {
             console.log('process response err', err)
@@ -366,7 +350,7 @@ class TaskDownload {
         this.transferInfo.blockDownloadInfo[addr] = {
             index: 0,
             peerWallet: fileMsg.payInfo.walletAddress,
-            sliceId: lastSliceId,
+            sliceId: latestSliceId,
             totalCount: 0,
         }
         console.log('response process', this.transferInfo.blockDownloadInfo)
@@ -509,15 +493,11 @@ class TaskDownload {
     }
 
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
-        const readPledge = await sdk.globalSdk().ontFs.getFileReadPledge(
-            this.option.fileHash, sdk.globalSdk().account.address).catch((err) => {
-                console.log(`download get read file pledge error: ${err.toString()}`)
-                throw err
-            })
+
         console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${sdk.globalSdk().walletAddress()}` +
             `, sliceId: ${sliceId}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
-            peerWalletAddr, sliceId, readPledge.blockHeight).catch((err) => {
+            peerWalletAddr, sliceId, 0).catch((err) => {
                 throw err
             })
         const sliceData = {
