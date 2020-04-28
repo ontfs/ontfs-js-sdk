@@ -618,8 +618,10 @@ class TaskDownload {
                 console.log(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
                 throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
             }
-            // TODO: find links for block
-            if (block.cid.codec == 'raw') {
+            const links = await sdk.globalSdk().fs.getBlockLinks(block).catch((err) => {
+            })
+            console.log('get links of block', block.cid, links ? links.length : 0)
+            if (!links || !links.length) {
                 let data = sdk.globalSdk().fs.getBlockData(block)
                 let writeAtPos = value.offset
                 if (!isFileEncrypted && !hasCutPrefix && data.length > this.baseInfo.filePrefix.length &&

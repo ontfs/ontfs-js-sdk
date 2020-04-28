@@ -1,6 +1,6 @@
 ## OntFS-JS-SDK
 
-> fs js sdk in node env.
+> Ontology FS Javascript SDK
 
 ### Dependency
 

@@ -78,12 +78,12 @@ class Fs {
     /**
      * get block links, links are a layer of children for the block
      *
-     * @param {string} hash: block hash 
+     * @param {Object} block: block  
      * @returns {Array} links: a string array
      * @memberof Fs
      */
-    async getBlockLinks(hash) {
-        const links = await this.fs.getBlockLinks(hash)
+    async getBlockLinks(block) {
+        const links = await this.fs.getBlockLinks(block)
         return links
     }
 
