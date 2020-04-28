@@ -166,15 +166,25 @@ class FsService {
         return block._data
     }
 
-    async getBlockLinks(cidStr) {
-        const blockCid = new CID(cidStr)
-        const block = await this.ipld.get(blockCid)
-        var links = []
-        if (!block || !block.Links) {
-            return
+    /**
+     * get block links hash string array
+     *
+     * @param {Object} block
+     * @returns {Array} block links hash string array
+     * @memberof FsService
+     */
+    async getBlockLinks(block) {
+        const format = await this.ipld._getFormat(block.cid.codec)
+        const node = format.util.deserialize(block._data)
+        if (!node || !node.Links) {
+            return []
         }
-        for (const link of block.Links) {
-            links.push(link.Hash)
+
+        var links = []
+        if (node._data) {
+            for (const link of node.Links) {
+                links.push(link.Hash.toString())
+            }
         }
         return links
     }
