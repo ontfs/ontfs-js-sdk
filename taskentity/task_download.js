@@ -519,20 +519,13 @@ class TaskDownload {
             console.log(`received block ${this.option.fileHash}-${value.hash}-${value.index} from ` +
                 `${value.peerAddr}`)
             const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(value.block, 'hex'), value.hash)
-            // console.log('encode block ', block.data.toString(), value.hash)
-            // console.log('encode block result ', block)
             if (block.cid.toString() != value.hash) {
                 console.log(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
                 throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
             }
-            console.log('get links of block', block.cid)
-            const links = await sdk.globalSdk().fs.getBlockLinks(block.cid.toString()).catch((err) => {
-                // get block link err CID(bafkreicfixwb3aausd56kyf7urdljk4ggkpv6cnvao5pjnhw6jdaesfq3u) Error: Invalid version, must be a number equal to 1 or 0
-                // console.log('get block link err', block.cid, err.toString())
-            })
-            if (!links || !links.length) {
+            // TODO: find links for block
+            if (block.cid.codec == 'raw') {
                 let data = sdk.globalSdk().fs.getBlockData(block)
-                // console.log("data len", data.toString().substr(0, this.baseInfo.filePrefix.length), data.toString().substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix)
                 let writeAtPos = value.offset
                 if (!isFileEncrypted && !hasCutPrefix && data.length > this.baseInfo.filePrefix.length &&
                     data.toString().substr(0, this.baseInfo.filePrefix.length) == this.baseInfo.filePrefix) {

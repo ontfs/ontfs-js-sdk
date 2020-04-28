@@ -50,9 +50,9 @@ describe('fs service', () => {
     })
 
     test('get block links', async () => {
-        const filePath = './test/wallet.dat'
+        const filePath = './test/Zoom.pkg'
         prefix = "helloworld"
-        const hashes = await fsSvr.addFile(filePath, prefix, false, "")
+        const hashes = await fsSvr.addFile(filePath, fs.readFileSync(filePath), prefix, false, "")
         for (let hash of hashes) {
             links = await fsSvr.getBlockLinks(hash).catch((err) => {
                 console.log('err', err)

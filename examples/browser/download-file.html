@@ -1,0 +1,126 @@
+<style>
+    #byte_content {
+        margin: 5px 0;
+        max-height: 100px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #byte_range {
+        margin-top: 5px;
+    }
+</style>
+
+文件Hash：<input type="text" id="hash" name="file" style="width: 300px" ; />
+<span class="download">
+    <button>download file</button>
+</span>
+<div id="byte_range"></div>
+<div id="byte_content"></div>
+
+<!-- ontfs-js-sdk -->
+<script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
+
+<script>
+
+
+    // startSDK. start SDK 
+    const startSDK = async () => {
+        // init config
+        const password = 'pwd'
+        const rpcAddr = 'http://127.0.0.1:20336'
+        const sdkCfg = {
+            walletPwd: password,
+            chainRpcAddr: rpcAddr,
+            gasPrice: 500,
+            gasLimit: 400000,
+            pdpVersion: 1
+        }
+        ontfs.Config.DaemonConfig = {
+            fsRepoRoot: "./test/Fs",
+            fsFileRoot: "./test/Download",
+            fsType: 0
+        }
+        const walletObj = JSON.parse(`{"name":"","defaultOntid":"","defaultAccountAddress":"","createTime":"2020-04-24T02:45:47.044Z","version":"1.0","scrypt":{"n":4096,"r":8,"p":8,"dkLen":64},"identities":[],"accounts":[{"address":"AenXKSh4eyW2eZVC14o1iYWgp8KSE8u8Fw","label":"label","lock":false,"algorithm":"ECDSA","parameters":{"curve":"P-256"},"key":"S+7eRa+v3MF/QgDb3iYbRr/7IeCgIR6dUGLjE7SRzR2iuBCHGSGnUp6ySElFdLm/","enc-alg":"aes-256-gcm","hash":"sha256","salt":"eUXfLSlgqRGH9yyabTTiPQ==","isDefault":false,"publicKey":"02cf39e034cea74dba56bd02c61eeb94ac26b0f2595e68e50aaf854d46f821e292","signatureScheme":"SHA256withECDSA"}],"extra":null}`)
+        const defAccountObj = walletObj.accounts[0]
+        const { error, result } = ontfs.OntSDK.SDK.importAccountWithWallet(
+            defAccountObj.label,
+            defAccountObj.key,
+            defAccountObj.address,
+            defAccountObj.salt,
+            password)
+        if (error != 0) {
+            console.log('import account err', error)
+            return false
+        }
+        // import account by wif private key
+        const account = ontfs.OntSDK.Account.parseJson(result)
+        console.log('import account', account.address.toBase58())
+        // init global task manager
+        ontfs.TaskManage.initTaskManage()
+        // init global sdk
+        const s = await ontfs.SDK.initSdk(sdkCfg, account)
+        ontfs.SDK.setGlobalSdk(s)
+        await s.start()
+        return true
+    }
+
+    async function download(hash) {
+        if (!hash || !hash.length) {
+            return
+        }
+        const success = await startSDK()
+        if (!success) {
+            console.log('start sdk failed')
+            return
+        }
+        // init upload option
+        const option = new ontfs.Types.TaskDownloadOption()
+        option.fileHash = hash // file hash to download
+        option.inOrder = true // in order or not, only support true now
+        option.maxPeerCnt = 1 // max peer for download
+        option.decryptPwd = '' // decrypt password
+        /* 
+        * receive block callback
+        * {ArrayBuffer} data: block data
+        * {number} block data length
+        * {number} block data position offset of file
+        */
+        const datas = []
+        option.receiveBlock = (data, length, position) => {
+            console.log('receive data', data ? data.length : 0)
+            datas.push(new Uint8Array(data, position, data.length))
+        }
+        console.log('option', option)
+        // add task
+        const taskID = await ontfs.TaskManage.globalTaskMgr().addTask(option).catch((e) => {
+            console.log('e', e)
+        })
+        console.log('add download task success, taskID', taskID)
+        // poll check if file has downloaded
+        while (true) {
+            await ontfs.Utils.sleep(1000)
+            const task = ontfs.TaskManage.globalTaskMgr().getDownloadTaskByTaskId(taskID)
+            if (task && task.baseInfo.progress == 4) {
+                console.log(`file ${hash} download success`)
+                break
+            }
+        }
+        const blob = new Blob(datas)
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = hash;
+        link.click();
+        await ontfs.SDK.globalSdk().stop().catch((err) => {
+            console.log('stop err', err.toString())
+        })
+    }
+
+
+    document.querySelector('.download').addEventListener('click', async function (evt) {
+        if (evt.target.tagName.toLowerCase() == 'button') {
+            await download(document.getElementById('hash').value)
+
+        }
+    }, false);
+</script>

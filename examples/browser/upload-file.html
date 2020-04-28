@@ -30,8 +30,6 @@
     // startSDK. start SDK 
     const startSDK = async () => {
         // init config
-        const wif = "KxYkAszCkUhfnx2goy5wxSiUrbMcCFgjK87dgAvDxnwiq7hKymNL"
-        const label = 'pwd'
         const password = 'pwd'
         const rpcAddr = 'http://127.0.0.1:20336'
         const sdkCfg = {
@@ -46,16 +44,23 @@
             fsFileRoot: "./test/Download",
             fsType: 0
         }
-        // init global task manager
-        ontfs.TaskManage.initTaskManage()
-        // import account by wif private key
-        const { error, result } = await ontfs.OntSDK.SDK.importAccountWithWif(label, wif, password)
+        const walletObj = JSON.parse(`{"name":"","defaultOntid":"","defaultAccountAddress":"","createTime":"2020-04-24T02:45:47.044Z","version":"1.0","scrypt":{"n":4096,"r":8,"p":8,"dkLen":64},"identities":[],"accounts":[{"address":"AenXKSh4eyW2eZVC14o1iYWgp8KSE8u8Fw","label":"label","lock":false,"algorithm":"ECDSA","parameters":{"curve":"P-256"},"key":"S+7eRa+v3MF/QgDb3iYbRr/7IeCgIR6dUGLjE7SRzR2iuBCHGSGnUp6ySElFdLm/","enc-alg":"aes-256-gcm","hash":"sha256","salt":"eUXfLSlgqRGH9yyabTTiPQ==","isDefault":false,"publicKey":"02cf39e034cea74dba56bd02c61eeb94ac26b0f2595e68e50aaf854d46f821e292","signatureScheme":"SHA256withECDSA"}],"extra":null}`)
+        const defAccountObj = walletObj.accounts[0]
+        const { error, result } = ontfs.OntSDK.SDK.importAccountWithWallet(
+            defAccountObj.label,
+            defAccountObj.key,
+            defAccountObj.address,
+            defAccountObj.salt,
+            password)
         if (error != 0) {
             console.log('import account err', error)
             return false
         }
+        // import account by wif private key
         const account = ontfs.OntSDK.Account.parseJson(result)
         console.log('import account', account.address.toBase58())
+        // init global task manager
+        ontfs.TaskManage.initTaskManage()
         // init global sdk
         const s = await ontfs.SDK.initSdk(sdkCfg, account)
         ontfs.SDK.setGlobalSdk(s)
@@ -124,16 +129,6 @@
                 await ontfs.SDK.globalSdk().stop().catch((err) => {
                     console.log('stop err', err.toString())
                 })
-                // DONE == 2
-                // root = await fsSrv.addFile(evt.target.result, "helloworld", true, "123456")
-                // cidOffsets = await fsSrv.getFileAllBlockHashAndOffset(root.cid.toString())
-                // block = await fsSrv.getBlockWithHash(root.cid.toString())
-                // block2 = fsSrv.encodedToBlockWithCid(block._data, block.cid.toString())
-                // document.getElementById('byte_content').textContent = 'Processing packet []: ' + root.cid.toString();
-                // document.getElementById('byte_range').textContent =
-                //     ['Read bytes: ', start + 1, ' - ', stop + 1,
-                //         ' of ', file.size, ' byte file'].join('');
-
             }
         };
 

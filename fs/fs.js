@@ -82,8 +82,8 @@ class Fs {
      * @returns {Array} links: a string array
      * @memberof Fs
      */
-    getBlockLinks(hash) {
-        const links = this.fs.getBlockLinks(hash)
+    async getBlockLinks(hash) {
+        const links = await this.fs.getBlockLinks(hash)
         return links
     }
 
