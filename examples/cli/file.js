@@ -401,17 +401,23 @@ const changeFileOwner = async (argv) => {
         console.log('start sdk failed')
         return
     }
-    const tx = await globalSdk().changeOwner(argv.fileHash, new Address(argv.walletAddr)).catch((err) => { })
-    const events = await globalSdk().chain.getSmartCodeEvent(tx)
-    if (events && events.result.Notify && events.result.Notify.length) {
-        for (let n of events.result.Notify) {
-            if (n.ContractAddress == common.ONTFS_CONTRACT_ADDRESS) {
-                console.log(utils.base64str2utf8str(n.States))
+
+    try {
+        await globalSdk().changeOwner(argv.fileHash, new Address(argv.walletAddr))
+        const events = await globalSdk().chain.getSmartCodeEvent(tx)
+        if (events && events.result.Notify && events.result.Notify.length) {
+            for (let n of events.result.Notify) {
+                if (n.ContractAddress == common.ONTFS_CONTRACT_ADDRESS) {
+                    console.log(utils.base64str2utf8str(n.States))
+                }
             }
+        } else {
+            console.log(`change file ${argv.fileHash} owner success`)
         }
-    } else {
-        console.log(`change file owner ${argv.fileHash} success`)
+    } catch (e) {
+        console.log(`change file ${argv.fileHash} owner failed`, e.toString())
     }
+
     await globalSdk().stop().catch((err) => {
         console.log('stop err', err.toString())
     })

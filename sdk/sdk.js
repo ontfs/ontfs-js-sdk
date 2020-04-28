@@ -248,11 +248,13 @@ class Sdk {
                 newOwner,
             }
             await this.ontFs.transferFiles([fileRenews])
-            const fileInfo = this.ontFs.getFileInfo(fileHash)
-            if (fileInfo.fileOwner == newOwner) {
+            const fileInfo = await this.ontFs.getFileInfo(fileHash).catch((err) => {
+                throw err
+            })
+            if (fileInfo && fileInfo.fileOwner == newOwner) {
                 console.log('change owner success')
             } else {
-                throw new Error(`check upload file info owner is not newOwner ${newOwner}`)
+                throw new Error(`check upload file info owner is not newOwner`, newOwner)
             }
         } catch (e) {
             throw e
