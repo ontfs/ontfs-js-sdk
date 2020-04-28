@@ -15,6 +15,11 @@ $ cd ontfs-js-sdk
 $ yarn install (or npm install)
 ```
 
+#### Examples on browser
+
+> see details in `examples/browser`
+
+
 #### Examples on node.js
 
 
