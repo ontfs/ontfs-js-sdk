@@ -375,6 +375,7 @@ const getFileInfo = async (argv) => {
         console.log('start sdk failed')
         return
     }
+
     const fileInfo = await globalSdk().getFileInfo(argv.fileHash).catch((err) => { })
     if (!fileInfo) {
         console.log(`file ${argv.fileHash} not exist`)

@@ -103,12 +103,12 @@ const httpBroadcast = async (address, data, needReply = false, action) => {
             cancelLists.map(cancel => { // if no need to request peer (finished === true) , return current result and cancel all request
               cancel();
             })
-          } else {
-            resolve({
-              addr: options.url,
-              err: null
-            });
           }
+          resolve({
+            addr: options.url,
+            err: null
+          });
+
           // }
         }).catch((err) => {
           resolve({

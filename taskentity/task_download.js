@@ -265,6 +265,7 @@ class TaskDownload {
         }
         if (this.transferInfo.blockDownloadInfo &&
             Object.keys(this.transferInfo.blockDownloadInfo).length >= this.option.maxPeerCnt) {
+            console.log('stop here')
             return true
         }
         console.log('res.data', res.data)
@@ -371,7 +372,6 @@ class TaskDownload {
             console.log(`broadcast err ${err.toString()}`)
             throw err
         })
-
         // console.log("broadcast file download ask msg ret", message.decodeMsg(ret.data))
         console.log("peers:", Object.keys(this.transferInfo.blockDownloadInfo).length)
         if (!this.transferInfo.blockDownloadInfo ||
@@ -390,6 +390,7 @@ class TaskDownload {
             }
             readPlan.push(plan)
         }
+        console.log('readPlan', readPlan)
         const readPledgeRet = await sdk.globalSdk().ontFs.fileReadPledge(this.option.fileHash, readPlan).catch((err) => {
             console.log(`read file pledge err: ${err.toString()}`)
             throw err
@@ -417,7 +418,7 @@ class TaskDownload {
         for (let req of blocksReq) {
             blocksReqM[keyOfBlockHashAndIndex(req.Hash, req.Index)] = {}
         }
-        const resp = await client.httpSendWithRetry(reqMsg, peerNetAddr, 1, 30).catch((err) => {
+        const resp = await client.httpSendWithRetry(reqMsg, peerNetAddr, 5, 30).catch((err) => {
             console.log(`send download block flights msg err: ${err.toString()}`)
             throw err
         })
