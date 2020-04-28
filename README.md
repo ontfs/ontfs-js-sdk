@@ -16,7 +16,7 @@ $ yarn install (or npm install)
 ```
 
 
-#### Build project
+### Build project
 
 ##### config file is webpack.config.js
 
@@ -27,12 +27,12 @@ $ npm run build
 > The project code will be integrated into the directory named dist
 
 
-#### Examples on browser
+### Examples on browser
 
 > see details in `examples/browser`
 
 
-#### Examples on node.js
+### Examples on node.js
 
 
 
@@ -235,7 +235,7 @@ await globalSdk().stop().catch((err) => {
 
 
 
-#### CLI Usage
+### CLI Usage
 
 
 
