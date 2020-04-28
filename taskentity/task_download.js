@@ -526,7 +526,7 @@ class TaskDownload {
                 throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
             }
             console.log('get links of block', block.cid)
-            const links = await sdk.globalSdk().fs.getBlockLinks(block).catch((err) => {
+            const links = await sdk.globalSdk().fs.getBlockLinks(block.cid.toString()).catch((err) => {
                 // get block link err CID(bafkreicfixwb3aausd56kyf7urdljk4ggkpv6cnvao5pjnhw6jdaesfq3u) Error: Invalid version, must be a number equal to 1 or 0
                 // console.log('get block link err', block.cid, err.toString())
             })

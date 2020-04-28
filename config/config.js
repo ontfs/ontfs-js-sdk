@@ -27,6 +27,11 @@ class Config {
 
 var DaemonConfig
 
+/**
+ * generate a default config
+ *
+ * @returns {Config}
+ */
 const defaultConfig = () => {
     var cfg = new Config()
     cfg.logLevel = 1

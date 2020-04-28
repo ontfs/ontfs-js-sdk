@@ -7,6 +7,13 @@ class Pdp {
     constructor(_version) {
         this.version = _version
     }
+    /**
+     * generate a unique id for file
+     *
+     * @param {Array} blocks: all block hex data array
+     * @returns {string} a hex string of unique Id
+     * @memberof Pdp
+     */
     genUniqueIdWithFileBlocks(blocks) {
         if (!Array.isArray(blocks)) {
             return ''
@@ -16,6 +23,12 @@ class Pdp {
     }
 }
 
+/**
+ * init a pdp service
+ *
+ * @param {number} version: pdp version, default 1
+ * @returns
+ */
 const newPdp = async (version) => {
     const p = new Pdp(version)
     const go = new Go()
@@ -30,6 +43,11 @@ const newPdp = async (version) => {
     return p
 }
 
+/**
+ * Deprecated
+ *
+ * @class FilePdpHashSt
+ */
 class FilePdpHashSt {
     constructor(_version, _blockPdpHashes) {
         this.version = _version

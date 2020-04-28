@@ -42,12 +42,15 @@ const humanateBytes = (s, base, sizes) => {
     return `${val.toFixed(0)} ${suffix}`
 }
 
+/**
+ * convert size to humanize readable bytes
+ *
+ * @param {number} s
+ * @returns {string}: e.g '1MB' 
+ */
 const bytes = (s) => {
-    // let sizes = ["B", "kB", "MB", "GB", "TB", "PB", "EB"]
-    // return humanateBytes(s, 1024, sizes)
     return Bytes(s, { unitSeparator: ' ', decimalPlaces: 1 })
 }
-
 
 const parseBytes = (s) => {
     return Bytes.parse(s)

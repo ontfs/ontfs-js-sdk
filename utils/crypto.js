@@ -87,11 +87,23 @@ const bytes2HexString = (b) => {
 }
 
 
+/**
+ * convert a Address to bytes string
+ *
+ * @param {Address} addr
+ * @returns {string}
+ */
 const address2bytestr = (addr) => {
     return hexstr2Bytes(reverseHex(addr.toHexString()))
 }
 
 
+/**
+ * convert a bytes string to Address
+ *
+ * @param {string} bytes
+ * @returns {Address}
+ */
 const bytes2address = (bytes) => {
     const hex = bytes2HexString(bytes)
     const addr = new Address(hex)

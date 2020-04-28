@@ -8,10 +8,21 @@ class Fs {
         this.closeCh = _closeCh
     }
 
+    /**
+     * start a ipld service
+     *
+     * @returns 
+     * @memberof Fs
+     */
     async start() {
         return await this.fs.initIpldInMemory()
     }
 
+    /**
+     * close ipld service
+     *
+     * @memberof Fs
+     */
     async close() {
         // this.closeCh.resolve()
         await this.fs.close()
@@ -38,6 +49,13 @@ class Fs {
         return all
     }
 
+    /**
+     * get file all block hash and offset 
+     *
+     * @param {string} rootHash: root block hash of the file
+     * @returns {Object} key `${hash}-${index}` value offset
+     * @memberof Fs
+     */
     async getFileAllBlockHashAndOffset(rootHash) {
         let offsets = {}
         offsets[`${rootHash}-0`] = 0
@@ -45,12 +63,27 @@ class Fs {
         return Object.assign(offsets, others)
     }
 
+    /**
+     * encoded a block data to Object
+     *
+     * @param {ArrayBuffer} data
+     * @param {String} hash
+     * @returns
+     * @memberof Fs
+     */
     encodedToBlockWithCid(data, hash) {
         return this.fs.encodedToBlockWithCid(data, hash)
     }
 
-    getBlockLinks(block) {
-        const links = this.fs.getBlockLinks(block)
+    /**
+     * get block links, links are a layer of children for the block
+     *
+     * @param {string} hash: block hash 
+     * @returns {Array} links: a string array
+     * @memberof Fs
+     */
+    getBlockLinks(hash) {
+        const links = this.fs.getBlockLinks(hash)
         return links
     }
 
@@ -76,20 +109,48 @@ class Fs {
         return this.fs.getBlockData(block)
     }
 
+    /**
+     * encrypt a file 
+     *
+     * @param {ArrayBuffer} fileBuf
+     * @param {string} password
+     * @returns {ArrayBuffer} encrypted buffer
+     * @memberof Fs
+     */
     aesEncryptFile(fileBuf, password) {
         return this.fs.encrypt(fileBuf, password)
     }
 
+    /**
+     * decrypt a file
+     *
+     * @param {ArrayBuffer} fileBuf: encrypted buffer
+     * @param {string} password: encrypted password
+     * @param {number} prefixLen: prefix of the file with not belongs to the origin data
+     * @returns {ArrayBuffer} origin data buffer
+     * @memberof Fs
+     */
     aesDecryptFile(fileBuf, password, prefixLen) {
         return this.fs.decrypt(fileBuf, password, prefixLen)
     }
 
+    /**
+     * TODO method
+     *
+     * @param {*} buffer
+     * @memberof Fs
+     */
     returnBuffer(buffer) {
     }
 }
 
 
 
+/**
+ * init a FS service 
+ *
+ * @returns
+ */
 const newFs = () => {
     let cfg = config.DaemonConfig
     let fsConfig = {

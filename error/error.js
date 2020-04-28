@@ -10,12 +10,26 @@ class SDKError {
     }
 }
 
+/**
+ * init a SDKError
+ *
+ * @param {number} code: error code
+ * @param {string} msg : error msg
+ * @returns {SDKError}
+ */
 const init = (code, msg) => {
     let cause = new Error(msg)
     let err = new SDKError(code, msg, cause)
     return err
 }
 
+/**
+ * init a SDKError with error
+ *
+ * @param {number} code
+ * @param {error} error
+ * @returns {SDKError}
+ */
 const newWithError = (code, error) => {
     let errMsg = ""
     if (error) {
