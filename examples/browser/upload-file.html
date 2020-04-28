@@ -1,0 +1,151 @@
+<style>
+    #byte_content {
+        margin: 5px 0;
+        max-height: 100px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #byte_range {
+        margin-top: 5px;
+    }
+</style>
+
+<input type="file" id="files" name="file" />
+<span class="readBytesButtons">
+    <!-- <button data-startbyte="0" data-endbyte="4">1-5</button>
+    <button data-startbyte="5" data-endbyte="14">6-15</button>
+    <button data-startbyte="6" data-endbyte="7">7-8</button> -->
+    <button>upload file</button>
+</span>
+<div id="byte_range"></div>
+<div id="byte_content"></div>
+
+<!-- ontfs-js-sdk -->
+<script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
+
+<script>
+
+
+    // startSDK. start SDK 
+    const startSDK = async () => {
+        // init config
+        const wif = "KxYkAszCkUhfnx2goy5wxSiUrbMcCFgjK87dgAvDxnwiq7hKymNL"
+        const label = 'pwd'
+        const password = 'pwd'
+        const rpcAddr = 'http://127.0.0.1:20336'
+        const sdkCfg = {
+            walletPwd: password,
+            chainRpcAddr: rpcAddr,
+            gasPrice: 500,
+            gasLimit: 400000,
+            pdpVersion: 1
+        }
+        ontfs.Config.DaemonConfig = {
+            fsRepoRoot: "./test/Fs",
+            fsFileRoot: "./test/Download",
+            fsType: 0
+        }
+        // init global task manager
+        ontfs.TaskManage.initTaskManage()
+        // import account by wif private key
+        const { error, result } = await ontfs.OntSDK.SDK.importAccountWithWif(label, wif, password)
+        if (error != 0) {
+            console.log('import account err', error)
+            return false
+        }
+        const account = ontfs.OntSDK.Account.parseJson(result)
+        console.log('import account', account.address.toBase58())
+        // init global sdk
+        const s = await ontfs.SDK.initSdk(sdkCfg, account)
+        ontfs.SDK.setGlobalSdk(s)
+        await s.start()
+        return true
+    }
+
+    async function readBlob(opt_startByte, opt_stopByte) {
+
+        var files = document.getElementById('files').files;
+        if (!files.length) {
+            alert('Please select a file!');
+            return;
+        }
+
+        var file = files[0];
+        var start = parseInt(opt_startByte) || 0;
+        var stop = parseInt(opt_stopByte) || file.size - 1;
+
+        var reader = new FileReader();
+
+        var blob = file.slice(start, stop + 1);
+
+        reader.onloadend = async function (evt) {
+            if (evt.target.readyState == FileReader.DONE) {
+                const success = await startSDK()
+                if (!success) {
+                    console.log('start sdk failed')
+                    return
+                }
+                // init upload option
+                const option = new ontfs.Types.TaskUploadOption()
+                option.filePath = "./test.zip" // file path of the file
+                option.fileContent = evt.target.result// ArrayBuffer of file content
+                option.fileDesc = "test.zip" // file name or file description
+                option.fileSize = evt.total // file real size
+                option.storageType = 1 // file store type
+                option.copyNum = 1 // file copy number
+                option.firstPdp = true // first pdp or not
+                const nowTimeStamp = parseInt(new Date().getTime() / 1000)
+                option.timeExpired = nowTimeStamp + 86400 // file expired timestamp
+                option.encPassword = "" // encrypt password
+                console.log('option', option)
+                // add task
+                const taskID = await ontfs.TaskManage.globalTaskMgr().addTask(option).catch((e) => {
+                    console.log('e', e)
+                })
+                console.log('add upload task success, taskID', taskID)
+                // poll check if node has store the file commit PDP prove
+                while (true) {
+                    await ontfs.Utils.sleep(1000)
+                    const task = ontfs.TaskManage.globalTaskMgr().getUploadTaskByTaskId(taskID)
+                    if (!task.baseInfo.fileHash) {
+                        console.log("task not found", task.baseInfo)
+                        continue
+                    }
+                    const pdpRecordList = await ontfs.SDK.globalSdk().ontFs.getFilePdpRecordList(task.baseInfo.fileHash).catch((err) => { })
+                    if (pdpRecordList && pdpRecordList.pdpRecords && pdpRecordList.pdpRecords.length) {
+                        console.log(`storage node has store the file ${task.baseInfo.fileHash}`, pdpRecordList)
+                        break
+                    } else {
+                        console.log(`storage node have not stored the file ${task.baseInfo.fileHash}`)
+                    }
+                }
+                // stop sdk
+                await ontfs.SDK.globalSdk().stop().catch((err) => {
+                    console.log('stop err', err.toString())
+                })
+                // DONE == 2
+                // root = await fsSrv.addFile(evt.target.result, "helloworld", true, "123456")
+                // cidOffsets = await fsSrv.getFileAllBlockHashAndOffset(root.cid.toString())
+                // block = await fsSrv.getBlockWithHash(root.cid.toString())
+                // block2 = fsSrv.encodedToBlockWithCid(block._data, block.cid.toString())
+                // document.getElementById('byte_content').textContent = 'Processing packet []: ' + root.cid.toString();
+                // document.getElementById('byte_range').textContent =
+                //     ['Read bytes: ', start + 1, ' - ', stop + 1,
+                //         ' of ', file.size, ' byte file'].join('');
+
+            }
+        };
+
+        reader.readAsArrayBuffer(blob)
+    }
+
+
+    document.querySelector('.readBytesButtons').addEventListener('click', async function (evt) {
+        if (evt.target.tagName.toLowerCase() == 'button') {
+            var startByte = evt.target.getAttribute('data-startbyte');
+            var endByte = evt.target.getAttribute('data-endbyte');
+            await readBlob(startByte, endByte);
+        }
+    }, false);
+</script>

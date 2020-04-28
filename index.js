@@ -8,6 +8,7 @@ const TaskEntity = require("./taskentity")
 const TaskManage = require("./taskmanage")
 const Types = require("./types")
 const Utils = require("./utils")
+const OntSDK = require("ontology-ts-sdk")
 module.exports = {
     Common,
     Config,
@@ -19,4 +20,5 @@ module.exports = {
     TaskManage,
     Types,
     Utils,
+    OntSDK
 }
