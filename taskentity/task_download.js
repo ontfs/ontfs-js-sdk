@@ -17,6 +17,11 @@ const Download_Error = 5
 
 
 
+/**
+ * Download Task
+ *
+ * @class TaskDownload
+ */
 class TaskDownload {
     constructor(_option, _baseInfo, _transferInfo) {
         this.option = _option
@@ -24,6 +29,11 @@ class TaskDownload {
         this.transferInfo = _transferInfo
     }
 
+    /**
+     * start the task
+     *
+     * @memberof TaskDownload
+     */
     start() {
         if (this.baseInfo.status == TaskStart) {
             throw new Error("Task is already start.")
@@ -44,13 +54,28 @@ class TaskDownload {
         })
     }
 
+    /**
+     * resume the task
+     *
+     * @memberof TaskDownload
+     */
     resume() {
         this.start()
     }
 
+    /**
+     * stop the task
+     *
+     * @memberof TaskDownload
+     */
     stop() {
     }
 
+    /**
+     * clean the task
+     *
+     * @memberof TaskDownload
+     */
     async clean() {
         if (this.baseInfo.status == TaskFinish || this.baseInfo.status == TaskPause) {
 
@@ -61,6 +86,11 @@ class TaskDownload {
         }
     }
 
+    /**
+     * start download
+     *
+     * @memberof TaskDownload
+     */
     async download() {
         this.baseInfo.status = TaskStart
         if (this.baseInfo.progress < Download_FsFoundFileServers) {
@@ -108,6 +138,11 @@ class TaskDownload {
         })
     }
 
+    /**
+     * download blocks from peer
+     *
+     * @memberof TaskDownload
+     */
     async blocksDownload() {
         this.initMicroTasks()
         await this.getValidServers(sdk.globalSdk().account).catch((err) => {
@@ -182,6 +217,11 @@ class TaskDownload {
             this.transferInfo.blockDownloadNotify.finished = true
         }
     }
+    /**
+     * init micro tasks object
+     *
+     * @memberof TaskDownload
+     */
     initMicroTasks() {
         for (let index = 0; index < this.baseInfo.fileBlockCount; index += common.MAX_REQ_BLOCK_COUNT) {
             const microTaskInfo = {
@@ -192,6 +232,12 @@ class TaskDownload {
         }
     }
 
+    /**
+     * get blocks request
+     *
+     * @returns {Object}
+     * @memberof TaskDownload
+     */
     async getBlocksReq() {
         let currTaskIndex = 0
         const microTaskTotalNum = this.transferInfo.microTasks ? this.transferInfo.microTasks.length : 0
@@ -237,6 +283,14 @@ class TaskDownload {
         }
     }
 
+    /**
+     * handler of block download ask
+     *
+     * @param {Object} res: response msg
+     * @param {string} addr: peer http host address
+     * @returns {boolean} stop broadcast or not
+     * @memberof TaskDownload
+     */
     async responseProcess(res, addr) {
         if (!res || !res.data) {
             return false
@@ -338,6 +392,12 @@ class TaskDownload {
         return false
     }
 
+    /**
+     * get valid servers for download the file
+     *
+     * @param {Account} account: current account
+     * @memberof TaskDownload
+     */
     async getValidServers(account) {
         const msg = message.newFileMsg(this.option.fileHash, message.FILE_OP_DOWNLOAD_ASK, [
             message.withWalletAddress(account.address.toBase58()),
@@ -359,6 +419,11 @@ class TaskDownload {
         }
     }
 
+    /**
+     * make read pledge for file
+     *
+     * @memberof TaskDownload
+     */
     async pledge() {
         let readPlan = []
         for (let [peerAddr, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
@@ -385,6 +450,15 @@ class TaskDownload {
         this.baseInfo.progress = Download_FsReadPledge
     }
 
+    /**
+     * download blocks from peer
+     *
+     * @param {string} peerNetAddr peer http host address
+     * @param {string} peerWalletAddr peer wallet base58 address
+     * @param {Object} blocksReq download block request
+     * @returns
+     * @memberof TaskDownload
+     */
     async downloadBlockFlightsFromPeer(peerNetAddr, peerWalletAddr, blocksReq) {
         console.log(`DownloadBlockFlightsFromPeer(${peerWalletAddr} ${peerNetAddr}) begin, Routine start`)
         const peerTransferInfo = this.transferInfo.blockDownloadInfo[peerNetAddr]
@@ -460,6 +534,12 @@ class TaskDownload {
         return blocksResp
     }
 
+    /**
+     * send file download ok msg to peer
+     *
+     * @param {string} peerNetAddr peer http host address
+     * @memberof TaskDownload
+     */
     async fileDownloadOk(peerNetAddr) {
         const sessionId = getDownloadSessionId(this.baseInfo.taskID, peerNetAddr)
         const fileDownloadOkMsg = message.newFileMsg(this.option.fileHash,
@@ -473,6 +553,16 @@ class TaskDownload {
         })
     }
 
+    /**
+     * pay for downloaded blocks to peers
+     *
+     * @param {string} peerNetAddr peer http host address
+     * @param {string} peerWalletAddr peer wallet base58 address
+     * @param {number} sliceId settle slice id
+     * @param {Array} blockHashes block hashes array
+     * @param {number} paymentId payment id from peer 
+     * @memberof TaskDownload
+     */
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
 
         console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${sdk.globalSdk().walletAddress()}` +
@@ -509,6 +599,11 @@ class TaskDownload {
         console.log(`payment msg response:`, message.decodeMsg(ret.data))
     }
 
+    /**
+     * handler for downloaded block
+     *
+     * @memberof TaskDownload
+     */
     async combine() {
         let hasCutPrefix = this.transferInfo.combineInfo.hasCutPrefix
         const isFileEncrypted = this.transferInfo.combineInfo.isFileEncrypted
@@ -564,6 +659,15 @@ class TaskDownload {
     }
 }
 
+/** 
+ * init a download task
+ *
+ * @param {string} taskID taskID
+ * @param {Object} option download option
+ * @param {Object} baseInfo base info, for a new task, it is null
+ * @param {Object} transferInfo transfer info, for a new task, it is null
+ * @returns
+ */
 const newTaskDownload = async (taskID, option, baseInfo, transferInfo) => {
     if (!baseInfo && !transferInfo) {
         try {
@@ -605,6 +709,11 @@ const newTaskDownload = async (taskID, option, baseInfo, transferInfo) => {
     return taskDownload
 }
 
+/**
+ * check download params
+ *
+ * @param {Object} to download option
+ */
 const checkDownloadParams = async (to) => {
     if (!to.inOrder) {
         throw new Error("[TaskDownloadOption] checkParams param inOrder should be true")
@@ -620,11 +729,25 @@ const checkDownloadParams = async (to) => {
     }
 }
 
+/**
+ * get session id with peer
+ *
+ * @param {string} taskId
+ * @param {string} peerAddr
+ * @returns
+ */
 const getDownloadSessionId = (taskId, peerAddr) => {
     return `${taskId}_${peerAddr}_download`
 }
 
 
+/**
+ * decrypt a downloaded file
+ *
+ * @param {ArrayBuffer} fileContent: encrypted array buffer
+ * @param {string} decryptPwd : encrypted password
+ * @returns {ArrayBuffer} : decrypted array buffer
+ */
 const decryptDownloadedFile = async (fileContent, decryptPwd) => {
     try {
         const data = await sdk.globalSdk().decryptDownloadedFile(fileContent, decryptPwd)
@@ -635,8 +758,15 @@ const decryptDownloadedFile = async (fileContent, decryptPwd) => {
     }
 }
 
+/**
+ * get key of block hash and index
+ *
+ * @param {string} hash
+ * @param {number} index
+ * @returns
+ */
 const keyOfBlockHashAndIndex = (hash, index) => {
-    return `${hash} -${index} `
+    return `${hash}-${index}`
 }
 
 module.exports = {

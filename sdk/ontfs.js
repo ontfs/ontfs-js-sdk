@@ -40,6 +40,13 @@ class OntFs {
         this.rpcClient = new RpcClient(_chainRpcAddr)
     }
 
+    /**
+     * pre invoke a native contract
+     *
+     * @param {Transaction} tx 
+     * @returns {FsResult}
+     * @memberof OntFs
+     */
     async preInvokeNativeContract(tx) {
         const rawTx = tx.serialize()
         const ret = await this.rpcClient.sendRawTransaction(rawTx, true)
@@ -48,6 +55,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * Invoke a native contract
+     *
+     * @param {Transaction} tx
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async invokeNativeContract(tx) {
         const signedTx = this.account.signTransaction(this.password, tx)
         const rawTx = signedTx.serialize()
@@ -68,6 +82,14 @@ class OntFs {
     }
 
 
+    /**
+     * wait for a transaction to be confirmed
+     *
+     * @param {number} timeout: timeout, second
+     * @param {string} txHashStr: transaction hash string
+     * @returns {boolean} success or not
+     * @memberof OntFs
+     */
     async waitForTxConfirmed(timeout, txHashStr) {
         if (!timeout) {
             timeout = 1
@@ -82,6 +104,13 @@ class OntFs {
         throw new Error(`timeout after ${timeout} (s)`)
     }
 
+    /**
+     * get storage node info list
+     *
+     * @param {number} [limit=1] : max number of list
+     * @returns {FsNodeInfoList}
+     * @memberof OntFs
+     */
     async getNodeInfoList(limit = 1) {
         const tx = OntfsContractTxBuilder.buildGetNodeInfoListTx(limit)
         const result = await this.preInvokeNativeContract(tx)
@@ -90,6 +119,15 @@ class OntFs {
         return nodeInfoList
     }
 
+    /**
+     * create a storage space
+     *
+     * @param {number} volume: volume size in KB
+     * @param {number} copyNum: copy number
+     * @param {number} timeExpired: space expired timestamp, second
+     * @returns
+     * @memberof OntFs
+     */
     async createSpace(volume, copyNum, timeExpired) {
         const tx = OntfsContractTxBuilder.buildCreateSpaceTx(this.account.address, volume, copyNum, timeExpired,
             this.gasPrice, this.gasLimit, this.account.address)
@@ -98,6 +136,12 @@ class OntFs {
         return result
     }
 
+    /**
+     *
+     * get space info for user
+     * @returns {SpaceInfo}
+     * @memberof OntFs
+     */
     async getSpaceInfo() {
         const tx = OntfsContractTxBuilder.buildGetSpaceInfoTx(this.account.address)
         const result = await this.preInvokeNativeContract(tx)
@@ -108,12 +152,27 @@ class OntFs {
         return spaceInfo
     }
 
+    /**
+     * delete current user space 
+     *
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async deleteSpace() {
         const tx = OntfsContractTxBuilder.buildDeleteSpaceTx(this.account.address, this.gasPrice, this.gasLimit,
             this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
     }
+
+    /**
+     * update a exist space 
+     *
+     * @param {number} volume volume size in KB
+     * @param {number} timeExpired space expired timestamp, second
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async updateSpace(volume, timeExpired) {
         const tx = OntfsContractTxBuilder.buildUpdateSpaceTx(this.account.address, this.account.address, volume, timeExpired,
             this.gasPrice, this.gasLimit, this.account.address)
@@ -121,6 +180,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * store a file
+     *
+     * @param {Array} files, array of file info object
+     * @returns  {string} tx hash
+     * @memberof OntFs
+     */
     async storeFiles(files) {
         let newFiles = []
         for (let file of files) {
@@ -136,6 +202,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * get file info of hash
+     *
+     * @param {string} fileHash
+     * @returns {FileInfo}
+     * @memberof OntFs
+     */
     async getFileInfo(fileHash) {
         const tx = OntfsContractTxBuilder.buildGetFileInfoTx(str2hexstr(fileHash))
         const result = await this.preInvokeNativeContract(tx)
@@ -149,6 +222,12 @@ class OntFs {
         return fileInfo
     }
 
+    /**
+     * get stored file list 
+     *
+     * @returns {FileHashList}
+     * @memberof OntFs
+     */
     async getFileList() {
         const height = await this.rpcClient.getBlockHeight()
         const ret = await this.rpcClient.getBlockJson(height)
@@ -166,6 +245,13 @@ class OntFs {
         return list
     }
 
+    /**
+     * renew a exist file
+     *
+     * @param {Array} renews: array of renew object
+     * @returns  {string} tx hash
+     * @memberof OntFs
+     */
     async renewFile(renews) {
         for (let item of renews) {
             item.fileHash = str2hexstr(item.fileHash)
@@ -176,6 +262,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * change file owner
+     *
+     * @param {Array} renews: array of renew object
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async transferFiles(renews) {
         for (let item of renews) {
             item.fileHash = str2hexstr(item.fileHash)
@@ -186,6 +279,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * delete files
+     *
+     * @param {Array} fileHashes, array of file hashes
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async deleteFiles(fileHashes) {
         let newFileHashes = []
         for (let item of fileHashes) {
@@ -197,6 +297,14 @@ class OntFs {
         return result
     }
 
+    /**
+     * make a file read pledge for download
+     *
+     * @param {string} fileHash: file hash to download
+     * @param {Array} plans: plans of download detail
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async fileReadPledge(fileHash, plans) {
         let readPlan = []
         for (let p of plans) {
@@ -208,6 +316,14 @@ class OntFs {
         return result
     }
 
+    /**
+     * get a file read pledge 
+     *
+     * @param {string} fileHash  file hash 
+     * @param {Address} walletAddr read pledge owner wallet addr
+     * @returns
+     * @memberof OntFs
+     */
     async getFileReadPledge(fileHash, walletAddr) {
         const tx = OntfsContractTxBuilder.buildGetFileReadPledgeTx(str2hexstr(fileHash), walletAddr)
         const result = await this.preInvokeNativeContract(tx)
@@ -220,6 +336,13 @@ class OntFs {
         return readPledge
     }
 
+    /**
+     * cancel the file read pledge
+     * 
+     * @param {string} fileHash
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async cancelFileRead(fileHash) {
         const tx = OntfsContractTxBuilder.buildCancelFileReadTx(str2hexstr(fileHash), this.account.address,
             this.gasPrice, this.gasLimit, this.account.address)
@@ -227,6 +350,13 @@ class OntFs {
         return result
     }
 
+    /**
+     * get file pdp record list
+     *
+     * @param {string} fileHash
+     * @returns {PdpRecordList}
+     * @memberof OntFs
+     */
     async getFilePdpRecordList(fileHash) {
         const tx = OntfsContractTxBuilder.buildGetFilePdpRecordListTx(str2hexstr(fileHash))
         const result = await this.preInvokeNativeContract(tx)
@@ -242,6 +372,14 @@ class OntFs {
         return list
     }
 
+    /**
+     * challenge a file with a specific node
+     *
+     * @param {string} fileHash
+     * @param {string} nodeAddr node wallet base58 string
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async challenge(fileHash, nodeAddr) {
         const tx = OntfsContractTxBuilder.buildChallengeTx(str2hexstr(fileHash), this.account.address, new Address(nodeAddr),
             this.gasPrice, this.gasLimit, this.account.address)
@@ -249,12 +387,29 @@ class OntFs {
         console.log("result", result)
         return result
     }
+
+    /**
+     * judge a file with a specific node
+     *
+     * @param {string} fileHash
+     * @param {string} nodeAddr node wallet base58 string
+     * @returns {string} tx hash
+     * @memberof OntFs
+     */
     async judge(fileHash, nodeAddr) {
         const tx = OntfsContractTxBuilder.buildJudgeTx(str2hexstr(fileHash), this.account.address, new Address(nodeAddr),
             this.gasPrice, this.gasLimit, this.account.address)
         const result = await this.invokeNativeContract(tx)
         return result
     }
+
+    /**
+     * get file challenge list
+     *
+     * @param {string} fileHash
+     * @returns {ChallengeList}
+     * @memberof OntFs
+     */
     async getFileChallengeList(fileHash) {
         const tx = OntfsContractTxBuilder.buildGetFileChallengeListTx(str2hexstr(fileHash), this.account.address)
         const result = await this.preInvokeNativeContract(tx)
@@ -270,6 +425,13 @@ class OntFs {
         return list
     }
 
+    /**
+     * get node info
+     *
+     * @param {string} walletAddr node wallet base58 string
+     * @returns {FsNodeInfo}
+     * @memberof OntFs
+     */
     async getNodeInfo(walletAddr) {
         const tx = OntfsContractTxBuilder.buildNodeQueryTx(new Address(walletAddr))
         const result = await this.preInvokeNativeContract(tx)
@@ -280,6 +442,13 @@ class OntFs {
         return nodeInfo
     }
 
+    /**
+     * verify file read settle slice
+     *
+     * @param {Object} settleSlice
+     * @returns {boolean}
+     * @memberof OntFs
+     */
     async verifyFileReadSettleSlice(settleSlice) {
         const sig = Signature.deserializeHex(settleSlice.sig)
         const pubKey = PublicKey.deserializeHex(new StringReader(settleSlice.pubKey))
@@ -294,6 +463,16 @@ class OntFs {
         return fileReadSettleSlice.verify()
     }
 
+    /**
+     * generate a file read settle slice
+     *
+     * @param {string} fileHash file hash
+     * @param {string} peerWalletAddr node wallet base58 string
+     * @param {number} sliceId slice id
+     * @param {number} blockHeight block height
+     * @returns
+     * @memberof OntFs
+     */
     async genFileReadSettleSlice(fileHash, peerWalletAddr, sliceId, blockHeight) {
         const privateKey = this.account.exportPrivateKey(this.password)
         const settleSlice = FileReadSettleSlice.genFileReadSettleSlice(str2hexstr(fileHash), new Address(peerWalletAddr),

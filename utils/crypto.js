@@ -4,6 +4,14 @@ const { Address, PublicKey, Signature } = Crypto
 const address = require("./address.js")
 const CryptoJS = require("crypto-js")
 
+/**
+ * verify sign
+ *
+ * @param {string} pubKey: public key hex string
+ * @param {string} data: raw data
+ * @param {string} signData: signature data hex string
+ * @returns {boolean}
+ */
 const verify = (pubKey, data, signData) => {
     const publicKey = new PublicKey(pubKey)
     if (!publicKey) {
@@ -17,33 +25,76 @@ const verify = (pubKey, data, signData) => {
     return result
 }
 
+/**
+ * check if a public key equal to a base58 address
+ *
+ * @param {string} pubKey  public key hex string
+ * @param {string} base58Addr address in base58 format
+ * @returns {boolean}
+ */
 const publicKeyMatchAddress = (pubKey, base58Addr) => {
     let addr = address.addressFromPubKeyHex(pubKey)
     return addr == base58Addr
 }
 
+/**
+ * convert a string to base64 string
+ *
+ * @param {string} str
+ * @returns {string}
+ */
 const str2base64 = (str) => {
     return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse((str)))
 }
 
 
+/**
+ * convert a string to hex string by crypto-js
+ *
+ * @param {string} str
+ * @returns {string}
+ */
 const cryptoStr2Hex = (str) => {
     return CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse((str)))
 }
 
 
+/**
+ * convert a base64 string to utf-8 string
+ *
+ * @param {string} base64str
+ * @returns {string}
+ */
 const base64str2utf8str = (base64str) => {
     return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8)
 }
 
+/**
+ * convert a base64 string to raw string
+ *
+ * @param {string} base64str
+ * @returns {string}
+ */
 const base64str2str = (base64str) => {
     return CryptoJS.enc.Base64.parse(base64str).toString()
 }
 
+/**
+ * convert a base64 string to hex string
+ *
+ * @param {string} base64str
+ * @returns {string}
+ */
 const base64str2hex = (base64str) => {
     return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString()
 }
 
+/**
+ * convert a hex string to base64 string
+ *
+ * @param {string} hex
+ * @returns {string}
+ */
 const hex2base64str = (hex) => {
     var _data = CryptoJS.enc.Hex.parse(hex);
     var base64_data = _data.toString(CryptoJS.enc.Base64);
@@ -51,11 +102,23 @@ const hex2base64str = (hex) => {
 }
 
 
+/**
+ * convert a hex string to sha256 string
+ *
+ * @param {string} hex
+ * @returns {string}
+ */
 const hex2sha256 = (hex) => {
     var message = CryptoJS.enc.Hex.parse(hex);
     return CryptoJS.SHA256(message).toString();
 }
 
+/**
+ * convert a hex string to array bytes
+ *
+ * @param {string} str
+ * @returns {Array}
+ */
 const hexstr2Bytes = (str) => {
     let pos = 0;
     let len = str.length;
@@ -74,6 +137,12 @@ const hexstr2Bytes = (str) => {
 }
 
 
+/**
+ * convert a bytes array to hex string
+ *
+ * @param {Array} b
+ * @returns {string}
+ */
 const bytes2HexString = (b) => {
     let hexs = "";
     for (let i = 0; i < b.length; i++) {
@@ -110,6 +179,12 @@ const bytes2address = (bytes) => {
     return addr
 }
 
+/**
+ * sha256 a string
+ *
+ * @param {string} str
+ * @returns {string}
+ */
 const sha256str = (str) => {
     return CryptoJS.SHA256(str).toString()
 }

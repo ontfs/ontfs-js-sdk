@@ -15,6 +15,18 @@ $ cd ontfs-js-sdk
 $ yarn install (or npm install)
 ```
 
+
+#### Build project
+
+##### config file is webpack.config.js
+
+```shell
+$ npm run build
+```
+
+> The project code will be integrated into the directory named dist
+
+
 #### Examples on browser
 
 > see details in `examples/browser`
@@ -261,13 +273,3 @@ $ node index.js file download --fileHash=bafkreih7wrw5icnbfq2cxl2jcpplgdwgxyxte4
 $ cd ./examples/cli
 $ node index.js file download --fileHash=bafkreih7wrw5icnbfq2cxl2jcpplgdwgxyxte4hnreg2i5qcxnzyr6xlma --outFilePath=./Downloads/test.dat --fileHash=bafkreicy6su74alclhq6fczi7ma6fysiaxq7yargmuqmyxwr2lafw3mx5y --outFilePath=./Downloads/test2.dat
 ```
-
-#### build project
-
-##### config file is webpack.config.js
-
-```shell
-$ npm run build
-```
-
-> The project code will be integrated into the directory named dist

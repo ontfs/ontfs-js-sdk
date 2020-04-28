@@ -6,11 +6,23 @@ const getTaskId = () => {
     return utils.randomInt()
 }
 
+/**
+ * TaskManager for control task life cycle 
+ *
+ * @class TaskMgr
+ */
 class TaskMgr {
     constructor(_uploadTaskHub, _downloadTaskHub) {
         this.uploadTaskHub = _uploadTaskHub
         this.downloadTaskHub = _downloadTaskHub
     }
+    /**
+     * add a task with option, return a taskID if add success
+     *
+     * @param {Object} taskOption
+     * @returns {string} taskID 
+     * @memberof TaskMgr
+     */
     async addTask(taskOption) {
         const taskID = getTaskId()
         switch (taskOption.constructor) {
@@ -41,6 +53,13 @@ class TaskMgr {
         return taskID
     }
 
+    /**
+     * get a upload task by taskId
+     *
+     * @param {string} taskId
+     * @returns {Object}
+     * @memberof TaskMgr
+     */
     getUploadTaskByTaskId(taskId) {
         const task = this.uploadTaskHub[taskId]
         if (task) {
@@ -49,6 +68,13 @@ class TaskMgr {
         throw new Error(`[GetUploadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
+    /**
+    * get a download task by taskId
+    *
+    * @param {string} taskId
+    * @returns {Object}
+    * @memberof TaskMgr
+    */
     getDownloadTaskByTaskId(taskId) {
         const task = this.downloadTaskHub[taskId]
         if (task) {
@@ -57,14 +83,32 @@ class TaskMgr {
         throw new Error(`[GetDownloadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
+    /**
+     * get all upload task
+     * 
+     * @returns {Object}, key is task ID, value is task object
+     * @memberof TaskMgr
+     */
     getAllUploadTask() {
         return this.uploadTaskHub
     }
 
+    /**
+     * get all download task
+     * 
+     * @returns {Object}, key is task ID, value is task object
+     * @memberof TaskMgr
+     */
     getAllDownloadTask() {
         return this.downloadTaskHub
     }
 
+    /**
+    * delete a task by taskId
+    *
+    * @param {string} taskId
+    * @memberof TaskMgr
+    */
     async delTask(id) {
         const task = this.getTaskById(id)
         if (task) {
@@ -79,6 +123,12 @@ class TaskMgr {
         }
     }
 
+    /**
+     * resume a task by taskId
+     *
+     * @param {string} taskId
+     * @memberof TaskMgr
+     */
     async resumeTask(id) {
         const task = this.getTaskById(id)
         if (task) {
@@ -92,6 +142,12 @@ class TaskMgr {
         }
     }
 
+    /**
+    * stop a task by taskId
+    *
+    * @param {string} taskId
+    * @memberof TaskMgr
+    */
     async stopTask(id) {
         const task = this.getTaskById(id)
         if (task) {
@@ -105,6 +161,13 @@ class TaskMgr {
         }
     }
 
+    /**
+    * get a task by taskId
+    *
+    * @param {string} taskId
+    * @returns {Object}
+    * @memberof TaskMgr
+    */
     getTaskById(id) {
         let task = this.uploadTaskHub[id]
         if (task) {
@@ -117,6 +180,12 @@ class TaskMgr {
         return
     }
 
+    /**
+    * delete a task by taskId
+    *
+    * @param {string} taskId
+    * @memberof TaskMgr
+    */
     delTaskById(id) {
         let task = this.uploadTaskHub[id]
         if (task) {
@@ -132,12 +201,22 @@ class TaskMgr {
 
 var Global = {}
 
+/**
+ * init a task manager and set it to global cache
+ *
+ * @returns {TaskMgr}
+ */
 const initTaskManage = () => {
     const taskMgr = new TaskMgr({}, {})
     Global['taskMgr'] = taskMgr
     return taskMgr
 }
 
+/**
+ * get global task manager
+ *
+ * @returns {TaskMgr}
+ */
 const globalTaskMgr = () => {
     return Global["taskMgr"]
 }

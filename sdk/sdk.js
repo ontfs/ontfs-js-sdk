@@ -26,14 +26,31 @@ class Sdk {
         this.pdpServer = _pdpServer
     }
 
+    /**
+     * get current SDK version
+     *
+     * @returns {string}
+     * @memberof Sdk
+     */
     getVersion() {
         return common.VERSION
     }
 
+    /**
+     * start SDK as daemon
+     *
+     * @returns
+     * @memberof Sdk
+     */
     async start() {
         return await this.fs.start()
     }
 
+    /**
+     * stop SDK daemon
+     *
+     * @memberof Sdk
+     */
     async stop() {
         if (this.fs) {
             const err = await this.fs.close()
@@ -44,14 +61,32 @@ class Sdk {
         this.isStop = true
     }
 
+    /**
+     * get current wallet account
+     *
+     * @returns {Account}
+     * @memberof Sdk
+     */
     currentAccount() {
         return this.account
     }
 
+    /**
+     * get wallet Base58 address
+     *
+     * @returns {string}
+     * @memberof Sdk
+     */
     walletAddress() {
         return this.currentAccount().address.toBase58()
     }
 
+    /**
+     * wait for block confirmed 
+     *
+     * @param {number} blockHeight
+     * @memberof Sdk
+     */
     async waitForBlock(blockHeight) {
         try {
             const currentBlockHeight = await this.chain.getBlockHeight()
@@ -70,6 +105,14 @@ class Sdk {
 
 
 
+    /**
+     * wait for {blockCount} blocks confirmed in {timeout} second
+     *
+     * @param {number} timeout
+     * @param {number} blockCount
+     * @returns {boolean}
+     * @memberof Sdk
+     */
     async waitForGenerateBlock(timeout, blockCount) {
         if (!blockCount) {
             return
@@ -88,6 +131,15 @@ class Sdk {
         throw new Error(`timeout after ${timeout} (s)`)
     }
 
+    /**
+     * create user storage space
+     *
+     * @param {number} volume: volume size in KB
+     * @param {number} copyNum: copy number
+     * @param {number} timeExpired: space expired timestamp, second
+     * @returns {SpaceInfo}
+     * @memberof Sdk
+     */
     async createSpace(volume, copyNum, timeExpired) {
         try {
             if (copyNum > common.MAX_COPY_NUM) {
@@ -109,6 +161,12 @@ class Sdk {
         }
     }
 
+    /**
+     *
+     * get space info for user
+     * @returns {SpaceInfo}
+     * @memberof Sdk
+     */
     async getSpaceInfo() {
         try {
             const info = await this.ontFs.getSpaceInfo()
@@ -121,6 +179,11 @@ class Sdk {
         }
     }
 
+    /**
+     * delete current user space 
+     *
+     * @memberof Sdk
+     */
     async deleteSpace() {
         try {
             const tx = await this.ontFs.deleteSpace()
@@ -136,6 +199,13 @@ class Sdk {
         }
     }
 
+    /**
+     * update a exist space 
+     *
+     * @param {number} volume volume size in KB
+     * @param {number} timeExpired space expired timestamp, second
+     * @memberof Sdk
+     */
     async updateSpace(volume, timeExpired) {
         try {
             const spaceInfo1 = await this.ontFs.getSpaceInfo()
@@ -152,6 +222,13 @@ class Sdk {
         }
     }
 
+    /**
+      * get storage node info list
+     *
+     * @param {number} : max number of list
+     * @returns {Array}
+     * @memberof Sdk
+     */
     async getFsNodesList(limit) {
         try {
             const fsNodeList = await this.ontFs.getNodeInfoList(limit)
@@ -179,6 +256,13 @@ class Sdk {
         }
     }
 
+    /**
+     * get file info of hash
+     *
+     * @param {string} fileHash
+     * @returns {Object}
+     * @memberof Sdk
+     */
     async getFileInfo(fileHashStr) {
         try {
             const fi = await this.ontFs.getFileInfo(fileHashStr)
@@ -208,6 +292,12 @@ class Sdk {
         }
     }
 
+    /**
+     * get stored file list 
+     *
+     * @returns {Array}
+     * @memberof Sdk
+     */
     async getFileList() {
         let fileHashes = []
         try {
@@ -227,6 +317,13 @@ class Sdk {
         }
     }
 
+    /**
+     * renew a exist file
+     *
+     * @param {string} fileHash : file hash
+     * @param {number} addTime : added second
+     * @memberof Sdk
+     */
     async  renewFile(fileHash, addTime) {
         try {
             const fileInfo = await this.ontFs.getFileInfo(fileHash)
@@ -240,6 +337,13 @@ class Sdk {
         }
     }
 
+    /**
+     * change file owner
+     *
+     * @param {string} fileHash
+     * @param {Address} newOwner
+     * @memberof Sdk
+     */
     async changeOwner(fileHash, newOwner) {
         try {
             const fileRenews = {
@@ -260,6 +364,13 @@ class Sdk {
         }
     }
 
+    /**
+     * get a file read pledge 
+     *
+     * @param {string} fileHash  file hash 
+     * @returns {Object}
+     * @memberof Sdk
+     */
     async getFileReadPledge(fileHashStr) {
         try {
             const pledge = await this.ontFs.getFileReadPledge(fileHashStr, this.ontFs.walletAddr)
@@ -286,6 +397,12 @@ class Sdk {
         }
     }
 
+    /**
+     * cancel the file read pledge
+     * 
+     * @param {string} fileHash
+     * @memberof Sdk
+     */
     async cancelFileRead(fileHashStr) {
         try {
 
@@ -300,6 +417,13 @@ class Sdk {
 
     }
 
+    /**
+     * get file pdp record list
+     *
+     * @param {string} fileHash
+     * @returns {Array}
+     * @memberof Sdk
+     */
     async getFilePdpInfoList(fileHashStr) {
         try {
             let records = []
@@ -327,6 +451,13 @@ class Sdk {
         }
     }
 
+    /**
+     * challenge a file with a specific node
+     *
+     * @param {string} fileHash
+     * @param {string} nodeAddr node wallet base58 string
+     * @memberof Sdk
+     */
     async  challenge(fileHash, nodeAddr) {
         try {
             await this.ontFs.challenge(fileHash, nodeAddr)
@@ -335,6 +466,13 @@ class Sdk {
         }
     }
 
+    /**
+     * judge a file with a specific node
+     *
+     * @param {string} fileHash
+     * @param {string} nodeAddr node wallet base58 string
+     * @memberof Sdk
+     */
     async  judge(fileHash, nodeAddr) {
         try {
             await this.ontFs.judge(fileHash, nodeAddr)
@@ -343,6 +481,13 @@ class Sdk {
         }
     }
 
+    /**
+     * get file challenge list
+     *
+     * @param {string} fileHash
+     * @returns {Array}
+     * @memberof Sdk
+     */
     async  getChallengeList(fileHash) {
         try {
             const challengeListTmp = await this.ontFs.getFileChallengeList(fileHash)
@@ -365,6 +510,12 @@ class Sdk {
         }
     }
 
+    /**
+     * delete file
+     *
+     * @param {string} fileHash
+     * @memberof Sdk
+     */
     async deleteFile(fileHash) {
         try {
             let fileInfo = await this.ontFs.getFileInfo(fileHash)
@@ -383,6 +534,13 @@ class Sdk {
             throw e
         }
     }
+
+    /**
+     * delete files
+     *
+     * @param {Array} fileHashes
+     * @memberof Sdk
+     */
     async  deleteFiles(fileHashes) {
         try {
             await this.ontFs.deleteFiles(fileHashes)
@@ -391,11 +549,14 @@ class Sdk {
         }
     }
 
-    decryptFile(fullFilePath, decryptPwd, outFilePath) {
-        this.decryptDownloadedFile(fullFilePath, decryptPwd, outFilePath)
-
-    }
-
+    /**
+     * decrypt a downloaded file
+     *
+     * @param {ArrayBuffer} fileContent: encrypted array buffer
+     * @param {string} decryptPwd : encrypted password
+     * @returns {ArrayBuffer} : decrypted array buffer
+     * @memberof Sdk
+     */
     async decryptDownloadedFile(fileContent, decryptPwd) {
         if (!decryptPwd || !decryptPwd.length) {
             throw new Error(`no decrypt password`)
@@ -417,6 +578,13 @@ class Sdk {
 
 }
 
+/**
+ * init a SDK
+ *
+ * @param {Object} sdkCfg: sdk config
+ * @param {Account} acc: wallet account
+ * @returns
+ */
 const initSdk = async (sdkCfg, acc) => {
     const s = new Sdk()
     s.sdkConfig = sdkCfg
@@ -439,9 +607,19 @@ const initSdk = async (sdkCfg, acc) => {
 var Global = {}
 var Version = 0
 
+/**
+ * global sdk setter
+ *
+ * @param {Sdk} sdk
+ */
 const setGlobalSdk = (sdk) => {
     Global['sdk'] = sdk
 }
+/**
+ * global sdk getter 
+ *
+ * @returns {Sdk}
+ */
 const globalSdk = () => {
     return Global['sdk']
 }

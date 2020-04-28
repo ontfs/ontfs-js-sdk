@@ -8,6 +8,11 @@ const CRYPTO_HASH_LEN = 32
 const REVERSED_LEN = 4
 const PREFIX_LEN = 158
 
+/**
+ *  Prefix struct for File
+ *
+ * @class FilePrefix
+ */
 class FilePrefix {
     constructor(
         _version,
@@ -28,6 +33,12 @@ class FilePrefix {
         this.fileSize = _fileSize
         this.reserved = _reserved
     }
+    /**
+     * convert encrypted password to hex string
+     *
+     * @returns {string}
+     * @memberof FilePrefix
+     */
     encryptPwdToHex() {
         const pwd = this.encryptPwd.substr(0, this.encryptPwdLen)
         const pwdHex = str2hexstr(pwd)
@@ -38,6 +49,12 @@ class FilePrefix {
         return pwdHex + remainZero
     }
 
+    /**
+     * get password hash string
+     *
+     * @returns {string}
+     * @memberof FilePrefix
+     */
     getPasswordHash() {
         if (!this.encryptPwd || !this.encryptPwd.length) {
             return num2hexstring(0, CRYPTO_HASH_LEN, true)
@@ -49,6 +66,12 @@ class FilePrefix {
         return sha256(hexstr2str(encryptData)).toString()
     }
 
+    /**
+     * get file prefix object serialized string
+     *
+     * @returns {string}
+     * @memberof FilePrefix
+     */
     string() {
         this.version = this.version || PREFIX_VERSION
         if (this.encrypt) {
@@ -69,6 +92,12 @@ class FilePrefix {
             num2hexstring(this.fileSize, 8, true) + reservedStr
     }
 
+    /**
+     * parse a hexstr to FilePrefix
+     *
+     * @param {string} hexStr
+     * @memberof FilePrefix
+     */
     fromString(hexStr) {
         let sr = new StringReader(hexStr)
         this.version = sr.readUint8();
@@ -82,6 +111,11 @@ class FilePrefix {
         this.reserved = hexstr2str(sr.read(REVERSED_LEN))
     }
 
+    /**
+     * print detail
+     *
+     * @memberof FilePrefix
+     */
     print() {
         console.log(`this.version: ${this.version}\n,
         this.fileSize: ${this.fileSize}\n,
@@ -91,6 +125,13 @@ class FilePrefix {
         this.encryptHash:${this.encryptHash}\n`)
     }
 
+    /**
+     * verify a password 
+     *
+     * @param {string} password
+     * @returns {boolean}
+     * @memberof FilePrefix
+     */
     verifyEncryptPassword(password) {
         const encrypt = password + this.encryptSalt
         const hash = sha256(encrypt.toString()).toString()
@@ -98,6 +139,12 @@ class FilePrefix {
     }
 }
 
+/**
+ * parse a file prefix from hex string and check if the file is encrypted
+ *
+ * @param {string} prefixHex
+ * @returns {boolean}
+ */
 const getPrefixEncrypted = (prefixHex) => {
     const prefix = new FilePrefix()
     prefix.fromString(prefixHex)

@@ -16,6 +16,15 @@ const Upload_WaitPdpRecords = 6
 const Upload_Done = 7
 const Upload_Error = 8
 
+/**
+ * init a upload task
+ *
+ * @param {string} taskID taskID
+ * @param {Object} option upload option
+ * @param {Object} baseInfo base info, for a new task, it is null
+ * @param {Object} transferInfo transfer info, for a new task, it is null
+ * @returns
+ */
 const newTaskUpload = (taskID, option, baseInfo, transferInfo) => {
     if (!baseInfo && !transferInfo) {
         try {
@@ -51,6 +60,11 @@ const newTaskUpload = (taskID, option, baseInfo, transferInfo) => {
     return taskUpload
 }
 
+/**
+ * Upload task
+ *
+ * @class TaskUpload
+ */
 class TaskUpload {
     constructor(_option, _baseInfo, _transferInfo) {
         this.option = _option
@@ -58,6 +72,11 @@ class TaskUpload {
         this.transferInfo = _transferInfo
     }
 
+    /**
+     * check a upload task is valid or not
+     *
+     * @memberof TaskUpload
+     */
     async checkUploadTask() {
         const uploaded = await fileHasUploaded(this.baseInfo.fileHash)
         if (uploaded) {
@@ -82,6 +101,11 @@ class TaskUpload {
         }
     }
 
+    /**
+     * start upload 
+     *
+     * @memberof TaskUpload
+     */
     async upload() {
         let fileEnc = false
         this.baseInfo.status = TaskStart
@@ -238,6 +262,11 @@ class TaskUpload {
         console.log("pdp finish")
     }
 
+    /**
+     * start the task 
+     *
+     * @memberof TaskUpload
+     */
     start() {
         if (this.baseInfo.status == TaskStart) {
             throw new Error("Task is already start.")
@@ -258,13 +287,28 @@ class TaskUpload {
         })
     }
 
+    /**
+     * resume the task
+     *
+     * @memberof TaskUpload
+     */
     resume() {
         this.start()
     }
 
+    /**
+     * stop the task
+     *
+     * @memberof TaskUpload
+     */
     stop() {
     }
 
+    /**
+     * delete the task
+     *
+     * @memberof TaskUpload
+     */
     async clean() {
         if (this.baseInfo.status == TaskFinish || this.baseInfo.status == TaskPause) {
 
@@ -275,6 +319,13 @@ class TaskUpload {
         }
     }
 
+    /**
+     * check storage node status
+     *
+     * @param {Account} account: current account
+     * @param {string} nodeNetAddr: node http host address
+     * @memberof TaskUpload
+     */
     async checkFsServerStatus(account, nodeNetAddr) {
         const sessionId = getUploadSessionId(this.baseInfo.taskID, nodeNetAddr)
         const msg = message.newFileMsg(this.baseInfo.fileHash, message.FILE_OP_UPLOAD_ASK, [
@@ -297,6 +348,12 @@ class TaskUpload {
         }
     }
 
+    /**
+     * send blocks concurrent to receivers
+     *
+     * @param {Array} fileReceivers
+     * @memberof TaskUpload
+     */
     async blocksSend(fileReceivers) {
         let promiseList = []
         console.log('blocksSend', fileReceivers)
@@ -328,6 +385,12 @@ class TaskUpload {
         }
     }
 
+    /**
+     * send block to a peer
+     *
+     * @param {string} peerNetAddr: peer http host address
+     * @memberof TaskUpload
+     */
     async sendBlockToPeer(peerNetAddr) {
         const blockSendDetail = this.transferInfo.blockSendDetails[peerNetAddr]
         const newFileResp = await this.sendFetchReadyMsg(peerNetAddr).catch((e) => {
@@ -375,6 +438,15 @@ class TaskUpload {
         }
     }
 
+    /**
+     * generate block msg
+     *
+     * @param {string} hash block hash
+     * @param {number} index ignore
+     * @param {number} offset block data offset
+     * @returns
+     * @memberof TaskUpload
+     */
     async generateBlockMsgData(hash, index, offset) {
         const block = await sdk.globalSdk().fs.getBlockWithHash(hash).catch((e) => {
             throw e
@@ -387,6 +459,14 @@ class TaskUpload {
         }
     }
 
+    /**
+     * send a block flight msg to peer
+     *
+     * @param {string} peerAddr peer http host address
+     * @param {Array} blocks blocks data array
+     * @returns {Array} acks from peer
+     * @memberof TaskUpload
+     */
     async sendBlockFlightMsg(peerAddr, blocks) {
         if (!blocks || !blocks.length) {
             console.log(`task ${this.baseInfo.taskID} has no block to send`)
@@ -429,6 +509,13 @@ class TaskUpload {
         return blockAck
     }
 
+    /**
+     * send block fetch ready msg
+     *
+     * @param {string} peerAddr peer http host address
+     * @returns {Object} response msg from peer
+     * @memberof TaskUpload
+     */
     async sendFetchReadyMsg(peerAddr) {
         const sessionId = getUploadSessionId(this.baseInfo.taskID, peerAddr)
         const msg = message.newFileMsg(this.baseInfo.fileHash, message.FILE_OP_UPLOAD_RDY, [
@@ -451,6 +538,14 @@ class TaskUpload {
         return p2pMsg
     }
 
+    /**
+     * get a block msg 
+     *
+     * @param {string} hash block hash
+     * @param {number} index block index of the file
+     * @returns {Object}
+     * @memberof TaskUpload
+     */
     async getMsgData(hash, index) {
         const key = keyOfBlockHashAndIndex(hash, index)
         let data = this.transferInfo.blockMsgDataMap[key]
@@ -466,6 +561,12 @@ class TaskUpload {
         return data
     }
 
+    /**
+     * clean a unused msg from memory
+     *
+     * @param {Object} blocksAck
+     * @memberof TaskUpload
+     */
     cleanMsgData(blocksAck) {
         for (let reqInfo of blocksAck) {
             const { hash, index } = reqInfo
@@ -485,6 +586,12 @@ class TaskUpload {
 }
 
 
+/**
+ * generate a file prefix by option
+ *
+ * @param {Object} to upload option
+ * @returns {string} prefix string
+ */
 const getFilePrefix = (to) => {
     const filePrefix = new utils.FilePrefix(utils.PREFIX_VERSION, false, 0, "", "", "", to.fileSize, "")
     if (to.encPassword && to.encPassword.length) {
@@ -497,6 +604,11 @@ const getFilePrefix = (to) => {
     return prefix
 }
 
+/**
+ * check upload option params
+ *
+ * @param {Object} to upload option
+ */
 const checkParams = (to) => {
     if (!to.fileDesc || !to.fileDesc.length) {
         throw new Error("[TaskUploadOption] CheckParams file desc is missing")
@@ -523,6 +635,12 @@ const checkParams = (to) => {
     }
 }
 
+/**
+ * check if a file has uploaded
+ *
+ * @param {string} fileHash
+ * @returns {boolean}
+ */
 const fileHasUploaded = async (fileHash) => {
     const fi = await sdk.globalSdk().ontFs.getFileInfo(fileHash).catch((e) => {
         console.log("get file info err", e.toString())
@@ -533,6 +651,12 @@ const fileHasUploaded = async (fileHash) => {
     return false
 }
 
+/**
+ * get file unique id
+ *
+ * @param {Array} blockHashes
+ * @returns {string}
+ */
 const getFileUniqueId = async (blockHashes) => {
     console.log('getFileUniqueId blockHashes', blockHashes)
     let blocks = []
@@ -554,12 +678,26 @@ const getFileUniqueId = async (blockHashes) => {
 }
 
 
+/**
+ * get key of upload session
+ *
+ * @param {string} taskId
+ * @param {string} peerAddr
+ * @returns
+ */
 const getUploadSessionId = (taskId, peerAddr) => {
     return `${taskId}_${peerAddr}_upload`
 }
 
+/**
+ * get key of block hash and index
+ *
+ * @param {string} hash
+ * @param {number} index
+ * @returns
+ */
 const keyOfBlockHashAndIndex = (hash, index) => {
-    return `${hash} -${index} `
+    return `${hash}-${index}`
 }
 
 module.exports = {
