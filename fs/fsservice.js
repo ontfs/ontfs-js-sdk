@@ -11,7 +11,7 @@ const CID = require('cids')
 const { Errors } = require('interface-datastore')
 const ERR_NOT_FOUND = Errors.notFoundError().code
 const Crypto = require("crypto");
-const fs = require('fs')
+const Buffer = require('buffer/').Buffer
 
 const MAX_PREFIX_BUFFER_LENGTH = 256
 const MAX_PREFIX_LENGTH_LENGTH = 4
@@ -51,12 +51,13 @@ class FsService {
         await this.ipld.bs._repo.close()
     }
 
-    async addFile(filePath, filePrefix, encrypt, password) {
-        var data = fs.readFileSync(filePath);
+    async addFile(filePath, fileArrayBuf, filePrefix, encrypt, password) {
+        var data = Buffer.from(fileArrayBuf);
         if (encrypt) {
             var cipher = Crypto.createCipher('aes-256-cbc', password);
             data = Buffer.concat([cipher.update(data), cipher.final()]);
         }
+
         //add prefix at the beginning
         const fullDataBuf = Buffer.concat([Buffer.from(filePrefix), data])
         for await (const file of importer([{ path: filePath, content: fullDataBuf }], this.ipld, this.opts)) {
@@ -186,25 +187,23 @@ class FsService {
         return block
     }
 
-    encrypt(filePath, password, outPath) {
+    encrypt(fileBuf, password) {
         try {
-            var data = fs.readFileSync(filePath);
+            var data = Buffer.from(fileBuf);
             var cipher = Crypto.createCipher('aes-256-cbc', password);
-            var encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-            fs.writeFileSync(outPath, encrypted);
-            return
+            var encryptedFileBuf = Buffer.concat([cipher.update(data), cipher.final()]);
+            return encryptedFileBuf
         } catch (exception) {
             throw new Error(exception.message);
         }
     }
-    decrypt(filePath, password, outPath, prefixLen) {
+    decrypt(fileBuf, password, prefixLen) {
         try {
-            var data = fs.readFileSync(filePath);
+            var data = Buffer.from(fileBuf)
             data = data.slice(prefixLen)
             var decipher = Crypto.createDecipher("aes-256-cbc", password);
-            var decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
-            fs.writeFileSync(outPath, decrypted);
-            return
+            var decryptedFileBuf = Buffer.concat([decipher.update(data), decipher.final()]);
+            return decryptedFileBuf
         } catch (exception) {
             throw new Error(exception.message);
         }

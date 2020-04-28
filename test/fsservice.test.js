@@ -25,7 +25,8 @@ describe('fs service', () => {
     test('add file', async () => {
         const filePath = './test/wallet.dat'
         const prefix = "helloworld"
-        const hashes = await fsSvr.addFile(filePath, prefix, true, "123456")
+        var data = fs.readFileSync(filePath);
+        const hashes = await fsSvr.addFile(filePath, data, prefix, true, "123456")
         rootHash = hashes[0]
         console.log('hashes', hashes)
     }, testTimeout)
@@ -143,8 +144,11 @@ describe('fs service', () => {
     }, testTimeout)
 
     test('encrypt file and decrypt', () => {
-        fsSvr.aesEncryptFile("./test/wallet.dat", "123", "./test/wallet_enc.dat")
-        fsSvr.aesDecryptFile("./test/wallet_enc.dat", "123", "./test/wallet_dec.dat", 0)
+        var data = fs.readFileSync("./test/wallet.dat");
+        var encData = fsSvr.aesEncryptFile(data, "123")
+        fs.writeFileSync("./test/wallet_enc.dat", encData)
+        var decData = fsSvr.aesDecryptFile(encData, "123", 0)
+        fs.writeFileSync("./test/wallet_dec.dat", decData)
     })
 
     test('decrypt file', async () => {

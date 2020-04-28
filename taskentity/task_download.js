@@ -9,6 +9,7 @@ const { TaskStart, TaskPause, TaskFinish } = require("./const")
 const { str2hexstr, hexstr2str } = require("ontology-ts-sdk").utils
 const message = require("../network/message")
 const client = require("../network/http/http_client")
+const Buffer = require('buffer/').Buffer
 
 const Download_AddTask = 0
 const Download_FsFoundFileServers = 1

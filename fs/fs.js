@@ -13,7 +13,7 @@ class Fs {
     }
 
     async start() {
-        return await this.fs.initIpld()
+        return await this.fs.initIpldInMemory()
     }
 
     async close() {
@@ -22,8 +22,8 @@ class Fs {
         await this.fs.close()
     }
 
-    async addFile(fileName, filePrefix, encrypt, password) {
-        const root = await this.fs.addFile(fileName, filePrefix, encrypt, password)
+    async addFile(filePath, fileArrayBuf, filePrefix, encrypt, password) {
+        const root = await this.fs.addFile(filePath, fileArrayBuf, filePrefix, encrypt, password)
         let all = [root.cid.toString()]
         const others = await this.fs.getAllFileCids(root.cid)
         for (let blk of others) {
@@ -56,12 +56,12 @@ class Fs {
         return this.fs.getBlockData(block)
     }
 
-    aesEncryptFile(file, password, outputPath) {
-        return this.fs.encrypt(file, password, outputPath)
+    aesEncryptFile(fileBuf, password) {
+        return this.fs.encrypt(fileBuf, password)
     }
 
-    aesDecryptFile(file, password, outputPath, prefixLen) {
-        return this.fs.decrypt(file, password, outputPath, prefixLen)
+    aesDecryptFile(fileBuf, password, prefixLen) {
+        return this.fs.decrypt(fileBuf, password, prefixLen)
     }
 
     returnBuffer(buffer) {
