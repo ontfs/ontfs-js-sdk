@@ -1,12 +1,9 @@
-const path = require("path")
-const fs = require("fs")
 const types = require("../types")
 const utils = require("../utils")
 const common = require("../common")
 const sdk = require("../sdk")
-const config = require("../config")
 const { TaskStart, TaskPause, TaskFinish } = require("./const")
-const { str2hexstr, hexstr2str } = require("ontology-ts-sdk").utils
+const { hexstr2str } = require("ontology-ts-sdk").utils
 const message = require("../network/message")
 const client = require("../network/http/http_client")
 const Buffer = require('buffer/').Buffer
@@ -122,22 +119,6 @@ class TaskDownload {
         this.transferInfo.combineInfo.combinedBlockNum = 0
         this.transferInfo.combineInfo.isFileEncrypted = utils.getPrefixEncrypted(this.baseInfo.filePrefix)
         this.transferInfo.combineInfo.hasCutPrefix = false
-        const fullFilePath = path.join(config.DaemonConfig.fsFileRoot, this.option.fileHash)
-        this.transferInfo.combineInfo.fullFilePath = fullFilePath
-
-        console.log('createDownloadFile', config.DaemonConfig.fsFileRoot, fullFilePath)
-        await createDownloadFile(config.DaemonConfig.fsFileRoot, fullFilePath).catch((err) => {
-            console.log('[Combine] createDownloadFile error:', err)
-            throw err
-        })
-        console.log("create success")
-        await utils.sleep(2000)
-        const file = fs.openSync(fullFilePath, 'r+', 0o666)
-        console.log("open success", fullFilePath)
-        if (!file) {
-            throw new Error(`[Combine] createDownloadFile error file is nil`)
-        }
-        this.transferInfo.combineInfo.fileStream = file
         let promiseList = []
         for (let [peerNetAddr, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
             console.log(`StartRoutine (${peerDownloadInfo.peerWallet} ${peerNetAddr})`)
@@ -190,16 +171,13 @@ class TaskDownload {
         if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
             await this.combine().catch((err) => {
                 console.log("combine err", err)
-                fs.closeSync(file)
                 this.baseInfo.errorInfo = err.toString()
                 this.transferInfo.blockDownloadNotify.finished = false
                 throw err
             })
-            fs.closeSync(file)
             this.baseInfo.progress = Download_Done
             this.transferInfo.blockDownloadNotify.finished = true
         } else {
-            fs.closeSync(file)
             this.baseInfo.progress = Download_Done
             this.transferInfo.blockDownloadNotify.finished = true
         }
@@ -314,6 +292,7 @@ class TaskDownload {
         }
 
         let latestSliceId = 0
+        let settleSlice = {}
         try {
             if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
                 const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
@@ -567,7 +546,9 @@ class TaskDownload {
                 }
                 console.log(`block ${block.cid.toString()} block-len ${data.length}, offset ${value.offset}` +
                     ` prefix ${this.baseInfo.filePrefix}, pos ${writeAtPos}`)
-                fs.writeSync(file, data, 0, data.length, writeAtPos)
+                if (this.option.receiveBlock) {
+                    this.option.receiveBlock(data, data.length, writeAtPos)
+                }
             }
             console.log(`${this.option.fileHash}-${value.hash}-${value.index} set downloaded`)
         }
@@ -587,17 +568,7 @@ class TaskDownload {
             return
         }
         this.baseInfo.progress = Download_FsBlocksDownloadOver
-        const fullFilePath = this.transferInfo.combineInfo.fullFilePath
-        if (!this.option.decryptPwd || !this.option.decryptPwd || !isFileEncrypted) {
-            console.log('fullFilePath', fullFilePath, this.option.outFilePath)
-            fs.renameSync(fullFilePath, this.option.outFilePath)
-        } else {
-            await decryptDownloadedFile(fullFilePath, this.option.decryptPwd, this.option.outFilePath).catch((err) => {
-                throw err
-            })
-        }
     }
-
 }
 
 const newTaskDownload = async (taskID, option, baseInfo, transferInfo) => {
@@ -654,65 +625,22 @@ const checkDownloadParams = async (to) => {
     if (!fileInfo) {
         throw new Error(`[TaskDownloadOption] checkParams file(hash: ${to.fileHash}) is not exist, err ${err.toString()}`)
     }
-
-    const dir = path.dirname(to.outFilePath)
-    if (dir == ".") {
-        to.outFilePath = path.join(config.DaemonConfig.fsFileRoot, to.outFilePath)
-    } else if (!common.pathExisted(dir)) {
-        throw new Error(`[TaskDownloadOption] checkParams out file path err: directory ${dir} is not exist`)
-    }
-
-    if (common.pathExisted(to.outFilePath)) {
-        throw new Error(`out file path err: file ${to.outFilePath} is exist`)
-    }
 }
 
 const getDownloadSessionId = (taskId, peerAddr) => {
     return `${taskId}_${peerAddr}_download`
 }
 
-const createDownloadFile = async (dir, filePath) => {
-    if (!fs.existsSync(dir)) {
-        await fs.mkdirSync(dir, { recursive: true, mode: 0o766 });
-    }
-    //     const filePath = './.data/initialized'
-    // fs.closeSync(fs.openSync(filePath, 'w'))
-    const stream = fs.createWriteStream(filePath, { mode: 0o666 });
-    stream.close()
-}
 
-const decryptDownloadedFile = async (fullFilePath, decryptPwd, outFilePath) => {
-    console.log(`decrypt download file ${fullFilePath}, pwd ${decryptPwd}, out ${outFilePath}`)
-    if (!decryptPwd || !decryptPwd.length) {
-        throw new Error(`no decrypt password`)
-    }
-    // to do test
-    const readStream = fs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN - 1 });
-    const filePrefix = new utils.FilePrefix()
-    let prefix = ""
-    for await (const chunk of readStream) {
-        prefix = chunk
-        console.log("read first n prefix :", prefix, prefix.length)
-        filePrefix.fromString(prefix)
-    }
-    readStream.close()
-    if (!filePrefix.encrypt) {
-        console.log(`file not encrypt`)
-        return
-    }
-    if (!filePrefix.verifyEncryptPassword(decryptPwd)) {
-        throw new Error(`wrong password`)
-    }
-
+const decryptDownloadedFile = async (fileContent, decryptPwd) => {
     try {
-        await sdk.globalSdk().fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, prefix.length)
+        const data = await sdk.globalSdk().decryptDownloadedFile(fileContent, decryptPwd)
+        return data
     } catch (e) {
         console.log('decrypt file err', e)
         throw e
     }
-
 }
-
 
 const keyOfBlockHashAndIndex = (hash, index) => {
     return `${hash} -${index} `

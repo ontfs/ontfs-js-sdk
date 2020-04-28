@@ -27,7 +27,7 @@
 	}
 
 	if (!global.fs && global.require) {
-		global.fs = require("fs");
+		// global.fs = require("fs");
 	}
 
 	if (!global.fs) {

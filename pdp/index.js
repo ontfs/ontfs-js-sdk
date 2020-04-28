@@ -1,7 +1,5 @@
 const { num2hexstring } = require("ontology-ts-sdk").utils
-const fs = require('fs');
-const path = require("path")
-const buf = fs.readFileSync(path.join(__dirname, './fileunique.wasm'));
+const buf = fetch('./fileunique.wasm');
 const utils = require("../utils")
 require("./wasm_exec.js")
 

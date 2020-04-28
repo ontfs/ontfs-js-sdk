@@ -133,18 +133,26 @@ class FsService {
         const blk = await this.ipld.get(blockCid)
         if (blk._data) {
             if (blockCid.codec == 'dag-pb') {
-                const block = new Block(blk.serialize(), blockCid)
-                block.rawData = blk.serialize()
-                return block
+                const blkSerialized = blk.serialize()
+                return {
+                    _data: blkSerialized,
+                    cid: blockCid,
+                    rawData: blkSerialized,
+                }
             }
-            const block = new Block(blk._data, blockCid)
-            block.rawData = blk._data
-            return block
+            return {
+                _data: blk._data,
+                cid: blockCid,
+                rawData: blk._data,
+            }
         }
-        if (Buffer.isBuffer(blk)) {
-            const block = new Block(blk, blockCid)
-            block.rawData = blk
-            return block
+        const blkBuffer = Buffer.from(blk)
+        if (Buffer.isBuffer(blkBuffer)) {
+            return {
+                _data: blkBuffer,
+                cid: blockCid,
+                rawData: blkBuffer,
+            }
         }
         return
     }
@@ -153,7 +161,7 @@ class FsService {
      * get block encoded data
      *
      * @param {Object} block
-     * @returns {Buffer} block encoded data buffer
+     * @returns {ArrayBuffer} block encoded data buffer
      * @memberof FsService
      */
     getBlockData(block) {
@@ -183,7 +191,10 @@ class FsService {
      */
     encodedToBlockWithCid(blockdata, blockhash) {
         const cid = new CID(blockhash)
-        const block = new Block(blockdata, cid)
+        const block = {
+            _data: blockdata,
+            cid: cid
+        }
         return block
     }
 

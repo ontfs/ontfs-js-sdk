@@ -1,9 +1,5 @@
-const cid = {}
-const { FsService, MAX_PREFIX_LENGTH } = require("./fsservice")
+const { FsService } = require("./fsservice")
 const config = require("../config")
-const common = require("../common")
-const Deferred = require("deferred")
-const ffs = require("fs")
 
 class Fs {
     constructor(_fs, _cfg, _closeCh) {
@@ -18,10 +14,20 @@ class Fs {
 
     async close() {
         // this.closeCh.resolve()
-        // return this.fs.stop()
         await this.fs.close()
     }
 
+    /**
+     * sharding file and add file to unixfs 
+     *
+     * @param {string} filePath: file path from the file
+     * @param {ArrayBuffer} fileArrayBuf: file content 
+     * @param {string} filePrefix: file identified prefix string
+     * @param {bool} encrypt: encrypt the file or not
+     * @param {string} password: encrypt file password
+     * @returns {Array} a string array of all block hash
+     * @memberof Fs
+     */
     async addFile(filePath, fileArrayBuf, filePrefix, encrypt, password) {
         const root = await this.fs.addFile(filePath, fileArrayBuf, filePrefix, encrypt, password)
         let all = [root.cid.toString()]
@@ -48,10 +54,24 @@ class Fs {
         return links
     }
 
+    /**
+     * get block object with hash
+     *
+     * @param {string} hash
+     * @returns {Object} : block object
+     * @memberof Fs
+     */
     async getBlockWithHash(hash) {
         return await this.fs.getBlockWithHash(hash)
     }
 
+    /**
+   * get block encoded data
+   *
+   * @param {Object} block
+   * @returns {ArrayBuffer} block encoded data buffer
+   * @memberof FsService
+   */
     getBlockData(block) {
         return this.fs.getBlockData(block)
     }
@@ -65,7 +85,6 @@ class Fs {
     }
 
     returnBuffer(buffer) {
-        // return ontFs.returnBuffer(buffer)
     }
 }
 
@@ -77,19 +96,13 @@ const newFs = () => {
         repoRoot: cfg.fsRepoRoot,
         fsType: cfg.fsType,
     }
-    if (cfg && cfg.fsFileRoot && cfg.fsFileRoot.length) {
-        common.createDirIfNeed(cfg.fsFileRoot)
-    }
     const options = {
         cidVersion: 0,
         codec: 'dag-pb',
         rawLeaves: true,
         leafType: "raw",
-        // rawLeaves: false,
-        // leafType: 'file', // 'raw'
         strategy: 'balanced' // dag tree balanced to leaves, strategy used in golang version
     }
-    // console.log('repo', fsConfig.repoRoot, options)
     const fsSrv = new FsService(fsConfig.repoRoot, options)
     // let closeCh = new Deferred()
     let closeCh

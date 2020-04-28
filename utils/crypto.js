@@ -1,8 +1,6 @@
 const Crypto = require("ontology-ts-sdk").Crypto
-const { hexstr2str, reverseHex } = require("ontology-ts-sdk").utils
+const { reverseHex } = require("ontology-ts-sdk").utils
 const { Address, PublicKey, Signature } = Crypto
-// const PublicKey = Crypto.PublicKey
-// const Signature = Crypto.Signature
 const address = require("./address.js")
 const CryptoJS = require("crypto-js")
 
@@ -39,7 +37,6 @@ const base64str2utf8str = (base64str) => {
 }
 
 const base64str2str = (base64str) => {
-    // return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8)
     return CryptoJS.enc.Base64.parse(base64str).toString()
 }
 
@@ -57,15 +54,6 @@ const hex2base64str = (hex) => {
 const hex2sha256 = (hex) => {
     var message = CryptoJS.enc.Hex.parse(hex);
     return CryptoJS.SHA256(message).toString();
-}
-
-
-const hex2utf8str = (hex) => {
-    // var _data = CryptoJS.enc.Hex.parse(hex);
-    // var utf8_data = _data.toString(CryptoJS.enc.Utf8);
-    // return utf8_data
-    return Buffer.from(hex, 'hex').toString()
-    // return _data.toString()
 }
 
 const hexstr2Bytes = (str) => {
@@ -123,7 +111,6 @@ module.exports = {
     hexstr2Bytes,
     address2bytestr,
     base64str2utf8str,
-    hex2utf8str,
     cryptoStr2Hex,
     base64str2hex,
     sha256str,

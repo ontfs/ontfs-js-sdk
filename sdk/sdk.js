@@ -7,7 +7,6 @@ const common = require("../common")
 const utils = require("../utils")
 const OntFs = require("./ontfs").OntFs
 
-const ffs = require("fs")
 class Sdk {
     constructor(
         _account,
@@ -397,28 +396,23 @@ class Sdk {
 
     }
 
-    async decryptDownloadedFile(fullFilePath, decryptPwd, outFilePath) {
+    async decryptDownloadedFile(fileContent, decryptPwd) {
         if (!decryptPwd || !decryptPwd.length) {
             throw new Error(`no decrypt password`)
         }
         // to do test
-        const readStream = ffs.createReadStream(fullFilePath, { encoding: 'utf8', start: 0, end: utils.PREFIX_LEN - 1 });
         const filePrefix = new utils.FilePrefix()
-        let prefix = ""
-        for await (let chunk of readStream) {
-            prefix = chunk
-            console.log("read first n prefix :", prefix)
-            filePrefix.fromString(prefix)
-        }
-        readStream.close()
+        let prefix = fileContent.toString().substr(0, utils.PREFIX_LEN)
+        console.log("read first n prefix :", prefix)
+        filePrefix.fromString(prefix)
         if (!filePrefix.encrypt) {
             console.log(`file not encrypt`)
-            return
+            return fileContent
         }
         if (!filePrefix.verifyEncryptPassword(decryptPwd)) {
             throw new Error(`wrong password`)
         }
-        this.fs.aesDecryptFile(fullFilePath, decryptPwd, outFilePath, utils.PREFIX_LEN)
+        return this.fs.aesDecryptFile(fileContent, decryptPwd, utils.PREFIX_LEN)
     }
 
 }

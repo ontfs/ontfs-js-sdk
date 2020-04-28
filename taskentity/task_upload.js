@@ -1,7 +1,6 @@
 const types = require("../types")
 const utils = require("../utils")
 const common = require("../common")
-const pdp = require("../pdp")
 const sdk = require("../sdk")
 const { TaskStart, TaskPause, TaskFinish } = require("./const")
 
@@ -92,8 +91,13 @@ class TaskUpload {
                 fileEnc = true
             }
             try {
-                this.baseInfo.blockHashes = await sdk.globalSdk().fs.addFile(this.option.filePath, this.baseInfo.filePrefix,
-                    fileEnc, this.option.encPassword)
+                this.baseInfo.blockHashes = await sdk.globalSdk().fs.addFile(
+                    this.option.filePath,
+                    this.option.fileContent,
+                    this.baseInfo.filePrefix,
+                    fileEnc,
+                    this.option.encPassword
+                )
                 console.log('hash', this.baseInfo.blockHashes)
                 this.baseInfo.fileHash = this.baseInfo.blockHashes[0]
                 this.baseInfo.blockCount = this.baseInfo.blockHashes.length
@@ -494,18 +498,13 @@ const getFilePrefix = (to) => {
 }
 
 const checkParams = (to) => {
-    if (!common.pathExisted(to.filePath)) {
-        throw new Error(`[TaskUploadOption] CheckParams file ${to.filePath} not exists`)
-    }
     if (!to.fileDesc || !to.fileDesc.length) {
         throw new Error("[TaskUploadOption] CheckParams file desc is missing")
     }
-
     if (to.fileSize > common.MAX_UPLOAD_FILE_SIZE) {
         throw new Error(`[TaskUploadOption] CheckParams file size out of limit,
             max support ${ common.MAX_UPLOAD_FILE_SIZE} in kb unit`)
     }
-    console.log('to', to)
     if (parseInt((new Date().getTime()) / 1000) >= to.timeExpired) {
         throw new Error("[TaskUploadOption] CheckParams file expired time error")
     }
@@ -518,6 +517,9 @@ const checkParams = (to) => {
 
     if (to.storageType != types.FileStorageTypeUseFile && to.storageType != types.FileStorageTypeUseSpace) {
         throw new Error("[TaskUploadOption] CheckParams file storage type error")
+    }
+    if (!to.fileContent) {
+        throw new Error("[TaskUploadOption] CheckParams file content is empty")
     }
 }
 

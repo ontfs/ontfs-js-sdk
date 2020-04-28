@@ -74,12 +74,16 @@ describe('fs service', () => {
     test('write file', async () => {
         const filePath = './test/Zoom.pkg'
         prefix = "helloworld"
-        const hashes = await fsSvr.addFile(filePath, prefix, false, "")
-        console.log('hashes', hashes)
+        var data = fs.readFileSync(filePath);
+        const hashes = await fsSvr.addFile(filePath, data, prefix, false, "")
+        // console.log('hashes', hashes)
         rootHash = hashes[0]
         const cidOffsets = await fsSvr.getFileAllBlockHashAndOffset(rootHash)
+        // console.log('cidOffsets', cidOffsets)
+        block = await fsSvr.getBlockWithHash('QmcvQN2iTxRydp3LudrdqpTxTU3nEvUidayvZ33qk31Hn6')
+        console.log('block', block)
         hasCutPrefix = false
-        const outputPath = "./test/testdownload.zip"
+        const outputPath = "./test/testdownload"
         const fd = fs.openSync(outputPath, 'w')
         if (!fd) {
             throw new Error(`open file failed`)
@@ -88,6 +92,9 @@ describe('fs service', () => {
             let hash = hashes[index]
             let offset = cidOffsets[`${hash}-${index}`]
             block = await fsSvr.getBlockWithHash(hash)
+            if (!block) {
+                continue
+            }
             links = await fsSvr.getBlockLinks(hash)
             if (links && links.length) {
                 console.log('skip block with links', hash)
@@ -98,7 +105,6 @@ describe('fs service', () => {
                 console.log('block has no data', hash, block._data)
                 continue
             }
-            console.log('data substr', block._data.toString().substr(0, 20))
             if (!hasCutPrefix && block._data.toString().substr(0, prefix.length) == prefix) {
                 block._data = block._data.slice(prefix.length)
                 hasCutPrefix = true

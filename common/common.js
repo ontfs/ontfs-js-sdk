@@ -1,25 +1,12 @@
-const fs = require("fs")
-const path = require("path")
-const humanize = require(path.join(__dirname, "./humanize/bytes.js"))
+const humanize = require("./humanize/bytes.js")
 const BigNumber = require('bignumber.js');
 
 var VERSION = ""
 const PRECISION_ONG = 9
 
-const pathExisted = (path) => {
-    return fs.existsSync(path)
-}
-
-const createDirIfNeed = (folder) => {
-    if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder, { recursive: true });
-    }
-}
-
 const formatVolumeStringFromKb = (volumeInKb) => {
     return formatVolumeStringFromByteNum(volumeInKb * 1024)
 }
-
 
 const formatVolumeStringFromByteNum = (byteNum) => {
     return humanize.bytes(byteNum)
@@ -108,8 +95,6 @@ const formatDateLocaleString = (date) => {
 module.exports = {
     VERSION,
     PRECISION_ONG,
-    pathExisted,
-    createDirIfNeed,
     formatVolumeStringFromKb,
     formatVolumeStringFromByteNum,
     parseVolumeStringToByteNum,
@@ -121,5 +106,5 @@ module.exports = {
     toArrayReverse,
     getTcpAddrFromNodeNetAddr,
     getHTTPAddrFromNodeNetAddr,
-    formatDateLocaleString
+    formatDateLocaleString,
 }

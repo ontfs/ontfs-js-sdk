@@ -1,23 +1,21 @@
-const { RpcClient, Account, Wallet, Crypto } = require("ontology-ts-sdk")
-const { PrivateKey, Address } = require("ontology-ts-sdk").Crypto
+const { Account } = require("ontology-ts-sdk")
+const { Address } = require("ontology-ts-sdk").Crypto
 const OntSDK = require("ontology-ts-sdk").SDK
 const fs = require("fs")
-const path = require("path")
 const utils = require("../../utils")
 const flags = require("./flags")
 const { initTaskManage, globalTaskMgr } = require("../../taskmanage")
 const { initSdk, setGlobalSdk, globalSdk } = require("../../sdk")
 const types = require("../../types")
-const bytes = require("../../common/humanize/bytes")
 const config = require("../../config")
 const common = require("../../common")
-
+const Buffer = require('buffer/').Buffer
 
 const startSDK = async (argv) => {
     // init config
     const password = argv.password ? argv.password : 'pwd'
     const rpcAddr = argv.rpcAddr ? argv.rpcAddr : 'http://127.0.0.1:20336'
-    const walletObj = JSON.parse(fs.readFileSync(path.join(__dirname, "./wallet.dat")).toString())
+    const walletObj = JSON.parse(fs.readFileSync("./wallet.dat").toString())
     const defAccountObj = walletObj.accounts[0]
     const { error, result } = OntSDK.importAccountWithWallet(
         defAccountObj.label,
@@ -123,6 +121,7 @@ const uploadFile = async (argv) => {
             // init upload option
             const option = new types.TaskUploadOption()
             option.filePath = filePaths && filePaths.length && filePaths.length > index ? filePaths[index] : __dirname + "/test.zip"
+            option.fileContent = fs.readFileSync(option.filePath)
             option.fileDesc = descs && descs.length && descs.length > index ? descs[index] : "test.zip"
             const stat = fs.statSync(option.filePath)
             option.fileSize = stat.size
@@ -137,14 +136,16 @@ const uploadFile = async (argv) => {
                 resolve()
                 return
             }
-            // const minHour = 4
-            // if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
-            //     console.log(`file time expired less than ${minHour} hours`)
-            //     resolve()
-            //     return
-            // }
             option.encPassword = encryptPwds && encryptPwds.length && encryptPwds.length > index ? encryptPwds[index] : ""
-            console.log('upload option', option)
+            console.log("option.filePath", option.filePath)
+            console.log("option.fileContent", option.fileContent.length)
+            console.log("option.fileDesc", option.fileDesc)
+            console.log("option.fileSize", option.fileSize)
+            console.log("option.storageType", option.storageType)
+            console.log("option.copyNum", option.copyNum)
+            console.log("option.firstPdp", option.firstPdp)
+            console.log("option.timeExpired", option.timeExpired)
+            console.log("option.encPassword", option.encPassword)
             // add task
             const taskID = await globalTaskMgr().addTask(option).catch((e) => {
                 console.log('e', e)
@@ -238,6 +239,16 @@ const downloadFile = async (argv) => {
             option.maxPeerCnt = maxPeerCnts && maxPeerCnts.length && maxPeerCnts.length > index ? maxPeerCnts[index] : 10
             option.outFilePath = outFilePaths && outFilePaths.length && outFilePaths.length > index ? outFilePaths[index] : "./" + hash
             option.decryptPwd = decryptPwds && decryptPwds.length && decryptPwds.length > index ? decryptPwds[index] : ''
+            const stream = fs.createWriteStream(option.outFilePath, { mode: 0o666 });
+            stream.close()
+            const file = fs.openSync(option.outFilePath, 'r+', 0o666)
+            console.log("open success", option.outFilePath)
+            if (!file) {
+                throw new Error(`[Combine] createDownloadFile error file is nil`)
+            }
+            option.receiveBlock = (data, length, position) => {
+                fs.writeSync(file, data, 0, length, position)
+            }
             console.log('option', option)
             // add task
             const taskID = await globalTaskMgr().addTask(option).catch((e) => {
@@ -620,7 +631,7 @@ const downloadFileCmd = {
     builder: (yargs) => yargs
         .option(flags.fileHash.name, flags.fileHash)
         // .option(flags.inorder.name, flags.inorder)
-        .option(flags.decryptPwd.name, flags.decryptPwd)
+        // .option(flags.decryptPwd.name, flags.decryptPwd)
         .option(flags.maxPeerCnt.name, flags.maxPeerCnt)
         .option(flags.outFilePath.name, flags.outFilePath)
     ,

@@ -115,24 +115,7 @@ describe('prefix test', () => {
 
     test('base64str2str', async () => {
         const base64str = `CooFCAISggUwMTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMGU0MDEwMDAwMDAwMDAwMDAwMDAwMDAwMHsibmFtZSI6Ik15V2FsbGV0IiwidmVyc2lvbiI6IjEuMSIsInNjcnlwdCI6eyJwIjo4LCJuIjoxNjM4NCwiciI6OCwiZGtMZW4iOjY0fSwiYWNjb3VudHMiOlt7ImFkZHJlc3MiOiJBTFpYTjhWS3VONjN4YXNzQVVFMjlTRzF2S0hUZjNXdVZGIiwiZW5jLWFsZyI6ImFlcy0yNTYtZ2NtIiwia2V5IjoiM0dFZ29IUmV1ZU9uUTdoSW01dlMwdlFxL3RnLzI3NjA2WU1obVlyU1kyN3g1VGVmb1FScVNualB3dDc4WFZyTSIsImFsZ29yaXRobSI6IkVDRFNBIiwic2FsdCI6IkxnV3JYYkpPTDhOOURSano0cm9kb2c9PSIsInBhcmFtZXRlcnMiOnsiY3VydmUiOiJQLTI1NiJ9LCJsYWJlbCI6InB3ZCIsInB1YmxpY0tleSI6IjAzZTU1YzYyMzc1ZWU2NzI1YTBhN2M0NWRiNGMyMDlhYTI4YWMwOGFhOTg1ZGZjNjM0NzU3YThkZTg5YTJmNmFhZSIsInNpZ25hdHVyZVNjaGVtZSI6IlNIQTI1NndpdGhFQ0RTQSIsImlzRGVmYXVsdCI6dHJ1ZSwibG9jayI6ZmFsc2V9XX0YggU=`
-        // const base64str = utils.hex2base64str(str)
-        // console.log('64', base64str)
-        // console.log('str', utils.base64str2utf8str(base64str).toString('hex'))
-        // const str2 = `{
-        //     "MessageId": 3299747308398666000, 
-        //     "Header": {
-        //         "Version": "1", 
-        //         "Type": "file", 
-        //         "MsgLength": 352
-        //     }, 
-        //     "Payload": "eyJTZXNzaW9uSWQiOiIyNzc5ODI3NTY5OTc1MjU3MDAwX2h0dHA6Ly8xMjcuMC4wLjE6MzAzMzdfdXBsb2FkIiwiSGFzaCI6IlNrOXlWNDdHeGF6RTZ2UFlXSG1QQ1Y4NVllTThuUHBpVEhzbmpYcmtVOE5aVUNtRCIsIkJsb2NrSGFzaGVzIjpudWxsLCJPcGVyYXRpb24iOjEwMDEsIlByZWZpeCI6bnVsbCwiUGF5aW5mbyI6eyJXYWxsZXRBZGRyZXNzIjoiQUxRNlJXSkVOc0VMRTdBVHV6SHo0emdIcnE1NzN4SnNuTSIsIkxhdGVzdFBheW1lbnQiOm51bGx9LCJUeCI6bnVsbCwiQnJlYWtwb2ludCI6bnVsbCwiVG90YWxCbG9ja0NvdW50IjowLCJDaGFpbkluZm8iOnsiSGVpZ2h0IjoxMDAxN30sIkJMb2Nrc1Jvb3QiOiIifQ==", 
-        //     "Sig": null, 
-        //     "Error": null
-        // }`
-        // const msg = message.decodeMsg(str2)
-        // console.log('msg', msg)
         console.log('hex', CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString())
-        // console.log('data', Buffer.from(utils.base64str2str(base64str), 'hex').toString())
     })
 
     test('address2bytestr', async () => {
@@ -149,6 +132,7 @@ describe('prefix test', () => {
             console.log(`2 ^ ${i} = ${value + 1} ${serializeVarUint(value + 1)} `)
         }
     })
+
 
 
 
