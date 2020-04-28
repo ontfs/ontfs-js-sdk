@@ -1,8 +1,8 @@
 const { num2hexstring } = require("ontology-ts-sdk").utils
-const buf = fetch('./fileunique.wasm');
 const utils = require("../utils")
 require("./wasm_exec.js")
-
+const buf = require("./wasm")
+const Buffer = require('buffer/').Buffer
 class Pdp {
     constructor(_version) {
         this.version = _version
@@ -19,7 +19,7 @@ class Pdp {
 const newPdp = async (version) => {
     const p = new Pdp(version)
     const go = new Go()
-    await WebAssembly.instantiate(new Uint8Array(buf), go.importObject).then(async (res) => {
+    await WebAssembly.instantiate(Buffer.from(buf, 'hex'), go.importObject).then(async (res) => {
         go.run(res.instance).then((res) => {
         }).catch((err) => {
         })

@@ -18,3 +18,4 @@ examples/cli/*.zip
 examples/cli/*.pkg
 examples/cli/log
 test/*.pkg
+pdp/fileunique.wasm

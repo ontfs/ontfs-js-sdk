@@ -1,8 +1,6 @@
 const Ipld = require('ipld')
-// const Ipld = require('ipld-raw')
 const inMemory = require('ipld-in-memory')
 const IpfsRepo = require('ipfs-repo')
-const Block = require('ipfs-block')
 const IpfsBlockService = require('ipfs-block-service')
 const { DAGNode } = require('ipld-dag-pb')
 const importer = require('ipfs-unixfs-importer')
