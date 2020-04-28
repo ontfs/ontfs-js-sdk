@@ -137,12 +137,12 @@ const uploadFile = async (argv) => {
                 resolve()
                 return
             }
-            const minHour = 4
-            if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
-                console.log(`file time expired less than ${minHour} hours`)
-                resolve()
-                return
-            }
+            // const minHour = 4
+            // if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
+            //     console.log(`file time expired less than ${minHour} hours`)
+            //     resolve()
+            //     return
+            // }
             option.encPassword = encryptPwds && encryptPwds.length && encryptPwds.length > index ? encryptPwds[index] : ""
             console.log('upload option', option)
             // add task

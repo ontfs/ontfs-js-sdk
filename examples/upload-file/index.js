@@ -109,11 +109,11 @@ const main = async () => {
         console.log(`file time expired less than now ${nowTimeStamp}`)
         return
     }
-    const minHour = 4
-    if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
-        console.log(`file time expired less than ${minHour} hours`)
-        return
-    }
+    // const minHour = 4
+    // if (option.timeExpired < nowTimeStamp + minHour * 60 * 60) {
+    //     console.log(`file time expired less than ${minHour} hours`)
+    //     return
+    // }
     option.encPassword = argv.encryptPwd && argv.encryptPwd.length ? argv.encryptPwd : ""
     console.log('option', option)
     // add task
