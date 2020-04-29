@@ -112,7 +112,7 @@ describe('task manager', () => {
     }, testTimeout);
 
     test('test decrypt download file', async () => {
-        await decryptDownloadedFile("./test/QmTxcLjRfoinR85z87QfYHY1VNRMxek9ErqmPxgwYPRjej", "123456", "./test/f1")
+        decryptDownloadedFile("./test/QmTxcLjRfoinR85z87QfYHY1VNRMxek9ErqmPxgwYPRjej", "123456", "./test/f1")
     }, testTimeout)
 
 })

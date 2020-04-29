@@ -6,7 +6,7 @@ const fs = require("../fs")
 const common = require("../common")
 const utils = require("../utils")
 const OntFs = require("./ontfs").OntFs
-
+const Buffer = require('buffer/').Buffer
 class Sdk {
     constructor(
         _account,
@@ -173,7 +173,17 @@ class Sdk {
             if (!info) {
                 throw new Error(`get space info error`)
             }
-            return info
+            let space = {}
+            space.spaceOwner = info.spaceOwner.toBase58()
+            space.volume = common.formatVolumeStringFromKb(info.volume)
+            space.restVol = common.formatVolumeStringFromKb(info.restVol)
+            space.payAmount = common.formatOng(info.payAmount)
+            space.restAmount = common.formatOng(info.restAmount)
+            space.timeStart = common.formatDateLocaleString(new Date(info.timeStart * 1000));
+            space.timeExpired = common.formatDateLocaleString(new Date(info.timeExpired * 1000))
+            space.currFeeRate = info.currFeeRate
+            space.validFlag = info.validFlag
+            return space
         } catch (e) {
             throw e
         }
@@ -283,6 +293,7 @@ class Sdk {
                     expiredHeight: fi.expireHeight ? fi.expireHeight : 0,
                     pdpParam: fi.pdpParam,
                     validFlag: fi.validFlag,
+                    currFeeRate: fi.currFeeRate,
                     storageType: fi.storageType,
                 }
             }
@@ -557,13 +568,13 @@ class Sdk {
      * @returns {ArrayBuffer} : decrypted array buffer
      * @memberof Sdk
      */
-    async decryptDownloadedFile(fileContent, decryptPwd) {
+    decryptDownloadedFile(fileContent, decryptPwd) {
         if (!decryptPwd || !decryptPwd.length) {
             throw new Error(`no decrypt password`)
         }
         // to do test
         const filePrefix = new utils.FilePrefix()
-        let prefix = fileContent.toString().substr(0, utils.PREFIX_LEN)
+        let prefix = Buffer.from(fileContent).toString().substr(0, utils.PREFIX_LEN)
         console.log("read first n prefix :", prefix)
         filePrefix.fromString(prefix)
         if (!filePrefix.encrypt) {
@@ -573,6 +584,7 @@ class Sdk {
         if (!filePrefix.verifyEncryptPassword(decryptPwd)) {
             throw new Error(`wrong password`)
         }
+        console.log('password verified')
         return this.fs.aesDecryptFile(fileContent, decryptPwd, utils.PREFIX_LEN)
     }
 
