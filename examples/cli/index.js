@@ -3,7 +3,8 @@ const spaceCmd = require("./space")
 const fileCmd = require("./file")
 const nodeCmd = require("./fsnode")
 const fs = require("fs")
-const logDir = "./Logs"
+const path = require("path")
+const logDir = path.join(".", "Logs")
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir)
 }
@@ -22,7 +23,7 @@ const formatDateLocaleString = (date) => {
     return str
 }
 const now = formatDateLocaleString(new Date())
-const logPath = `${logDir}/${now}.log`
+const logPath = path.join(logDir, `${now}.log`)
 fs.writeFileSync(logPath, `[${formatDateLocaleString(new Date())}]: start log...\n`)
 const log = console.log;
 console.log = (...args) => {
