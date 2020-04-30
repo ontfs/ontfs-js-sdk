@@ -4,7 +4,7 @@ const fileCmd = require("./file")
 const nodeCmd = require("./fsnode")
 const fs = require("fs")
 const path = require("path")
-const logDir = path.join(".", "Logs")
+const logDir = path.join(__dirname, "Logs")
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir)
 }
@@ -20,6 +20,7 @@ const formatDateLocaleString = (date) => {
     })
     str = str.replace(/\//g, '-')
     str = str.replace(/ /g, '_')
+    str = str.replace(/\:/g, '.')
     return str
 }
 const now = formatDateLocaleString(new Date())
