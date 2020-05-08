@@ -631,7 +631,7 @@ class TaskDownload {
                     console.log('cut prefix')
                     this.transferInfo.combineInfo.hasCutPrefix = true
                 }
-                if (value.offset > 0 && !isFileEncrypted && hasCutPrefix) {
+                if (value.offset > 0 && !isFileEncrypted) {
                     writeAtPos = value.offset - this.baseInfo.filePrefix.length
                 }
                 console.log(`block ${block.cid.toString()} block-len ${data.length}, offset ${value.offset}` +
