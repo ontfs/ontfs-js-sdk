@@ -1,105 +1,17 @@
-const { hexstr2str, reverseHex, str2hexstr, StringReader } = require("ontology-ts-sdk").utils;
-const { RpcClient } = require("ontology-ts-sdk"); //todo
-const { Address, Signature, PublicKey } = require("ontology-ts-sdk").Crypto; // todo
+const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
-const {
-	FsNodeInfo,
-	FsNodeInfoList,
-	SpaceInfo,
-	FileInfo,
-	FileHashList,
-	FsResult,
-	ReadPlan,
-	ReadPledge,
-	PdpRecordList,
-	ChallengeList,
-	FileReadSettleSlice
-} = require("ontology-ts-sdk/fs");
-const { sleep } = require("../utils");
-const common = require("../common");
 
 class OntFs {
 	/**
 	 *Creates an instance of OntFs.
-	 * @param {Account} _account account object
-	 * @param {string} _pwd password for account
-	 * @param {string} _chainRpcAddr ontology chain rpc address. e.g http://127.0.0.1:20336
 	 * @param {number} [_gasPrice=500] gas price for smart contract transaction
 	 * @param {number} [_gasLimit=20000] gas limit for smart contract transaction
 	 * @memberof OntFs
 	 */
-	constructor(_account, _pwd, _chainRpcAddr, _gasPrice = 500, _gasLimit = 20000) {
+	constructor(_gasPrice = 500, _gasLimit = 20000) {
 		client.registerClient({});
-		this.account = _account;
-		this.walletAddr = _account.address;
-		this.password = _pwd;
-		this.chainRpcAddr = _chainRpcAddr;
 		this.gasPrice = _gasPrice;
 		this.gasLimit = _gasLimit;
-		this.rpcClient = new RpcClient(_chainRpcAddr);
-	}
-
-	/**
-	 * pre invoke a native contract
-	 *
-	 * @param {Transaction} tx
-	 * @returns {FsResult}
-	 * @memberof OntFs
-	 */
-	async preInvokeNativeContract(tx) {
-		const rawTx = tx.serialize();
-		const ret = await this.rpcClient.sendRawTransaction(rawTx, true);
-		// console.log('ret', ret)
-		const result = FsResult.deserializeHex(ret.result.Result);
-		return result;
-	}
-
-	/**
-	 * Invoke a native contract
-	 *
-	 * @param {Transaction} tx
-	 * @returns {string} tx hash
-	 * @memberof OntFs
-	 */
-	async invokeNativeContract(tx) {
-		const signedTx = this.account.signTransaction(this.password, tx);
-		const rawTx = signedTx.serialize();
-		const ret = await this.rpcClient.sendRawTransaction(rawTx, false);
-		console.log("ret", ret);
-		if (!ret || !ret.result) {
-			throw new Error("result is invalid");
-		}
-		if (ret && ret.error == 0) {
-			try {
-				await this.waitForTxConfirmed(common.WAIT_FOR_TX_COMFIRME_TIMEOUT, ret.result);
-			} catch (e) {
-				throw e;
-			}
-			return ret.result;
-		}
-		throw new Error(ret.result);
-	}
-
-	/**
-	 * wait for a transaction to be confirmed
-	 *
-	 * @param {number} timeout: timeout, second
-	 * @param {string} txHashStr: transaction hash string
-	 * @returns {boolean} success or not
-	 * @memberof OntFs
-	 */
-	async waitForTxConfirmed(timeout, txHashStr) {
-		if (!timeout) {
-			timeout = 1;
-		}
-		for (let i = 0; i < timeout; i++) {
-			await sleep(1000);
-			let { result } = await this.rpcClient.getBlockHeightByTxHash(txHashStr);
-			if (result > 0) {
-				return true;
-			}
-		}
-		throw new Error(`timeout after ${timeout} (s)`);
 	}
 
 	/**
@@ -118,16 +30,16 @@ class OntFs {
 	 *
 	 * @param {number} volume: volume size in KB
 	 * @param {number} copyNum: copy number
-	 * @param {Date} timeExpired: space expired timestamp, second
+	 * @param {number} timeExpired: space expired timestamp, second
 	 * @returns
 	 * @memberof OntFs
 	 */
-	async createSpace(volume, copyNum, timeExpired) {
-		return client.api.fs.sapce.create({
+	async createSpace(volume, copyNumber, timeExpired) {
+		return client.api.fs.space.create({
 			volume,
-			copyNum,
+			copyNumber,
 			timeStart: new Date(),
-			timeExpired,
+			timeExpired: new Date(timeExpired),
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
@@ -160,14 +72,14 @@ class OntFs {
 	 * update a exist space
 	 *
 	 * @param {number} volume volume size in KB
-	 * @param {Date} timeExpired space expired timestamp, second
+	 * @param {number} timeExpired space expired timestamp, second
 	 * @returns {string} tx hash
 	 * @memberof OntFs
 	 */
 	async updateSpace(volume, timeExpired) {
 		return client.api.fs.space.update({
 			volume,
-			timeExpired,
+			timeExpired: new Date(timeExpired),
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
@@ -184,13 +96,15 @@ class OntFs {
 		let newFiles = [];
 		for (let file of files) {
 			let newFile = file;
-			newFile.fileHash = str2hexstr(file.fileHash);
-			newFile.fileDesc = str2hexstr(file.fileDesc);
+			newFile.fileHash = client.api.utils.strToHex(file.fileHash);
+			newFile.fileDesc = client.api.utils.strToHex(file.fileDesc);
 			newFile.pdpParam = file.pdpParam;
+			newFile.timeStart = new Date();
+			newFile.timeExpired = new Date(file.timeExpired * 1000);
 			newFiles.push(newFile);
 		}
 		return client.api.fs.storeFiles({
-			fileInfo: newFiles,
+			filesInfo: newFiles,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
@@ -204,7 +118,7 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async getFileInfo(fileHash) {
-		const fileInfo = await client.api.fs.getFileInfo({ flieHash });
+		const fileInfo = await client.api.fs.getFileInfo({ fileHash });
 		fileInfo.fileHash = client.api.utils.hexToStr(fileInfo.fileHash);
 		fileInfo.fileDesc = client.api.utils.hexToStr(fileInfo.fileDesc);
 		fileInfo.pdpParam = client.api.utils.hexToStr(fileInfo.pdpParam);
@@ -230,7 +144,7 @@ class OntFs {
 	 */
 	async renewFile(renews) {
 		for (let item of renews) {
-			item.fileHash = str2hexstr(item.fileHash);
+			item.fileHash = client.api.utils.strToHex(item.fileHash);
 		}
 		return client.api.fs.renewFile({
 			filesRenew: renews,
@@ -267,7 +181,7 @@ class OntFs {
 	async deleteFiles(fileHashes) {
 		let newFileHashes = [];
 		for (let item of fileHashes) {
-			newFileHashes.push(str2hexstr(item));
+			newFileHashes.push(client.api.utils.strToHex(item));
 		}
 		return client.api.fs.deleteFiles({
 			fileHashes: newFileHashes,
@@ -285,15 +199,9 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async fileReadPledge(fileHash, plans) {
-		let readPlans = [];
-		for (let p of plans) {
-			readPlans.push(
-				new ReadPlan(new Address(p.nodeAddr), p.maxReadBlockNum, p.haveReadBlockNum, 0)
-			);
-		}
 		return client.api.fs.fileReadPledge({
 			fileHash: fileHash,
-			readPlans: readPlans,
+			readPlans: plans,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
@@ -312,7 +220,7 @@ class OntFs {
 			fileHash,
 			downloader: walletAddr
 		});
-		readPledge.fileHash = hexstr2str(readPledge.fileHash);
+		readPledge.fileHash = client.api.utils.hexToStr(readPledge.fileHash);
 		return readPledge;
 	}
 
