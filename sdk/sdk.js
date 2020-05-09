@@ -6,6 +6,8 @@ const utils = require("../utils");
 const OntFs = require("./ontfs").OntFs;
 const Buffer = require("buffer/").Buffer;
 const { client } = require("@ont-dev/ontology-dapi");
+const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils;
+const { addressFromPubKeyHex } = require('../utils/address')
 class Sdk {
 	constructor(_sdkConfig, _ontFs, _fs, _stop, _pdpServer) {
 		this.sdkConfig = _sdkConfig;
@@ -186,7 +188,7 @@ class Sdk {
 	async deleteSpace() {
 		try {
 			const tx = await this.ontFs.deleteSpace();
-			const info = await this.ontFs.getSpaceInfo().catch((e) => {});
+			const info = await this.ontFs.getSpaceInfo().catch((e) => { });
 			console.log(`delete space tx = ${tx}, info = ${info}`);
 			if (!info) {
 				console.log(`delete space success`);
@@ -247,7 +249,7 @@ class Sdk {
 					volume: common.formatVolumeStringFromKb(nodeInfo.volume),
 					restVol: common.formatVolumeStringFromKb(nodeInfo.restVol),
 					serviceTime: common.formatTimeStringFromUnixTime(nodeInfo.serviceTime),
-					nodeAddr: nodeInfo.nodeAddr.toBase58(),
+					nodeAddr: nodeInfo.nodeAddr,
 					nodeNetAddr: nodeInfo.nodeNetAddr
 				});
 				count++;
@@ -271,7 +273,7 @@ class Sdk {
 			if (fi) {
 				return {
 					fileHash: fi.fileHash,
-					fileOwner: fi.fileOwner.toBase58(),
+					fileOwner: fi.fileOwner,
 					fileDesc: fi.fileDesc,
 					fileBlockCount: fi.fileBlockCount,
 					realFileSize: common.formatVolumeStringFromByteNum(fi.realFileSize),
@@ -382,13 +384,13 @@ class Sdk {
 			}
 			const readPledge = {
 				fileHash: pledge.fileHash,
-				downloader: pledge.downloader.toBase58(),
+				downloader: pledge.downloader,
 				restMoney: pledge.restMoney,
 				readPlans: []
 			};
 			for (let plan of pledge.readPlans) {
 				readPledge.readPlans.push({
-					nodeAddr: plan.nodeAddr.toBase58(),
+					nodeAddr: plan.nodeAddr,
 					maxReadBlockNum: plan.maxReadBlockNum,
 					haveReadBlockNum: plan.haveReadBlockNum,
 					numOfSettlements: plan.numOfSettlements
@@ -439,9 +441,9 @@ class Sdk {
 			}
 			for (let pr of pdpRecordList.pdpRecords) {
 				records.push({
-					nodeAddr: pr.nodeAddr.toBase58(),
+					nodeAddr: addressFromPubKeyHex(str2hexstr(pr.nodeAddr)),
 					fileHash: pr.fileHash,
-					fileOwner: pr.fileOwner.toBase58(),
+					fileOwner: pr.fileOwner,
 					lastPdpTime: common.formatTimeStringFromUnixTime(pr.lastPdpTime),
 					settleFlag: pr.settleFlag
 				});
@@ -496,8 +498,8 @@ class Sdk {
 			for (let challenge of challengeListTmp.challenges) {
 				challengeList.push({
 					fileHash: challenge.fileHash,
-					fileOwner: challenge.fileOwner.toBase58(),
-					nodeAddr: challenge.nodeAddr.toBase58(),
+					fileOwner: challenge.fileOwner(),
+					nodeAddr: challenge.nodeAddr(),
 					challengeHeight: challenge.challengeHeight,
 					reward: challenge.reward,
 					expiredTime: challenge.expiredTime,
@@ -524,7 +526,7 @@ class Sdk {
 				throw new Error(`DeleteFile error: file is not exist`);
 			}
 			await this.ontFs.deleteFiles([fileHash]);
-			fileInfo = await this.ontFs.getFileInfo(fileHash).catch((e) => {});
+			fileInfo = await this.ontFs.getFileInfo(fileHash).catch((e) => { });
 			if (!fileInfo) {
 				console.log(`file ${fileHash} has deleted`);
 				return;

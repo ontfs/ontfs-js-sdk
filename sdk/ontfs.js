@@ -1,3 +1,5 @@
+const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils;
+const { addressFromPubKeyHex } = require('../utils/address')
 const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
 
@@ -22,7 +24,16 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async getNodeInfoList(limit = 1) {
-		return client.api.fs.getNodeInfoList({ count: limit });
+		const nodes = await client.api.fs.getNodeInfoList({ count: limit });
+		let newNodes = {
+			nodesInfo: []
+		};
+		for (let node of nodes.nodesInfo) {
+			let newNode = node;
+			newNode.nodeAddr = addressFromPubKeyHex(str2hexstr(node.nodeAddr));
+			newNodes.nodesInfo.push(newNode);
+		}
+		return newNodes
 	}
 
 	/**
@@ -52,7 +63,9 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async getSpaceInfo() {
-		return client.api.fs.space.get();
+		const spaceInfo = await client.api.fs.space.get();
+		spaceInfo.spaceOwner = addressFromPubKeyHex(str2hexstr(spaceInfo.spaceOwner))
+		return spaceInfo
 	}
 
 	/**
@@ -122,6 +135,7 @@ class OntFs {
 		fileInfo.fileHash = client.api.utils.hexToStr(fileInfo.fileHash);
 		fileInfo.fileDesc = client.api.utils.hexToStr(fileInfo.fileDesc);
 		fileInfo.pdpParam = client.api.utils.hexToStr(fileInfo.pdpParam);
+		fileInfo.fileOwner = addressFromPubKeyHex(str2hexstr(fileInfo.fileOwner));
 		return fileInfo;
 	}
 
@@ -220,8 +234,16 @@ class OntFs {
 			fileHash,
 			downloader: walletAddr
 		});
-		readPledge.fileHash = client.api.utils.hexToStr(readPledge.fileHash);
-		return readPledge;
+		readPledge.fileHash = hexstr2str(readPledge.fileHash);
+		readPledge.downloader = addressFromPubKeyHex(str2hexstr(readPledge.downloader));
+		let newReadPlans = []
+		for (let plan of readPledge.readPlans) {
+			let newPlan = plan;
+			newPlan.nodeAddr = addressFromPubKeyHex(str2hexstr(plan.nodeAddr));
+			newReadPlans.push(newPlan);
+		}
+		readPledge.readPlans = newReadPlans
+		return readPledge
 	}
 
 	/**
@@ -247,7 +269,18 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async getFilePdpRecordList(fileHash) {
-		return client.api.fs.getFilePdpRecordList({ fileHash });
+		const pdpRecords = await client.api.fs.getFilePdpRecordList({ fileHash });
+		let newPdpRecords = {
+			pdpRecords: []
+		};
+		for (let record of pdpRecords.pdpRecords) {
+			let newRecord = record;
+			newRecord.fileHash = hexstr2str(newRecord.fileHash);
+			newRecord.fileOwner = addressFromPubKeyHex(str2hexstr(newRecord.fileOwner));
+			newPdpRecords.pdpRecords.push(newRecord);
+		}
+		console.log(newPdpRecords)
+		return newPdpRecords
 	}
 
 	/**
@@ -292,7 +325,17 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async getFileChallengeList(fileHash) {
-		return client.api.fs.getFileChallengeList({ fileHash });
+		const challengeList = await client.api.fs.getFileChallengeList({ fileHash });
+		let newChallengeList = {
+			challenges: []
+		}
+		for (let challenge of challengeList.challenges) {
+			let newChallenge = challenge
+			newChallenge.fileOwner = addressFromPubKeyHex(str2hexstr(newChallenge.fileOwner));
+			newChallenge.nodeAddr = addressFromPubKeyHex(str2hexstr(newChallenge.nodeAddr));
+			newChallengeList.challenges.push(newChallenge)
+		}
+		return newChallengeList
 	}
 
 	/**

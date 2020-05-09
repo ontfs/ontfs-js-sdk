@@ -1,0 +1,76 @@
+<style>
+    #byte_content {
+        margin: 5px 0;
+        max-height: 100px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #byte_range {
+        margin-top: 5px;
+    }
+</style>
+
+<html>
+
+<body>
+    <a href="./index.html">upload/download/delete file, resume/delete task</a><br>
+    <a href="./node.html">node management</a><br>
+    <a href="./space.html">space management</a><br>
+    <a href="./fs.html">file system management</a><br>
+    <br>
+    <div>
+        <p>Please start service first.</p>
+        <button onclick="startSDK()">start service</button>
+    </div>
+    <div id="startRet"></div>
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">node list</div>
+        <div style="padding: 10;">
+            <button onclick="getFsNodeList()">getFsNodeList</button>
+        </div>
+        <p id="getFsNodeListRet"></p>
+    </div>
+</body>
+
+
+</html>
+
+<!-- ontfs-js-sdk -->
+<script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
+
+<script>
+    // startSDK. start SDK 
+    const startSDK = async () => {
+        document.getElementById('startRet').innerHTML = `<p>wait...</p>`
+        // init config
+        const sdkCfg = { gasPrice: 500, gasLimit: 400000, pdpVersion: 1 }
+        ontfs.Config.DaemonConfig = { fsRepoRoot: "./test/Fs", fsFileRoot: "./test/Download", fsType: 0 }
+        console.log('start service')
+        // init global task manager
+        ontfs.TaskManage.initTaskManage()
+        // init global sdk
+        const s = await ontfs.SDK.initSdk(sdkCfg)
+        ontfs.SDK.setGlobalSdk(s)
+        await s.start()
+        document.getElementById('startRet').innerHTML = `<p>service start success</p>`
+
+        return true
+    }
+
+    const getFsNodeList = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            console.log(document.getElementById('startRet').innerHTML.length)
+            alert('service not start')
+            return
+        }
+        try {
+            const list = await ontfs.SDK.globalSdk().getFsNodesList(10)
+            console.log('getFsNodeList: ', list)
+            document.getElementById('getFsNodeListRet').innerHTML = 'result: <br>' + JSON.stringify(list)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+</script>

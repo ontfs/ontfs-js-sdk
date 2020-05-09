@@ -1,0 +1,266 @@
+<style>
+    #byte_content {
+        margin: 5px 0;
+        max-height: 100px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #byte_range {
+        margin-top: 5px;
+    }
+</style>
+
+<html>
+
+<body>
+    <a href="./index.html">upload/download/delete file, resume/delete task</a><br>
+    <a href="./node.html">node management</a><br>
+    <a href="./space.html">space management</a><br>
+    <a href="./fs.html">file system management</a><br>
+    <br>
+    <div>
+        <p>Please start service first.</p>
+        <button onclick="startSDK()">start service</button>
+    </div>
+    <div id="startRet"></div>
+
+    <div style="padding: 10;">file system management</div>
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">file list</div>
+        <button onclick="getFileList()">getFileList</button>
+        <p id="getFileListRet"></p>
+    </div>
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">file info</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;">fileHash: <input type="text" id="fileHash" value="" style="width: 400px;"></div>
+        </div>
+        <button onclick="getFileInfo()">getFileInfo</button>
+        <p id="getFileInfoRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">file read pledge</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;"> fileHash: <input type="text" id="fileFileReadPledgeHash" value=""
+                    style="width: 400px;"></div>
+            <div style="padding: 10;">wallAddr: <input type="text" id="filePdpInfoListWalletAddr" value=""
+                    style="width: 400px;"></div>
+        </div>
+        <button onclick="getFileReadPledge()">getFileReadPledge</button>
+        <p id="getFileReadPledgeRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">file pdp info list</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;">fileHash: <input type="text" id="filePdpInfoListHash" value=""
+                    style="width: 400px;"></div>
+        </div>
+        <button onclick="getFilePdpInfoList()">getFilePdpInfoList</button>
+        <p id="getFilePdpInfoListRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">challenge</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;">fileHash: <input type="text" id="fileChallengeHash" value=""
+                    style="width: 400px;"></div>
+            <div style="padding: 10;">nodeAddr: <input type="text" id="fileChallengeNodeAddr" value=""
+                    style="width: 400px;"></div>
+        </div>
+        <button onclick="challenge()">challenge</button>
+        <p id="challengeRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">judge</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;">fileHash: <input type="text" id="fileJudgeHash" value="" style="width: 400px;">
+            </div>
+            <div style="padding: 10;">nodeAddr: <input type="text" id="fileJudgeNodeAddr" value=""
+                    style="width: 400px;"></div>
+        </div>
+        <button onclick="judge()">judge</button>
+        <p id="judgeRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">getChallengeList</div>
+        <div style="padding: 10;">
+            <div style="padding: 10;">fileHash: <input type="text" id="fileChallengeListHash" value=""
+                    style="width: 400px;"></div>
+        </div>
+        <button onclick="getChallengeList()">getChallengeList</button>
+        <p id="getChallengeListRet"></p>
+    </div>
+
+</body>
+
+
+</html>
+
+<!-- ontfs-js-sdk -->
+<script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
+
+<script>
+    // startSDK. start SDK 
+    const startSDK = async () => {
+        document.getElementById('startRet').innerHTML = `<p>wait...</p>`
+        // init config
+        const sdkCfg = { gasPrice: 500, gasLimit: 400000, pdpVersion: 1 }
+        ontfs.Config.DaemonConfig = { fsRepoRoot: "./test/Fs", fsFileRoot: "./test/Download", fsType: 0 }
+        console.log('start service')
+        // init global task manager
+        ontfs.TaskManage.initTaskManage()
+        // init global sdk
+        const s = await ontfs.SDK.initSdk(sdkCfg)
+        ontfs.SDK.setGlobalSdk(s)
+        await s.start()
+        document.getElementById('startRet').innerHTML = `<p>service start success</p>`
+
+        return true
+    }
+
+    const getFileList = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        try {
+            const list = await ontfs.SDK.globalSdk().ontFs.getFileList()
+            console.log('getFileList: ', list)
+            document.getElementById('getFileListRet').innerHTML = 'result: <br>' + JSON.stringify(list.filesH)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const getFileInfo = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("fileHash").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        try {
+            const fi = await ontfs.SDK.globalSdk().getFileInfo(hash)
+            console.log('getFileInfo: ', fi)
+            fi.pdpParam = 'too long'
+            document.getElementById('getFileInfoRet').innerHTML = 'result: <br>' + JSON.stringify(fi)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const getFileReadPledge = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("fileFileReadPledgeHash").value
+        const wallAddr = document.getElementById("filePdpInfoListWalletAddr").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        if (!wallAddr || !wallAddr.length) {
+            alert('wallet address is empty')
+            return
+        }
+        try {
+            const readPledge = await ontfs.SDK.globalSdk().ontFs.getFileReadPledge(hash, wallAddr)
+            console.log('getFileReadPledge: ', readPledge)
+            document.getElementById('getFileReadPledgeRet').innerHTML = 'result: <br>' + JSON.stringify(readPledge)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const getFilePdpInfoList = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("filePdpInfoListHash").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        try {
+            const pdpInfo = await ontfs.SDK.globalSdk().getFilePdpInfoList(hash)
+            console.log('getFilePdpInfoList: ', pdpInfo)
+            document.getElementById('getFilePdpInfoListRet').innerHTML = 'result: <br>' + JSON.stringify(pdpInfo)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const challenge = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("fileChallengeHash").value
+        const nodeAddr = document.getElementById("fileChallengeNodeAddr").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        if (!nodeAddr || !nodeAddr.length) {
+            alert('wallet address is empty')
+            return
+        }
+        try {
+            await ontfs.SDK.globalSdk().challenge(hash, nodeAddr)
+        } catch (e) {
+            document.getElementById('challengeRet').innerHTML = 'result: <br>' + e
+        }
+    }
+
+    const judge = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("fileJudgeHash").value
+        const nodeAddr = document.getElementById("fileJudgeNodeAddr").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        if (!nodeAddr || !nodeAddr.length) {
+            alert('wallet address is empty')
+            return
+        }
+        try {
+            await ontfs.SDK.globalSdk().judge(hash, nodeAddr)
+        } catch (e) {
+            document.getElementById('judgeRet').innerHTML = 'result: <br>' + e.toString()
+        }
+    }
+
+    const getChallengeList = async () => {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('service not start')
+            return
+        }
+        const hash = document.getElementById("fileChallengeListHash").value
+        if (!hash || !hash.length) {
+            alert('hash is empty')
+            return
+        }
+        try {
+            const list = await ontfs.SDK.globalSdk().getChallengeList(hash)
+            console.log('getChallengeList: ', list)
+            document.getElementById('getChallengeListRet').innerHTML = 'result: <br>' + JSON.stringify(list)
+        } catch (e) {
+            document.getElementById('getChallengeListRet').innerHTML = 'result: <br>' + e.toString()
+        }
+    }
+
+</script>

@@ -14,19 +14,16 @@
 <html>
 
 <body>
-    <div>
-        chain rpc : <input type="text" id="rpc" style="width:200px;margin:10px;" value="http://127.0.0.1:20336" />
+    <a href="./index.html">upload/download/delete file, resume/delete task</a><br>
+    <a href="./node.html">node management</a><br>
+    <a href="./space.html">space management</a><br>
+    <a href="./fs.html">file system management</a><br>
 
-    </div>
     <div>
-        wallet: <input type="text" id="wallet" style="width:500px;margin:10px;"
-            value='{"name":"","defaultOntid":"","defaultAccountAddress":"","createTime":"2020-04-24T02:45:47.044Z","version":"1.0","scrypt":{"n":4096,"r":8,"p":8,"dkLen":64},"identities":[],"accounts":[{"address":"AenXKSh4eyW2eZVC14o1iYWgp8KSE8u8Fw","label":"label","lock":false,"algorithm":"ECDSA","parameters":{"curve":"P-256"},"key":"S+7eRa+v3MF/QgDb3iYbRr/7IeCgIR6dUGLjE7SRzR2iuBCHGSGnUp6ySElFdLm/","enc-alg":"aes-256-gcm","hash":"sha256","salt":"eUXfLSlgqRGH9yyabTTiPQ==","isDefault":false,"publicKey":"02cf39e034cea74dba56bd02c61eeb94ac26b0f2595e68e50aaf854d46f821e292","signatureScheme":"SHA256withECDSA"}],"extra":null}' />
+        <p>Please start service first.</p>
+        <button onclick="startSDK()">start service</button>
     </div>
-    <div>
-        wallet password: <input type="text" id="password" style="width:200px;margin:10px;" value="pwd" />
-        <button onclick="startSDK()">import account</button>
-    </div>
-    <div id="account"></div>
+    <div id="startRet"></div>
 
     <div style="border-top:1px solid; width:30%;margin-top: 20px;">
         <div style="padding: 10;">upload file</div>
@@ -35,13 +32,22 @@
         <div style="padding: 10;">storeType: <input type="number" id="storeType" value="1" /></div>
         <div style="padding: 10;">copyNum: <input type="number" id="copyNum" value="1" /></div>
         <div style="padding: 10;">firstPdp: <input type="text" id="firstPdp" value="true" /></div>
-        <div style="padding: 10;">timeExpired: <input type="text" id="timeExpired" value="2020-05-01 00:00:00" /></div>
+        <div style="padding: 10;">timeExpired: <input type="text" id="timeExpired" value="2020-06-01 00:00:00" /></div>
         <div style="padding: 10;">encPassword: <input type="text" id="encPassword" value="" /></div>
         <div style="padding: 10;"> <span class="readBytesButtons">
                 <button>upload file</button>
             </span>
-            <p id="upload-hash"></p>
         </div>
+        <p id="uploadFileRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">upload task</div>
+        <div style="padding: 10;">taskID: <input type="text" id="uploadTaskID" value="" style="width: 400px;"></div>
+        <div style="padding: 10;">
+            <button onclick="getUploadTaskByTaskId()">get upload task</button>
+        </div>
+        <p id="getUploadTaskByTaskIdRet"></p>
     </div>
 
     <div style="border-top:1px solid; width:30%;margin-top: 20px;">
@@ -52,6 +58,34 @@
         <div style="padding: 10;">
             <button onclick="download()">download file</button>
         </div>
+        <p id="downloadFileRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">download task</div>
+        <div style="padding: 10;">taskID: <input type="text" id="downloadTaskID" value="" style="width: 400px;"></div>
+        <div style="padding: 10;">
+            <button onclick="getDownloadTaskByTaskId()">get download task</button>
+        </div>
+        <p id="getDownloadTaskByTaskIdRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">resume task</div>
+        <div style="padding: 10;">taskID: <input type="text" id="resumeTaskID" value="" style="width: 400px;"></div>
+        <div style="padding: 10;">
+            <button onclick="resumeTask()">resume task</button>
+        </div>
+        <p id="resumeTaskRet"></p>
+    </div>
+
+    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
+        <div style="padding: 10;">delete task</div>
+        <div style="padding: 10;">taskID: <input type="text" id="deleteTaskID" value="" style="width: 400px;"></div>
+        <div style="padding: 10;">
+            <button onclick="deleteTask()">delete task</button>
+        </div>
+        <p id="deleteTaskRet"></p>
     </div>
 
     <div style="border-top:1px solid; width:30%;margin-top: 20px;">
@@ -62,6 +96,7 @@
         </div>
         <p id="deleteFileRet"></p>
     </div>
+
 </body>
 
 </html>
@@ -73,35 +108,23 @@
     // startSDK. start SDK 
     const startSDK = async () => {
         // init config
-        const password = document.getElementById('password').value;
-        const rpcAddr = document.getElementById('rpc').value
-        const sdkCfg = { walletPwd: password, chainRpcAddr: rpcAddr, gasPrice: 500, gasLimit: 400000, pdpVersion: 1 }
+        document.getElementById('startRet').innerHTML = `<p>wait...</p>`
+        // init config
+        const sdkCfg = { gasPrice: 500, gasLimit: 400000, pdpVersion: 1 }
         ontfs.Config.DaemonConfig = { fsRepoRoot: "./test/Fs", fsFileRoot: "./test/Download", fsType: 0 }
-        const walletObj = JSON.parse(document.getElementById("wallet").value);
-        const defAccountObj = walletObj.accounts[0]
-        const { error, result } = ontfs.OntSDK.SDK.importAccountWithWallet(defAccountObj.label, defAccountObj.key,
-            defAccountObj.address, defAccountObj.salt, password)
-        if (error != 0) {
-            console.log('import account err', error)
-            alert('import account err' + error)
-            return false
-        }
-        // import account by wif private key const
-        account = ontfs.OntSDK.Account.parseJson(result)
-        console.log('import account', account.address.toBase58()) //
+        console.log('start service')
         // init global task manager
         ontfs.TaskManage.initTaskManage()
         // init global sdk
-        const s = await ontfs.SDK.initSdk(sdkCfg, account)
+        const s = await ontfs.SDK.initSdk(sdkCfg)
         ontfs.SDK.setGlobalSdk(s)
         await s.start()
-        document.getElementById('account').innerHTML = `<p>${account.address.toBase58()}</p>`
+        document.getElementById('startRet').innerHTML = `<p>service start success</p>`
 
         return true
     }
 
     async function readBlob(opt_startByte, opt_stopByte) {
-
         var files = document.getElementById('files').files;
         if (!files.length) {
             alert('Please select a file!');
@@ -118,10 +141,11 @@
 
         reader.onloadend = async function (evt) {
             if (evt.target.readyState == FileReader.DONE) {
-                if (!document.getElementById('account').innerHTML || !document.getElementById('account').innerHTML.length) {
+                if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
                     alert('account not found')
                     return
                 }
+
                 // init upload option
                 const option = new ontfs.Types.TaskUploadOption()
                 option.filePath = document.getElementById('desc').value// file path of the file
@@ -139,6 +163,7 @@
                     console.log('e', e)
                 })
                 console.log('add upload task success, taskID', taskID)
+                document.getElementById('uploadFileRet').innerHTML = `uploading taskID:${taskID}`
                 // poll check if node has store the file commit PDP prove
                 let fileHash = ''
                 while (true) {
@@ -157,7 +182,7 @@
                         console.log(`storage node have not stored the file ${task.baseInfo.fileHash}`)
                     }
                 }
-                document.getElementById('upload-hash').innerHTML = `upload success: file hash: ${fileHash}`
+                document.getElementById('uploadFileRet').innerHTML = `upload success: file hash: ${fileHash}, taskID:${taskID}`
 
             }
         };
@@ -175,8 +200,26 @@
     }, false);
 
 
+    async function getUploadTaskByTaskId() {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('account not found')
+            return
+        }
+        const taskID = document.getElementById('uploadTaskID').value
+        if (!taskID || !taskID.length) {
+            alert('hash is empty ')
+            return
+        }
+        const task = await ontfs.TaskManage.globalTaskMgr().getUploadTaskByTaskId(taskID)
+        if (!task.baseInfo.fileHash) {
+            console.log("task not found", task.baseInfo)
+        }
+        console.log('upload task: ', task)
+        document.getElementById('getUploadTaskByTaskIdRet').innerHTML = 'upload task: ' + JSON.stringify(task)
+    }
+
     async function download() {
-        if (!document.getElementById('account').innerHTML || !document.getElementById('account').innerHTML.length) {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
             alert('account not found')
             return
         }
@@ -215,6 +258,7 @@
             console.log('e', e)
         })
         console.log('add download task success, taskID', taskID)
+        document.getElementById('downloadFileRet').innerHTML = `downloading: file hash: ${hash}, taskID:${taskID}`
         // poll check if file has downloaded
         while (true) {
             await ontfs.Utils.sleep(1000)
@@ -244,9 +288,60 @@
 
     }
 
+    async function getDownloadTaskByTaskId() {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('account not found')
+            return
+        }
+        const taskID = document.getElementById('downloadTaskID').value
+        if (!taskID || !taskID.length) {
+            alert('hash is empty ')
+            return
+        }
+        const task = await ontfs.TaskManage.globalTaskMgr().getDownloadTaskByTaskId(taskID)
+        if (!task.baseInfo.fileHash) {
+            console.log("task not found", task.baseInfo)
+        }
+        console.log('download task: ', task)
+        document.getElementById('getDownloadTaskByTaskIdRet').innerHTML = 'download task: ' + JSON.stringify(task)
+    }
+
+    async function resumeTask() {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('account not found')
+            return
+        }
+        try {
+            const taskID = document.getElementById('resumeTaskID').value
+            if (!taskID || !taskID.length) {
+                alert('hash is empty ')
+                return
+            }
+            await ontfs.TaskManage.globalTaskMgr().resumeTask(taskID)
+            console.log('task resuming')
+            document.getElementById('resumeTaskRet').innerHTML = 'task resuming...'
+        } catch (e) {
+            document.getElementById('resumeTaskRet').innerHTML = 'task resume err: ' + e.toString()
+        }
+    }
+
+    async function deleteTask() {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
+            alert('account not found')
+            return
+        }
+        const taskID = document.getElementById('deleteTaskID').value
+        if (!taskID || !taskID.length) {
+            alert('hash is empty ')
+            return
+        }
+        await ontfs.TaskManage.globalTaskMgr().delTask(taskID)
+        console.log('task deleting')
+        document.getElementById('deleteTaskRet').innerHTML = 'task deleted'
+    }
 
     async function deleteFile() {
-        if (!document.getElementById('account').innerHTML || !document.getElementById('account').innerHTML.length) {
+        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
             alert('account not found')
             return
         }
@@ -257,6 +352,6 @@
         }
         const tx = await ontfs.SDK.globalSdk().ontFs.deleteFiles([hash])
         console.log('delete file tx: ', tx)
-        document.getElementById('deleteFileRet').innerHTML = 'delete file tx: ' + tx
+        document.getElementById('deleteFileRet').innerHTML = 'delete file tx: ' + tx.transaction
     }
 </script>
