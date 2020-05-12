@@ -71,15 +71,6 @@
     </div>
 
     <div style="border-top:1px solid; width:30%;margin-top: 20px;">
-        <div style="padding: 10;">resume task</div>
-        <div style="padding: 10;">taskID: <input type="text" id="resumeTaskID" value="" style="width: 400px;"></div>
-        <div style="padding: 10;">
-            <button onclick="resumeTask()">resume task</button>
-        </div>
-        <p id="resumeTaskRet"></p>
-    </div>
-
-    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
         <div style="padding: 10;">delete task</div>
         <div style="padding: 10;">taskID: <input type="text" id="deleteTaskID" value="" style="width: 400px;"></div>
         <div style="padding: 10;">
@@ -304,25 +295,6 @@
         }
         console.log('download task: ', task)
         document.getElementById('getDownloadTaskByTaskIdRet').innerHTML = 'download task: ' + JSON.stringify(task)
-    }
-
-    async function resumeTask() {
-        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
-            alert('account not found')
-            return
-        }
-        try {
-            const taskID = document.getElementById('resumeTaskID').value
-            if (!taskID || !taskID.length) {
-                alert('hash is empty ')
-                return
-            }
-            await ontfs.TaskManage.globalTaskMgr().resumeTask(taskID)
-            console.log('task resuming')
-            document.getElementById('resumeTaskRet').innerHTML = 'task resuming...'
-        } catch (e) {
-            document.getElementById('resumeTaskRet').innerHTML = 'task resume err: ' + e.toString()
-        }
     }
 
     async function deleteTask() {
