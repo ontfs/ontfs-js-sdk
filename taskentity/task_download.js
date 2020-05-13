@@ -666,8 +666,8 @@ class TaskDownload {
                 if (value.offset > 0 && !isFileEncrypted) {
                     writeAtPos = value.offset - this.baseInfo.filePrefix.length
                 }
-                console.log(`block ${block.cid.toString()} block-len ${data.length}, offset ${value.offset}` +
-                    ` prefix ${this.baseInfo.filePrefix}, pos ${writeAtPos}`)
+                console.log(`block ${block.cid.toString()} index ${value.index} block-len ${data.length}, offset ${value.offset}` +
+                    ` prefix ${this.baseInfo.filePrefix ? this.baseInfo.filePrefix.length : 0}, pos ${writeAtPos}`)
                 if (this.option.receiveBlock) {
                     this.option.receiveBlock(data, data.length, writeAtPos)
                 }

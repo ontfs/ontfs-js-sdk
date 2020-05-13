@@ -260,17 +260,17 @@
             }
         }
         let blob
+        const u8a = new Uint8Array(totalLen)
+        for (let index in datas) {
+            console.log('index', index, offsetByIndex[index])
+            u8a.set(datas[index], offsetByIndex[index])
+        }
         if (option.decryptPwd) {
-            const u8a = new Uint8Array(totalLen)
-            for (let index in datas) {
-                console.log('index', index, offsetByIndex[index])
-                u8a.set(datas[index], offsetByIndex[index])
-            }
             const decryptedDatas = ontfs.SDK.globalSdk().decryptDownloadedFile(u8a, option.decryptPwd)
             console.log('datas', decryptedDatas, option.decryptPwd)
             blob = new Blob([decryptedDatas])
         } else {
-            blob = new Blob(datas)
+            blob = new Blob([u8a])
         }
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
