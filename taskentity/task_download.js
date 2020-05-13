@@ -356,12 +356,12 @@ class TaskDownload {
                 const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
                 settleSlice = {
                     fileHash: utils.base64str2utf8str(sliceObj.FileHash),
-                    payFrom: utils.bytes2address(sliceObj.PayFrom),
-                    payTo: utils.bytes2address(sliceObj.PayTo),
+                    payFrom: utils.bytes2address(sliceObj.PayFrom).toBase58(),
+                    payTo: utils.bytes2address(sliceObj.PayTo).toBase58(),
                     sliceId: sliceObj.SliceId,
                     pledgeHeight: sliceObj.PledgeHeight,
-                    sig: utils.base64str2hex(sliceObj.Sig),
-                    pubKey: utils.base64str2hex(sliceObj.PubKey),
+                    signature: utils.base64str2hex(sliceObj.Sig),
+                    publicKey: utils.base64str2hex(sliceObj.PubKey),
                 }
                 console.log('check payment', fileMsg.payInfo.latestPayment, settleSlice)
                 if (settleSlice.fileHash != this.option.fileHash) {
@@ -369,11 +369,12 @@ class TaskDownload {
                     not same as in the msg ${this.option.fileHash}`)
                     return false
                 }
-                if (settleSlice.payFrom.toBase58() != currentWalletAddress) {
-                    console.log(`"payer ${settleSlice.payFrom.toBase58()} in the settle slice is 
+                if (settleSlice.payFrom != currentWalletAddress) {
+                    console.log(`"payer ${settleSlice.payFrom} in the settle slice is 
                     not same as in the msg ${currentWalletAddress}"`)
                     return false
                 }
+                settleSlice.fileHash = utils.cryptoStr2Hex(settleSlice.fileHash)
                 const ok = await sdk.globalSdk().ontFs.verifyFileReadSettleSlice(settleSlice)
                 if (!ok) {
                     console.log(`check sign in the settle slice failed`)
@@ -583,17 +584,12 @@ class TaskDownload {
         console.log('fileReadSlice', fileReadSlice)
         let payFrom = fileReadSlice.payFrom
         let payTo = fileReadSlice.payTo
-        console.log('type of', typeof payFrom == 'string')
-        console.log('type of payTo', typeof payTo == 'string')
         if (typeof payFrom == 'string') {
             payFrom = new Address(payFrom)
         }
         if (typeof payTo == 'string') {
             payTo = new Address(payTo)
         }
-        console.log('+++++fileReadSlice', payFrom, payTo)
-        console.log('payFrom fileReadSlice', payFrom.toBase58())
-        console.log('payTo fileReadSlice', payTo.toBase58())
         let fileReadPledgeSig
         if (fileReadSlice.sig) {
             fileReadPledgeSig = fileReadSlice.sig.serializeHex()

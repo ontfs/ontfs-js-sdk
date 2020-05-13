@@ -615,7 +615,6 @@ const initSdk = async (sdkCfg) => {
 		throw new Error("ontfs contract api init failed");
 	}
 	// console.log('config.DaemonConfig', config.DaemonConfig)
-	console.log('init....SDK')
 	if (
 		config.DaemonConfig &&
 		config.DaemonConfig.fsRepoRoot &&
