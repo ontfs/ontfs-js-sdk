@@ -6,7 +6,7 @@ const utils = require("../utils");
 const OntFs = require("./ontfs").OntFs;
 const Buffer = require("buffer/").Buffer;
 const { client } = require("@ont-dev/ontology-dapi");
-const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils;
+const { str2hexstr, reverseHex } = require("ontology-ts-sdk").utils;
 const { addressFromPubKeyHex } = require('../utils/address')
 class Sdk {
 	constructor(_sdkConfig, _ontFs, _fs, _stop, _pdpServer) {
@@ -119,6 +119,25 @@ class Sdk {
 		}
 		throw new Error(`timeout after ${timeout} (s)`);
 	}
+
+	// async pollForTxConfirmed(txHash, timeout) {
+	// 	if (!txHash) {
+	// 		return;
+	// 	}
+	// 	if (!timeout) {
+	// 		timeout = 60;
+	// 	}
+	// 	for (let i = 0; i < timeout; i++) {
+	// 		await utils.sleep(1000);
+	// 		// bug
+	// 		let blockHeight = await client.api.network.getBlockHeightByTxHash(txHash);
+	// 		console.log(`blockHeight = ${blockHeight} tx = ${txHash}, ${reverseHex(txHash)}`)
+	// 		if (blockHeight) {
+	// 			return
+	// 		}
+	// 	}
+	// 	throw new Error(`timeout after ${timeout} (s)`);
+	// }
 
 	/**
 	 * create user storage space
@@ -596,6 +615,7 @@ const initSdk = async (sdkCfg) => {
 		throw new Error("ontfs contract api init failed");
 	}
 	// console.log('config.DaemonConfig', config.DaemonConfig)
+	console.log('init....SDK')
 	if (
 		config.DaemonConfig &&
 		config.DaemonConfig.fsRepoRoot &&

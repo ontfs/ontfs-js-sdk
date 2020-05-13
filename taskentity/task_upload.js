@@ -161,12 +161,13 @@ class TaskUpload {
                 throw e
             })
             console.log('fileStore', fileStore, tx)
+            await sdk.globalSdk().waitForGenerateBlock(60, 1)
             const uploaded = await fileHasUploaded(this.baseInfo.fileHash)
             if (!uploaded) {
                 throw new Error(`contract interface StoreFile called failed`)
             }
             this.baseInfo.storeTxHash = tx.transaction
-            const blockHeightRet = await dapi.api.network.getBlockHeightByTxHash({hash: tx.transaction}).catch((e) => {
+            const blockHeightRet = await dapi.api.network.getBlockHeightByTxHash({ hash: tx.transaction }).catch((e) => {
                 console.log("get height err", e)
                 throw e
             })
@@ -644,7 +645,7 @@ const checkParams = (to) => {
  */
 const fileHasUploaded = async (fileHash) => {
     const fi = await sdk.globalSdk().ontFs.getFileInfo(fileHash).catch((e) => {
-        console.log("get file info err", JSON.stringify((e)))
+        console.log("get file info err", fileHash, e)
     })
     if (fi && fi.validFlag) {
         return true

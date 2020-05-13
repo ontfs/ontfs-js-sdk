@@ -15,7 +15,8 @@ const startSDK = async (argv) => {
     // init config
     const password = argv.password ? argv.password : 'pwd'
     const rpcAddr = argv.rpcAddr ? argv.rpcAddr : 'http://127.0.0.1:20336'
-    const walletObj = JSON.parse(fs.readFileSync("./wallet.dat").toString())
+    const walletStr = fs.readFileSync("./wallet.dat").toString()
+    const walletObj = JSON.parse(walletStr.trim())
     const defAccountObj = walletObj.accounts[0]
     const { error, result } = OntSDK.importAccountWithWallet(
         defAccountObj.label,

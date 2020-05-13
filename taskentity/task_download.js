@@ -8,6 +8,7 @@ const message = require("../network/message")
 const client = require("../network/http/http_client")
 const Buffer = require('buffer/').Buffer
 const { client: dapi } = require("@ont-dev/ontology-dapi")
+const { Address } = require("ontology-ts-sdk").Crypto
 
 const Download_AddTask = 0
 const Download_FsFoundFileServers = 1
@@ -350,6 +351,7 @@ class TaskDownload {
         let latestSliceId = 0
         let settleSlice = {}
         try {
+            const currentWalletAddress = await sdk.globalSdk().walletAddress()
             if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
                 const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
                 settleSlice = {
@@ -367,9 +369,9 @@ class TaskDownload {
                     not same as in the msg ${this.option.fileHash}`)
                     return false
                 }
-                if (settleSlice.payFrom.toBase58() != sdk.globalSdk().walletAddress()) {
+                if (settleSlice.payFrom.toBase58() != currentWalletAddress) {
                     console.log(`"payer ${settleSlice.payFrom.toBase58()} in the settle slice is 
-                    not same as in the msg ${sdk.globalSdk().walletAddress()}"`)
+                    not same as in the msg ${currentWalletAddress}"`)
                     return false
                 }
                 const ok = await sdk.globalSdk().ontFs.verifyFileReadSettleSlice(settleSlice)
@@ -442,6 +444,7 @@ class TaskDownload {
             console.log(`read file pledge err: ${err.toString()}`)
             throw err
         })
+        await sdk.globalSdk().waitForGenerateBlock(60, 1)
         console.log('readPledgeRet', readPledgeRet)
         const account = await dapi.api.asset.getAccount();
         const readPledge = await sdk.globalSdk().ontFs.getFileReadPledge(this.option.fileHash,
@@ -546,12 +549,13 @@ class TaskDownload {
      * @memberof TaskDownload
      */
     async fileDownloadOk(peerNetAddr) {
+        const currentWalletAddress = await sdk.globalSdk().walletAddress()
         const sessionId = getDownloadSessionId(this.baseInfo.taskID, peerNetAddr)
         const fileDownloadOkMsg = message.newFileMsg(this.option.fileHash,
             message.FILE_OP_DOWNLOAD_OK,
             [
                 message.withSessionId(sessionId),
-                message.withWalletAddress(sdk.globalSdk().walletAddress())
+                message.withWalletAddress(currentWalletAddress)
             ])
         await client.httpBroadcast([peerNetAddr], fileDownloadOkMsg, false, null).then(() => { }).catch((err) => {
             console.log(`fileDownloadOk msg P2pBroadcast error`)
@@ -569,28 +573,54 @@ class TaskDownload {
      * @memberof TaskDownload
      */
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
-
-        console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${sdk.globalSdk().walletAddress()}` +
+        const currentWalletAddress = await sdk.globalSdk().walletAddress()
+        console.log(`111 paying to node peer addr ${peerNetAddr}, wallet addr ${currentWalletAddress}` +
             `, sliceId: ${sliceId}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
             peerWalletAddr, sliceId, 0).catch((err) => {
                 throw err
             })
+        console.log('fileReadSlice', fileReadSlice)
+        let payFrom = fileReadSlice.payFrom
+        let payTo = fileReadSlice.payTo
+        console.log('type of', typeof payFrom == 'string')
+        console.log('type of payTo', typeof payTo == 'string')
+        if (typeof payFrom == 'string') {
+            payFrom = new Address(payFrom)
+        }
+        if (typeof payTo == 'string') {
+            payTo = new Address(payTo)
+        }
+        console.log('+++++fileReadSlice', payFrom, payTo)
+        console.log('payFrom fileReadSlice', payFrom.toBase58())
+        console.log('payTo fileReadSlice', payTo.toBase58())
+        let fileReadPledgeSig
+        if (fileReadSlice.sig) {
+            fileReadPledgeSig = fileReadSlice.sig.serializeHex()
+        } else if (fileReadSlice.signature) {
+            fileReadPledgeSig = fileReadSlice.signature
+        }
+        let fileReadSlicePubKey
+        if (fileReadSlice.pubKey) {
+            fileReadSlicePubKey = fileReadSlice.pubKey.serializeHex()
+        } else if (fileReadSlice.publicKey) {
+            fileReadSlicePubKey = fileReadSlice.publicKey
+        }
         const sliceData = {
             FileHash: utils.str2base64(hexstr2str(fileReadSlice.fileHash)),
-            PayFrom: utils.address2bytestr(fileReadSlice.payFrom),
-            PayTo: utils.address2bytestr(fileReadSlice.payTo),
+            PayFrom: utils.address2bytestr(payFrom),
+            PayTo: utils.address2bytestr(payTo),
             SliceId: fileReadSlice.sliceId,
             PledgeHeight: fileReadSlice.pledgeHeight,
-            Sig: utils.hex2base64str(fileReadSlice.sig.serializeHex()),
-            PubKey: utils.hex2base64str(fileReadSlice.pubKey.serializeHex()),
+            Sig: utils.hex2base64str(fileReadPledgeSig),
+            PubKey: utils.hex2base64str(fileReadSlicePubKey),
         }
         // console.log('fileReadSlice', fileReadSlice, fileReadSlice.sig.serializeHex(), fileReadSlice.pubKey.serializeHex())
         // console.log('sliceData', sliceData)
 
-        const msg = message.newPaymentMsg(fileReadSlice.payFrom.toBase58(), fileReadSlice.payTo.toBase58(),
+        const msg = message.newPaymentMsg(payFrom.toBase58(), payTo.toBase58(),
             message.PAYMENT_OP_PAY, paymentId, this.option.fileHash, blockHashes, sliceData,
-            [message.withWalletAddress(sdk.globalSdk().walletAddress())])
+            [message.withWalletAddress(currentWalletAddress)])
         // console.log('payment msg', msg)
 
         const ret = await client.httpSendWithRetry(msg, peerNetAddr, common.MAX_NETWORK_REQUEST_RETRY,
@@ -598,6 +628,7 @@ class TaskDownload {
                 console.log(`paymentMsg payment id ${paymentId}, for file: ${this.option.fileHash},` +
                     ` error: ${err.toString()}`)
             })
+        // console.log('payment msg ret', ret)
         if (!ret.data) {
             throw new Error(``)
         }

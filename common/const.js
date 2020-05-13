@@ -37,7 +37,7 @@ const PROTO_NODE_PREFIX = "Qm"
 const RAW_NODE_PREFIX = "zb"
 const MAX_NETWORK_REQUEST_RETRY = 4  // max network request retry
 const MAX_SEND_BLOCK_COUNT = 16 // max send block count for send flights
-const ONTFS_CONTRACT_ADDRESS = "0800000000000000000000000000000000000000"
+const ONTFS_CONTRACT_ADDRESS = "0b00000000000000000000000000000000000000"
 module.exports = {
     DefaultPassportExpire,
     DefaultNodeMinVolume,
