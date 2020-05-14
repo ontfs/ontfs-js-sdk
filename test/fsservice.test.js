@@ -3,7 +3,7 @@ const fs = require('fs')
 const { newFs } = require("../fs")
 const utils = require("../utils")
 const config = require("../config")
-const { newPdp, FilePdpHashSt } = require("../pdp")
+const { newPdp } = require("../pdp")
 describe('fs service', () => {
     config.DaemonConfig = {
         fsRepoRoot: "./test/Fs",
@@ -117,9 +117,10 @@ describe('fs service', () => {
     }, 500000)
 
     test('get all block raw data', async () => {
-        const filePath = './test/Zoom.pkg'
+        const filePath = './test/zoom'
         const prefix = "010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f8b25010000000000000000"
-        const hashes = await fsSvr.addFile(filePath, prefix, false, "")
+        let fileContent = fs.readFileSync(filePath)
+        const hashes = await fsSvr.addFile(filePath, fileContent, prefix, false, "")
         console.log('hashes', hashes)
         rootHash = hashes[0]
         for (let hash of hashes) {
@@ -129,24 +130,21 @@ describe('fs service', () => {
     }, testTimeout)
 
     test('get all block raw data and calc pdp', async () => {
-        const filePath = './test/Zoom.pkg'
+        const merklePdp = 1
+        const filePath = './test/zoom'
         const prefix = "010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f8b25010000000000000000"
-        const hashes = await fsSvr.addFile(filePath, prefix, false, "")
+        let fileContent = fs.readFileSync(filePath)
+        const hashes = await fsSvr.addFile(filePath, fileContent, prefix, false, "")
         console.log('hashes', hashes)
-        rootHash = hashes[0]
+
         let datas = []
-        let index = 0
         for (let hash of hashes) {
             const block = await fsSvr.getBlockWithHash(hash)
-            datas.push(block.rawData.toString('hex'))
-            // fs.writeFileSync("./test/blocks/block" + index, block.rawData.toString('hex'))
-            index++
+            datas.push(block.rawData)
         }
-        const allHash = datas.join('|')
-        console.log('join', datas.length, allHash.substr(allHash.length - 100))
-        const pdp = await newPdp(1)
-        const hexResult = pdp.genUniqueIdWithFileBlocks(datas)
-        console.log('hex', hexResult)
+        const pdp = await newPdp(merklePdp)
+        const result = pdp.genUniqueIdWithFileBlocks(datas)
+        console.log('uniqueId: ', result.buffer)
     }, testTimeout)
 
     test('encrypt file and decrypt', () => {

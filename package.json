@@ -22,6 +22,7 @@
     "ipld-dag-pb": "^0.18.3",
     "ipld-in-memory": "^3.0.2",
     "ipld-raw": "^4.0.1",
+    "js-sha3": "^0.8.0",
     "ontology-ts-sdk": "^1.1.0"
   },
   "devDependencies": {

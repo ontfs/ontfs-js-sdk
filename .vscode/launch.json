@@ -7,6 +7,15 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "merkle client",
+      "program": "${workspaceFolder}\\pdp/merkle_pdp.js",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "http client",
       "program": "${workspaceFolder}\\network/http/http_client.js",
       "skipFiles": [

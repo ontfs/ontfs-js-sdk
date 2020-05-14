@@ -1,8 +1,8 @@
-const Crypto = require("ontology-ts-sdk").Crypto
-const { reverseHex } = require("ontology-ts-sdk").utils
-const { Address, PublicKey, Signature } = Crypto
-const address = require("./address.js")
-const CryptoJS = require("crypto-js")
+const Crypto = require("ontology-ts-sdk").Crypto;
+const { reverseHex } = require("ontology-ts-sdk").utils;
+const { Address, PublicKey, Signature } = Crypto;
+const address = require("./address.js");
+const CryptoJS = require("crypto-js");
 
 /**
  * verify sign
@@ -13,17 +13,17 @@ const CryptoJS = require("crypto-js")
  * @returns {boolean}
  */
 const verify = (pubKey, data, signData) => {
-    const publicKey = new PublicKey(pubKey)
-    if (!publicKey) {
-        throw new Error(`deserialize publick key error`)
-    }
-    const signature = Signature.deserializeHex(signData)
-    if (!signature) {
-        throw new Error(`invalid signature data`)
-    }
-    const result = publicKey.verify(data, signature);
-    return result
-}
+	const publicKey = new PublicKey(pubKey);
+	if (!publicKey) {
+		throw new Error(`deserialize publick key error`);
+	}
+	const signature = Signature.deserializeHex(signData);
+	if (!signature) {
+		throw new Error(`invalid signature data`);
+	}
+	const result = publicKey.verify(data, signature);
+	return result;
+};
 
 /**
  * check if a public key equal to a base58 address
@@ -33,9 +33,9 @@ const verify = (pubKey, data, signData) => {
  * @returns {boolean}
  */
 const publicKeyMatchAddress = (pubKey, base58Addr) => {
-    let addr = address.addressFromPubKeyHex(pubKey)
-    return addr == base58Addr
-}
+	let addr = address.addressFromPubKeyHex(pubKey);
+	return addr == base58Addr;
+};
 
 /**
  * convert a string to base64 string
@@ -44,9 +44,8 @@ const publicKeyMatchAddress = (pubKey, base58Addr) => {
  * @returns {string}
  */
 const str2base64 = (str) => {
-    return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse((str)))
-}
-
+	return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(str));
+};
 
 /**
  * convert a string to hex string by crypto-js
@@ -55,9 +54,8 @@ const str2base64 = (str) => {
  * @returns {string}
  */
 const cryptoStr2Hex = (str) => {
-    return CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse((str)))
-}
-
+	return CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(str));
+};
 
 /**
  * convert a base64 string to utf-8 string
@@ -66,8 +64,8 @@ const cryptoStr2Hex = (str) => {
  * @returns {string}
  */
 const base64str2utf8str = (base64str) => {
-    return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8)
-}
+	return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Utf8);
+};
 
 /**
  * convert a base64 string to raw string
@@ -76,8 +74,8 @@ const base64str2utf8str = (base64str) => {
  * @returns {string}
  */
 const base64str2str = (base64str) => {
-    return CryptoJS.enc.Base64.parse(base64str).toString()
-}
+	return CryptoJS.enc.Base64.parse(base64str).toString();
+};
 
 /**
  * convert a base64 string to hex string
@@ -86,8 +84,8 @@ const base64str2str = (base64str) => {
  * @returns {string}
  */
 const base64str2hex = (base64str) => {
-    return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString()
-}
+	return CryptoJS.enc.Base64.parse(base64str).toString(CryptoJS.enc.Hex).toString();
+};
 
 /**
  * convert a hex string to base64 string
@@ -96,11 +94,10 @@ const base64str2hex = (base64str) => {
  * @returns {string}
  */
 const hex2base64str = (hex) => {
-    var _data = CryptoJS.enc.Hex.parse(hex);
-    var base64_data = _data.toString(CryptoJS.enc.Base64);
-    return base64_data
-}
-
+	var _data = CryptoJS.enc.Hex.parse(hex);
+	var base64_data = _data.toString(CryptoJS.enc.Base64);
+	return base64_data;
+};
 
 /**
  * convert a hex string to sha256 string
@@ -109,9 +106,9 @@ const hex2base64str = (hex) => {
  * @returns {string}
  */
 const hex2sha256 = (hex) => {
-    var message = CryptoJS.enc.Hex.parse(hex);
-    return CryptoJS.SHA256(message).toString();
-}
+	var message = CryptoJS.enc.Hex.parse(hex);
+	return CryptoJS.SHA256(message).toString();
+};
 
 /**
  * convert a hex string to array bytes
@@ -120,22 +117,21 @@ const hex2sha256 = (hex) => {
  * @returns {Array}
  */
 const hexstr2Bytes = (str) => {
-    let pos = 0;
-    let len = str.length;
-    if (len % 2 != 0) {
-        return null;
-    }
-    len /= 2;
-    let hexA = new Array();
-    for (let i = 0; i < len; i++) {
-        let s = str.substr(pos, 2);
-        let v = parseInt(s, 16);
-        hexA.push(v);
-        pos += 2;
-    }
-    return hexA;
-}
-
+	let pos = 0;
+	let len = str.length;
+	if (len % 2 != 0) {
+		return null;
+	}
+	len /= 2;
+	let hexA = new Array();
+	for (let i = 0; i < len; i++) {
+		let s = str.substr(pos, 2);
+		let v = parseInt(s, 16);
+		hexA.push(v);
+		pos += 2;
+	}
+	return hexA;
+};
 
 /**
  * convert a bytes array to hex string
@@ -144,17 +140,16 @@ const hexstr2Bytes = (str) => {
  * @returns {string}
  */
 const bytes2HexString = (b) => {
-    let hexs = "";
-    for (let i = 0; i < b.length; i++) {
-        let hex = b[i].toString(16);
-        if (hex.length == 1) {
-            hex = '0' + hex;
-        }
-        hexs += hex.toLowerCase();
-    }
-    return hexs;
-}
-
+	let hexs = "";
+	for (let i = 0; i < b.length; i++) {
+		let hex = b[i].toString(16);
+		if (hex.length == 1) {
+			hex = "0" + hex;
+		}
+		hexs += hex.toLowerCase();
+	}
+	return hexs;
+};
 
 /**
  * convert a Address to bytes string
@@ -163,9 +158,8 @@ const bytes2HexString = (b) => {
  * @returns {string}
  */
 const address2bytestr = (addr) => {
-    return hexstr2Bytes(reverseHex(addr.toHexString()))
-}
-
+	return hexstr2Bytes(reverseHex(addr.toHexString()));
+};
 
 /**
  * convert a bytes string to Address
@@ -174,10 +168,10 @@ const address2bytestr = (addr) => {
  * @returns {Address}
  */
 const bytes2address = (bytes) => {
-    const hex = bytes2HexString(bytes)
-    const addr = new Address(hex)
-    return addr
-}
+	const hex = bytes2HexString(bytes);
+	const addr = new Address(hex);
+	return addr;
+};
 
 /**
  * sha256 a string
@@ -186,21 +180,31 @@ const bytes2address = (bytes) => {
  * @returns {string}
  */
 const sha256str = (str) => {
-    return CryptoJS.SHA256(str).toString()
-}
+	return CryptoJS.SHA256(str).toString();
+};
 
+/**
+ *  
+ * @param {int} number 
+ * @return {[]bytes} arrayBuffer
+ */
+const number2ArrayBuffer = (number) => {
+	let a = new BigUint64Array([BigInt(number.toString())])
+    return a.buffer;
+};
 module.exports = {
-    verify,
-    publicKeyMatchAddress,
-    str2base64,
-    base64str2str,
-    hex2base64str,
-    hexstr2Bytes,
-    address2bytestr,
-    base64str2utf8str,
-    cryptoStr2Hex,
-    base64str2hex,
-    sha256str,
-    hex2sha256,
-    bytes2address
-}
+	verify,
+	publicKeyMatchAddress,
+	str2base64,
+	base64str2str,
+	hex2base64str,
+	hexstr2Bytes,
+	address2bytestr,
+	base64str2utf8str,
+	cryptoStr2Hex,
+	base64str2hex,
+	sha256str,
+	hex2sha256,
+    bytes2address,
+    number2ArrayBuffer
+};
