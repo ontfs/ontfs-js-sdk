@@ -190,8 +190,30 @@ const sha256str = (str) => {
  */
 const number2ArrayBuffer = (number) => {
 	let a = new BigUint64Array([BigInt(number.toString())])
-    return a.buffer;
+	return a.buffer;
 };
+
+
+/**
+ * convert a uint8 array to hex string
+ *
+ * @param {Uint8Array} arr
+ * @returns
+ */
+const ab2hexstring = (arr) => {
+	let result = '';
+	const uint8Arr = new Uint8Array(arr);
+	for (let i = 0; i < uint8Arr.byteLength; i++) {
+		let str = uint8Arr[i].toString(16);
+		str = str.length === 0
+			? '00'
+			: str.length === 1
+				? '0' + str
+				: str;
+		result += str;
+	}
+	return result;
+}
 module.exports = {
 	verify,
 	publicKeyMatchAddress,
@@ -205,6 +227,7 @@ module.exports = {
 	base64str2hex,
 	sha256str,
 	hex2sha256,
-    bytes2address,
-    number2ArrayBuffer
+	bytes2address,
+	number2ArrayBuffer,
+	ab2hexstring
 };

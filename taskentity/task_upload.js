@@ -673,8 +673,8 @@ const getFileUniqueId = async (blockHashes) => {
     console.log(`blocks ${blocks.length} calculating file unique id`)
     // 64 bytes
     const uniqueId = await sdk.globalSdk().pdpServer.genUniqueIdWithFileBlocks(blocks)
-    console.log('uniqId: ', uniqueId)
-    return uniqueId
+    console.log('uniqId: ', utils.ab2hexstring(uniqueId))
+    return utils.ab2hexstring(uniqueId)
 }
 
 
