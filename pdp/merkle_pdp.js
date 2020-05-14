@@ -45,24 +45,20 @@ const CalcRootHash = (blocks) => {
 	let blocksLen = blocks.length;
 	if (blocksLen == 0) return null;
 	let layerHashes = []; // list of arrayBuffer([]byte)
-	
 	for (let i = 0; i < blocksLen; i++) {
 		let id = number2ArrayBuffer(i);
 		let blockHash = sha3_256.arrayBuffer(blocks[i].buffer)
 
 		let idArray = new Uint8Array(id)
 		let blockHashArray = new Uint8Array(blockHash)
-	
 		let layer = new Uint8Array(blockHash.byteLength + id.byteLength);
-		
 		layer.set(blockHashArray, 0);
 		layer.set(idArray, blockHashArray.byteLength);
 		layerHashes[i] = layer.buffer;
 	}
-
 	let depth = 0;
 	while (layerHashes.length !== 1) {
-		let n = layerHashes.length / 2;
+		let n = Math.floor(layerHashes.length / 2);
 		for (let i = 0; i < n; i++) {
 			layerHashes[i] = merkleHash(
 				depth,
@@ -96,7 +92,7 @@ const CalcRootHash = (blocks) => {
 const testRootHash = () => {
 	let blocks = [];
 
-	const uint8 = new Uint8Array(256*1024);
+	const uint8 = new Uint8Array(256 * 1024);
 	for (let i = 0; i < uint8.length; i++) {
 		uint8.set([2], i);
 	}
@@ -106,7 +102,7 @@ const testRootHash = () => {
 
 	let ret = CalcRootHash(blocks)
 	let ret1 = new Uint8Array(ret);
-	console.log('ret: '+ret1);
+	console.log('ret: ' + ret1);
 };
 testRootHash();
 module.exports = {
