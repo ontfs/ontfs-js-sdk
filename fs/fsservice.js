@@ -251,9 +251,9 @@ async function* bfsTraverse(ipld, rootCid, offsets, maxDepth, uniqueOnly) { // e
                     const chiNode = await ipld.get(link.Hash)
                     if (!chiNode.Links || chiNode.Links.length == 0) {
                         offsets[`${link.Hash.toString()}-${index}`] = offset
-                        index++
                         offset += CHUNK_SIZE
                     }
+                    index++
                     yield {
                         parent: parent,
                         node: link,

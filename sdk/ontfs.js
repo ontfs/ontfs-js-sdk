@@ -3,6 +3,27 @@ const { addressFromPubKeyHex } = require('../utils/address')
 const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
 
+class Mutex {
+	constructor() {
+		this._locking = Promise.resolve();
+		this._locks = 0;
+	}
+	isLocked() {
+		return this._locks > 0;
+	}
+	lock() {
+		this._locks += 1;
+		let unlockNext;
+		let willLock = new Promise(resolve => unlockNext = () => {
+			this._locks -= 1;
+			resolve();
+		});
+		let willUnlock = this._locking.then(() => unlockNext);
+		this._locking = this._locking.then(() => willLock);
+		return willUnlock;
+	}
+}
+
 class OntFs {
 	/**
 	 *Creates an instance of OntFs.
@@ -14,6 +35,7 @@ class OntFs {
 		client.registerClient({});
 		this.gasPrice = _gasPrice;
 		this.gasLimit = _gasLimit;
+		this.mutex = new Mutex()
 	}
 
 	/**
@@ -375,12 +397,15 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async genFileReadSettleSlice(fileHash, peerWalletAddr, sliceId, blockHeight) {
-		return client.api.fs.genFileReadSettleSlice({
+		let unlock = await this.mutex.lock()
+		const result = await client.api.fs.genFileReadSettleSlice({
 			fileHash,
 			payTo: peerWalletAddr,
 			sliceId,
 			pledgeHeight: blockHeight
 		});
+		unlock()
+		return result
 	}
 }
 

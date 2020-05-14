@@ -60,6 +60,7 @@ const httpSendWithRetry = async (msg = "", peer, retry = HTTP_REQ_RETRY, timeout
       result = await axios(options);
       return result
     } catch (error) {
+      console.log('err', error)
       console.log(`network error for ${index + 1} times`)
       result = error;
     }

@@ -185,6 +185,7 @@ class TaskDownload {
                         this.transferInfo.microTasks[taskIndex].status = types.BlockTaskUnStart
                         break
                     }
+                    console.log('blocksResp', peerNetAddr, blocksResp)
                     for (let blockResp of blocksResp) {
                         console.log(`${routineInfo} Process BlockResp: ${blockResp.index}, ${blockResp.hash}`)
                         this.transferInfo.blockDownloadNotify.respNotify = blockResp
@@ -475,7 +476,10 @@ class TaskDownload {
         const account = await dapi.api.asset.getAccount();
         const reqMsg = message.newBlockFlightsReqMsg(this.option.fileHash, account,
             blocksReq, message.BLOCK_FLIGHTS_OP_GET, [message.withSessionId(sessionId)])
-        console.log('reqMsg', reqMsg, peerNetAddr)
+        if (blocksReq && blocksReq.length) {
+            console.log(`request block from ${blocksReq[0].Hash}-${blocksReq[0].Index} to` +
+                ` ${blocksReq[blocksReq.length - 1].Hash}-${blocksReq[blocksReq.length - 1].Index} ${peerNetAddr}`)
+        }
         const blocksReqM = {}
         for (let req of blocksReq) {
             blocksReqM[keyOfBlockHashAndIndex(req.Hash, req.Index)] = {}
@@ -575,7 +579,7 @@ class TaskDownload {
      */
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
         const currentWalletAddress = await sdk.globalSdk().walletAddress()
-        console.log(`111 paying to node peer addr ${peerNetAddr}, wallet addr ${currentWalletAddress}` +
+        console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${currentWalletAddress}` +
             `, sliceId: ${sliceId}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
             peerWalletAddr, sliceId, 0).catch((err) => {
