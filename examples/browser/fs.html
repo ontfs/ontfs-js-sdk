@@ -53,16 +53,6 @@
     </div>
 
     <div style="border-top:1px solid; width:30%;margin-top: 20px;">
-        <div style="padding: 10;">cancel file read pledge</div>
-        <div style="padding: 10;">
-            <div style="padding: 10;"> fileHash: <input type="text" id="cancelFileReadPledgeHash" value=""
-                    style="width: 400px;"></div>
-        </div>
-        <button onclick="cancelFileReadPledge()">cancelFileReadPledge</button>
-        <p id="cancelFileReadPledgeRet"></p>
-    </div>
-
-    <div style="border-top:1px solid; width:30%;margin-top: 20px;">
         <div style="padding: 10;">file pdp info list</div>
         <div style="padding: 10;">
             <div style="padding: 10;">fileHash: <input type="text" id="filePdpInfoListHash" value=""
@@ -187,26 +177,6 @@
             console.log('getFileReadPledge: ', readPledge)
             document.getElementById('getFileReadPledgeRet').innerHTML = 'result: <br>' + JSON.stringify(readPledge)
         } catch (e) {
-            console.log(e)
-        }
-    }
-
-    const cancelFileReadPledge = async () => {
-        if (!document.getElementById('startRet').innerHTML || (document.getElementById('startRet').innerHTML.length) != 28) {
-            alert('service not start')
-            return
-        }
-        const hash = document.getElementById("cancelFileReadPledgeHash").value
-        if (!hash || !hash.length) {
-            alert('hash is empty')
-            return
-        }
-        try {
-            const tx = await ontfs.SDK.globalSdk().ontFs.cancelFileRead(hash)
-            console.log('file read pledge tx: ', tx.transaction)
-            document.getElementById('cancelFileReadPledgeRet').innerHTML = 'cancel file read pledge tx: ' + tx.transaction
-        } catch (e) {
-            document.getElementById('cancelFileReadPledgeRet').innerHTML = 'result: <br>' + e
             console.log(e)
         }
     }
