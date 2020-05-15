@@ -105,14 +105,15 @@ class TaskDownload {
             const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.option.fileHash).catch((err) => {
                 throw err
             })
+            console.log('pdpRecordList', pdpRecordList)
             if (!pdpRecordList || !pdpRecordList.pdpRecords || !pdpRecordList.pdpRecords.length) {
                 throw new Error("no available fs nodes to download file: no node had commit pdp prove data")
             }
             let nodeAddrs = []
             let walletAddrs = []
             for (let pdpRecord of pdpRecordList.pdpRecords) {
-                const nodeInfo = await sdk.globalSdk().ontFs.getNodeInfo(pdpRecord.nodeAddr).catch((e) => {
-                    console.log(`get node ${pdpRecord.nodeAddr} info err: ${e.toString()}`)
+                const nodeInfo = await sdk.globalSdk().ontFs.getNodeInfo(pdpRecord.nodeAddr.toBase58()).catch((e) => {
+                    console.log(`get node ${pdpRecord.nodeAddr.toBase58()} info err: ${e.toString()}`)
                 })
                 if (!nodeInfo) {
                     continue
@@ -125,7 +126,7 @@ class TaskDownload {
 
                 }
                 nodeAddrs.push(nodeHttpAddr)
-                walletAddrs.push(walletAddrs, pdpRecord.nodeAddr)
+                walletAddrs.push(walletAddrs, pdpRecord.nodeAddr.toBase58())
             }
             if (!nodeAddrs.length || !walletAddrs.length) {
                 throw new Error(`no available fs nodes to download file: get nodes information error`)

@@ -2,154 +2,154 @@
 <html lang="en">
 
 <head>
-	<meta charset="UTF-8" />
-	<title>Space</title>
+    <meta charset="UTF-8" />
+    <title>Space</title>
 </head>
 
 <body>
-	<a href="./index.html">upload/download/delete file, resume/delete task</a><br>
-	<a href="./node.html">node management</a><br>
-	<a href="./space.html">space management</a><br>
-	<a href="./fs.html">file system management</a><br>
-	<br />
-	<div>
-		<p>Please start service first.</p>
-		<button onclick="startSDK()">start service</button>
-	</div>
-	<div id="startRet"></div>
+    <a href="./index.html">upload/download/delete file</a><br>
+    <a href="./node.html">node management</a><br>
+    <a href="./space.html">space management</a><br>
+    <a href="./fs.html">file system management</a><br>
+    <br />
+    <div>
+        <p>Please start service first.</p>
+        <button onclick="startSDK()">start service</button>
+    </div>
+    <div id="startRet"></div>
 
-	<div style="padding: 10;">space system management</div>
-	<div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
-		<div style="padding: 10; margin-top:20px">get space info</div>
-		<button onclick="getSpaceInfo()">getSpaceInfo</button>
-		<p id="getSpaceInfoVal"></p>
-	</div>
-	<div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
-		<div style="padding: 10; margin-top:20px">create space</div>
-		<div style="padding: 10;">timeExpired: <input type="date" id="timeExpiredInput" /></div>
-		<div style="padding: 10;">
-			Volume:
-			<input type="text" id="volumeInput" placeholder="volume size in KB" value="" style="width: 400px;" />
-		</div>
-		<div style="padding: 10;">
-			CopyNumber:
-			<input type="text" id="copyNumberInput" placeholder="copyNumber" value="" style="width: 400px;" />
-		</div>
-		<button onclick="createSpace()">createSpace</button>
-	</div>
-	<div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
-		<div style="padding: 10; margin-top:20px">update space</div>
+    <div style="padding: 10;">space system management</div>
+    <div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
+        <div style="padding: 10; margin-top:20px">get space info</div>
+        <button onclick="getSpaceInfo()">getSpaceInfo</button>
+        <p id="getSpaceInfoVal"></p>
+    </div>
+    <div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
+        <div style="padding: 10; margin-top:20px">create space</div>
+        <div style="padding: 10;">timeExpired: <input type="date" id="timeExpiredInput" /></div>
+        <div style="padding: 10;">
+            Volume:
+            <input type="text" id="volumeInput" placeholder="volume size in KB" value="" style="width: 400px;" />
+        </div>
+        <div style="padding: 10;">
+            CopyNumber:
+            <input type="text" id="copyNumberInput" placeholder="copyNumber" value="" style="width: 400px;" />
+        </div>
+        <button onclick="createSpace()">createSpace</button>
+    </div>
+    <div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
+        <div style="padding: 10; margin-top:20px">update space</div>
 
-		<div style="padding: 10;">timeExpired: <input type="date" id="timeExpiredInputUpdate" /></div>
-		<div style="padding: 10;">
-			Volume:
-			<input type="text" id="volumeInputUpdate" placeholder="volume size in KB" value="" style="width: 400px;" />
-		</div>
-		<button onclick="updateSpace()">updateSpace</button>
-	</div>
-	<div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
-		<div style="padding: 10;">delete space</div>
-		<button onclick="deleteSpace()">deleteSpace</button>
-	</div>
-	<script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
+        <div style="padding: 10;">timeExpired: <input type="date" id="timeExpiredInputUpdate" /></div>
+        <div style="padding: 10;">
+            Volume:
+            <input type="text" id="volumeInputUpdate" placeholder="volume size in KB" value="" style="width: 400px;" />
+        </div>
+        <button onclick="updateSpace()">updateSpace</button>
+    </div>
+    <div style="border-top: 1px solid; width: 30%; margin-top: 20px;">
+        <div style="padding: 10;">delete space</div>
+        <button onclick="deleteSpace()">deleteSpace</button>
+    </div>
+    <script type="text/javascript" src="../../dist/ontfs-js-sdk.js"></script>
 </body>
 <script>
-	// startSDK. start SDK
-	const startSDK = async () => {
-		document.getElementById("startRet").innerHTML = `<p>wait...</p>`;
-		// init config
-		const sdkCfg = { gasPrice: 500, gasLimit: 400000, pdpVersion: 1 };
-		ontfs.Config.DaemonConfig = {
-			fsRepoRoot: "./test/Fs",
-			fsFileRoot: "./test/Download",
-			fsType: 0
-		};
-		console.log("start service");
-		// init global task manager
-		ontfs.TaskManage.initTaskManage();
-		// init global sdk
-		const s = await ontfs.SDK.initSdk(sdkCfg);
-		ontfs.SDK.setGlobalSdk(s);
-		await s.start();
-		document.getElementById("startRet").innerHTML = `<p>service start success</p>`;
+    // startSDK. start SDK
+    const startSDK = async () => {
+        document.getElementById("startRet").innerHTML = `<p>wait...</p>`;
+        // init config
+        const sdkCfg = { gasPrice: 500, gasLimit: 400000, pdpVersion: 1 };
+        ontfs.Config.DaemonConfig = {
+            fsRepoRoot: "./test/Fs",
+            fsFileRoot: "./test/Download",
+            fsType: 0
+        };
+        console.log("start service");
+        // init global task manager
+        ontfs.TaskManage.initTaskManage();
+        // init global sdk
+        const s = await ontfs.SDK.initSdk(sdkCfg);
+        ontfs.SDK.setGlobalSdk(s);
+        await s.start();
+        document.getElementById("startRet").innerHTML = `<p>service start success</p>`;
 
-		return true;
-	};
-	const createSpace = async () => {
-		if (
-			!document.getElementById("startRet").innerHTML ||
-			document.getElementById("startRet").innerHTML.length != 28
-		) {
-			alert("service not start");
-			return;
-		}
-		try {
-			let timeExpired = parseInt(Date.parse(document.querySelector("#timeExpiredInput").value));
-			const volume = parseInt(document.querySelector("#volumeInput").value);
-			const copyNumber = parseInt(document.querySelector("#copyNumberInput").value);
-			const spaceInfo = await ontfs.SDK.globalSdk().ontFs.createSpace(
-				volume,
-				copyNumber,
-				timeExpired
-			);
-			console.log("create create success");
-			console.log(spaceInfo);
-		} catch (e) {
-			console.error(e);
-		}
-	};
-	const updateSpace = async () => {
-		if (
-			!document.getElementById("startRet").innerHTML ||
-			document.getElementById("startRet").innerHTML.length != 28
-		) {
-			alert("service not start");
-			return;
-		}
-		try {
-			let timeExpired = parseInt(Date.parse(document.querySelector("#timeExpiredInputUpdate").value));
-			const volume = parseInt(document.querySelector("#volumeInputUpdate").value);
-			const spaceInfo = await ontfs.SDK.globalSdk().ontFs.updateSpace(volume, timeExpired);
-			console.log("create create success");
-			console.log(spaceInfo);
-		} catch (e) {
-			console.error(e);
-		}
-	};
-	const getSpaceInfo = async () => {
-		if (
-			!document.getElementById("startRet").innerHTML ||
-			document.getElementById("startRet").innerHTML.length != 28
-		) {
-			alert("service not start");
-			return;
-		}
-		try {
-			const spaceInfo = await ontfs.SDK.globalSdk().ontFs.getSpaceInfo();
-			console.log("spaceInfo is");
-			console.log(JSON.stringify(spaceInfo));
-			document.querySelector("#getSpaceInfoVal").innerHTML = JSON.stringify(spaceInfo);
-		} catch (e) {
-			console.error(e);
-			document.querySelector("#getSpaceInfoVal").innerHTML = "Space is empty ";
-		}
-	};
-	const deleteSpace = async () => {
-		if (
-			!document.getElementById("startRet").innerHTML ||
-			document.getElementById("startRet").innerHTML.length != 28
-		) {
-			alert("service not start");
-			return;
-		}
-		try {
-			const result = await ontfs.SDK.globalSdk().ontFs.deleteSpace();
-			console.log("result is");
-			console.log(result);
-		} catch (e) {
-			console.error(e);
-		}
-	};
+        return true;
+    };
+    const createSpace = async () => {
+        if (
+            !document.getElementById("startRet").innerHTML ||
+            document.getElementById("startRet").innerHTML.length != 28
+        ) {
+            alert("service not start");
+            return;
+        }
+        try {
+            let timeExpired = parseInt(Date.parse(document.querySelector("#timeExpiredInput").value));
+            const volume = parseInt(document.querySelector("#volumeInput").value);
+            const copyNumber = parseInt(document.querySelector("#copyNumberInput").value);
+            const spaceInfo = await ontfs.SDK.globalSdk().ontFs.createSpace(
+                volume,
+                copyNumber,
+                timeExpired
+            );
+            console.log("create create success");
+            console.log(spaceInfo);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+    const updateSpace = async () => {
+        if (
+            !document.getElementById("startRet").innerHTML ||
+            document.getElementById("startRet").innerHTML.length != 28
+        ) {
+            alert("service not start");
+            return;
+        }
+        try {
+            let timeExpired = parseInt(Date.parse(document.querySelector("#timeExpiredInputUpdate").value));
+            const volume = parseInt(document.querySelector("#volumeInputUpdate").value);
+            const spaceInfo = await ontfs.SDK.globalSdk().ontFs.updateSpace(volume, timeExpired);
+            console.log("create create success");
+            console.log(spaceInfo);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+    const getSpaceInfo = async () => {
+        if (
+            !document.getElementById("startRet").innerHTML ||
+            document.getElementById("startRet").innerHTML.length != 28
+        ) {
+            alert("service not start");
+            return;
+        }
+        try {
+            const spaceInfo = await ontfs.SDK.globalSdk().ontFs.getSpaceInfo();
+            console.log("spaceInfo is");
+            console.log(JSON.stringify(spaceInfo));
+            document.querySelector("#getSpaceInfoVal").innerHTML = JSON.stringify(spaceInfo);
+        } catch (e) {
+            console.error(e);
+            document.querySelector("#getSpaceInfoVal").innerHTML = "Space is empty ";
+        }
+    };
+    const deleteSpace = async () => {
+        if (
+            !document.getElementById("startRet").innerHTML ||
+            document.getElementById("startRet").innerHTML.length != 28
+        ) {
+            alert("service not start");
+            return;
+        }
+        try {
+            const result = await ontfs.SDK.globalSdk().ontFs.deleteSpace();
+            console.log("result is");
+            console.log(result);
+        } catch (e) {
+            console.error(e);
+        }
+    };
 </script>
 
 </html>

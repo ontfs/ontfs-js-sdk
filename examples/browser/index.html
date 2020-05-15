@@ -14,7 +14,7 @@
 <html>
 
 <body>
-    <a href="./index.html">upload/download/delete file, resume/delete task</a><br>
+    <a href="./index.html">upload/download/delete file</a><br>
     <a href="./node.html">node management</a><br>
     <a href="./space.html">space management</a><br>
     <a href="./fs.html">file system management</a><br>
@@ -139,7 +139,7 @@
 
                 // init upload option
                 const option = new ontfs.Types.TaskUploadOption()
-                option.filePath = document.getElementById('desc').value// file path of the file
+                // option.filePath = document.getElementById('desc').value// file path of the file
                 option.fileContent = evt.target.result// ArrayBuffer of file content
                 option.fileDesc = document.getElementById('desc').value // file name or file description
                 option.fileSize = evt.total // file real size

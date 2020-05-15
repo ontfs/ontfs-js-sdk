@@ -39,6 +39,15 @@ class OntFs {
 	}
 
 	/**
+	 * get account
+	 * @returns {Address}
+	 * @memberof OntFs
+	 */
+	async getAccount() {
+		return client.api.asset.getAccount()
+	}
+
+	/**
 	 * get storage node info list
 	 *
 	 *
@@ -52,7 +61,7 @@ class OntFs {
 		};
 		for (let node of nodes.nodesInfo) {
 			let newNode = node;
-			newNode.nodeAddr = addressFromPubKeyHex(str2hexstr(node.nodeAddr));
+			newNode.nodeAddr = new Address(node.nodeAddr);
 			newNodes.nodesInfo.push(newNode);
 		}
 		return newNodes
@@ -86,7 +95,7 @@ class OntFs {
 	 */
 	async getSpaceInfo() {
 		const spaceInfo = await client.api.fs.space.get();
-		spaceInfo.spaceOwner = addressFromPubKeyHex(str2hexstr(spaceInfo.spaceOwner))
+		spaceInfo.spaceOwner = new Address(spaceInfo.spaceOwner);
 		return spaceInfo
 	}
 
@@ -157,7 +166,7 @@ class OntFs {
 		fileInfo.fileHash = client.api.utils.hexToStr(fileInfo.fileHash);
 		fileInfo.fileDesc = client.api.utils.hexToStr(fileInfo.fileDesc);
 		fileInfo.pdpParam = client.api.utils.hexToStr(fileInfo.pdpParam);
-		fileInfo.fileOwner = addressFromPubKeyHex(str2hexstr(fileInfo.fileOwner));
+		fileInfo.fileOwner = new Address(fileInfo.fileOwner);
 		return fileInfo;
 	}
 
@@ -257,11 +266,11 @@ class OntFs {
 			downloader: walletAddr
 		});
 		readPledge.fileHash = hexstr2str(readPledge.fileHash);
-		readPledge.downloader = addressFromPubKeyHex(str2hexstr(readPledge.downloader));
+		readPledge.downloader = new Address(readPledge.downloader);
 		let newReadPlans = []
 		for (let plan of readPledge.readPlans) {
 			let newPlan = plan;
-			newPlan.nodeAddr = addressFromPubKeyHex(str2hexstr(plan.nodeAddr));
+			newPlan.nodeAddr = new Address(plan.nodeAddr);
 			newReadPlans.push(newPlan);
 		}
 		readPledge.readPlans = newReadPlans
@@ -297,11 +306,11 @@ class OntFs {
 		};
 		for (let record of pdpRecords.pdpRecords) {
 			let newRecord = record;
+			newRecord.nodeAddr = new Address(newRecord.nodeAddr);
 			newRecord.fileHash = hexstr2str(newRecord.fileHash);
-			newRecord.fileOwner = addressFromPubKeyHex(str2hexstr(newRecord.fileOwner));
+			newRecord.fileOwner = new Address(newRecord.fileOwner);
 			newPdpRecords.pdpRecords.push(newRecord);
 		}
-		console.log(newPdpRecords)
 		return newPdpRecords
 	}
 
@@ -353,8 +362,8 @@ class OntFs {
 		}
 		for (let challenge of challengeList.challenges) {
 			let newChallenge = challenge
-			newChallenge.fileOwner = addressFromPubKeyHex(str2hexstr(newChallenge.fileOwner));
-			newChallenge.nodeAddr = addressFromPubKeyHex(str2hexstr(newChallenge.nodeAddr));
+			newChallenge.fileOwner = new Address(newChallenge.fileOwner);
+			newChallenge.nodeAddr = new Address(newChallenge.nodeAddr);
 			newChallengeList.challenges.push(newChallenge)
 		}
 		return newChallengeList
