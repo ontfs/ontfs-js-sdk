@@ -247,6 +247,7 @@
         }
         try {
             await ontfs.SDK.globalSdk().challenge(hash, nodeAddr)
+            document.getElementById('challengeRet').innerHTML = 'result: <br> challenge Done'
         } catch (e) {
             document.getElementById('challengeRet').innerHTML = 'result: <br>' + e
         }
