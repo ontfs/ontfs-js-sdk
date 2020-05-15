@@ -362,6 +362,7 @@ class OntFs {
 		}
 		for (let challenge of challengeList.challenges) {
 			let newChallenge = challenge
+			newChallenge.fileHash = hexstr2str(newChallenge.fileHash);
 			newChallenge.fileOwner = new Address(newChallenge.fileOwner);
 			newChallenge.nodeAddr = new Address(newChallenge.nodeAddr);
 			newChallengeList.challenges.push(newChallenge)

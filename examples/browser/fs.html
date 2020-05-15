@@ -270,7 +270,12 @@
         try {
             await ontfs.SDK.globalSdk().judge(hash, nodeAddr)
         } catch (e) {
-            document.getElementById('judgeRet').innerHTML = 'result: <br>' + e.toString()
+            const errStr = e.toString()
+            if (errStr.indexOf("RepliedAndSuccess") != -1) {
+                document.getElementById('judgeRet').innerHTML = 'result: <br> RepliedAndSuccess'
+            } else {
+                document.getElementById('judgeRet').innerHTML = 'result: <br>' + e.toString()
+            }
         }
     }
 
