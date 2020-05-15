@@ -189,8 +189,8 @@ class Sdk {
             space.restVol = common.formatVolumeStringFromKb(info.restVol);
             space.payAmount = common.formatOng(info.payAmount);
             space.restAmount = common.formatOng(info.restAmount);
-            space.timeStart = common.formatDateLocaleString(new Date(info.timeStart * 1000));
-            space.timeExpired = common.formatDateLocaleString(new Date(info.timeExpired * 1000));
+            space.timeStart = common.formatDateLocaleString(new Date(info.timeStart));
+            space.timeExpired = common.formatDateLocaleString(new Date(info.timeExpired));
             space.currFeeRate = info.currFeeRate;
             space.validFlag = info.validFlag;
             return space;
