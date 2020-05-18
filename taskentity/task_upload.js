@@ -3,6 +3,8 @@ const utils = require("../utils")
 const common = require("../common")
 const sdk = require("../sdk")
 const { TaskStart, TaskPause, TaskFinish } = require("./const")
+const sha3_256 = require("js-sha3").sha3_256
+const Buffer = require('buffer/').Buffer
 
 const message = require("../network/message")
 const client = require("../network/http/http_client")
@@ -668,7 +670,9 @@ const getFileUniqueId = async (blockHashes) => {
             console.log('get block err', blockHashes[blockIndex], e.toString())
             throw e
         })
-        blocks.push(block.rawData)
+        const blockRawData = block.rawData
+        blocks.push(Buffer.from(sha3_256.arrayBuffer(blockRawData.buffer)))
+        sdk.globalSdk().fs.returnBuffer(blockRawData)
     }
     console.log(`blocks ${blocks.length} calculating file unique id`)
     // 64 bytes
