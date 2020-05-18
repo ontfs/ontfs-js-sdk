@@ -2,6 +2,7 @@ const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils;
 const { addressFromPubKeyHex } = require('../utils/address')
 const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
+const Base64 = require("js-base64").Base64;
 
 class Mutex {
 	constructor() {
@@ -147,11 +148,29 @@ class OntFs {
 			newFile.timeExpired = new Date(file.timeExpired * 1000);
 			newFiles.push(newFile);
 		}
-		return client.api.fs.storeFiles({
+		const tx = await client.api.fs.storeFiles({
 			filesInfo: newFiles,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
+		const events = await client.api.network.getSmartCodeEvent({ value: tx.transaction })
+		console.log("events:", events);
+		if (
+			events &&
+			events.Notify &&
+			events.Notify.length
+		) {
+			for (let n of events.Notify) {
+				if (
+					n.ContractAddress == "0b00000000000000000000000000000000000000"
+				) {
+					const str = Base64.decode(n.States);
+					console.log("tx " + tx.transaction + "state failed, " + str)
+					// throw ("tx " + tx.transaction + "state failed, " + str);
+				}
+			}
+		}
+		return tx
 	}
 
 	/**
