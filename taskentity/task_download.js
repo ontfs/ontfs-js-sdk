@@ -545,6 +545,7 @@ class TaskDownload {
             blockHashes, blocksResp[0].paymentId).catch((err) => {
                 // throw err
             })
+        await utils.sleep(2000)
         return blocksResp
     }
 
