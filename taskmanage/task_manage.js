@@ -63,7 +63,10 @@ class TaskMgr {
     getUploadTaskByTaskId(taskId) {
         const task = this.uploadTaskHub[taskId]
         if (task) {
-            return task
+            const taskCopy = JSON.parse(JSON.stringify(task))
+            delete taskCopy.baseInfo["blockHashes"]
+            delete taskCopy.baseInfo["allOffset"]
+            return taskCopy
         }
         throw new Error(`[GetUploadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
@@ -78,7 +81,9 @@ class TaskMgr {
     getDownloadTaskByTaskId(taskId) {
         const task = this.downloadTaskHub[taskId]
         if (task) {
-            return task
+            const taskCopy = JSON.parse(JSON.stringify(task))
+            delete taskCopy.baseInfo["fileBlockHashes"]
+            return taskCopy
         }
         throw new Error(`[GetDownloadTaskByTaskId] task (id: ${taskId})is not exist`)
     }

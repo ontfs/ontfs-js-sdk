@@ -420,6 +420,20 @@ class TaskDownload {
         })
         // console.log("broadcast file download ask msg ret", message.decodeMsg(ret.data))
         console.log("peers:", Object.keys(this.transferInfo.blockDownloadInfo).length)
+        if (this.transferInfo && this.transferInfo.blockDownloadInfo &&
+            Object.keys(this.transferInfo.blockDownloadInfo).length > this.option.maxPeerCnt) {
+            const peerKeys = Object.keys(this.transferInfo.blockDownloadInfo)
+            const removeCount = peerKeys.length - this.option.maxPeerCnt
+            const removePeers = []
+            for (let i = 0; i < removeCount; i++) {
+                removePeers.push(peerKeys[peerKeys.length - i - 1])
+            }
+            console.log("too much peers, remove", removePeers)
+            for (let removePeer of removePeers) {
+                delete this.transferInfo.blockDownloadInfo[removePeer]
+            }
+            console.log("remain peers count", Object.keys(this.transferInfo.blockDownloadInfo).length)
+        }
         if (!this.transferInfo.blockDownloadInfo ||
             Object.keys(this.transferInfo.blockDownloadInfo).length == 0) {
             throw new Error(`no fs nodes available when ask for download `)
@@ -545,7 +559,7 @@ class TaskDownload {
             blockHashes, blocksResp[0].paymentId).catch((err) => {
                 // throw err
             })
-        await utils.sleep(2000)
+        // await utils.sleep(2000)
         return blocksResp
     }
 
