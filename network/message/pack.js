@@ -93,7 +93,10 @@ const decodeMsg = (msg) => {
                         hash: b.Hash,
                         index: b.Index,
                         offset: b.Offset,
-                        data: utils.base64str2str(b.Data),
+                        // data: utils.base64str2str(b.Data),
+                    }
+                    if (b.Data && b.Data.length) {
+                        blk.data = utils.base64str2str(b.Data)
                     }
                     blocks.push(blk)
                 }
