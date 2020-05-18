@@ -186,6 +186,7 @@ class Sdk {
             let space = {};
             space.spaceOwner = info.spaceOwner.toBase58();
             space.volume = common.formatVolumeStringFromKb(info.volume);
+            space.copyNumber = info.copyNumber;
             space.restVol = common.formatVolumeStringFromKb(info.restVol);
             space.payAmount = common.formatOng(info.payAmount);
             space.restAmount = common.formatOng(info.restAmount);
