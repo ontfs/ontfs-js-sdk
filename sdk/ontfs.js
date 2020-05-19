@@ -226,7 +226,7 @@ class OntFs {
 	 */
 	async transferFiles(renews) {
 		for (let item of renews) {
-			item.fileHash = strhexstr(i2tem.fileHash);
+			item.fileHash = str2hexstr(i2tem.fileHash);
 		}
 		return client.api.fs.transferFiles({
 			fileTransfers: renews,
