@@ -342,7 +342,7 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async challenge(fileHash, nodeAddr) {
-		return client.api.fs.challenge({
+		return client.api.fs.chanllenge({
 			fileHash,
 			nodeAddr,
 			gasPrice: this.gasPrice,
