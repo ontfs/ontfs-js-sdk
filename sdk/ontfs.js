@@ -210,7 +210,7 @@ class OntFs {
 		for (let item of renews) {
 			item.fileHash = client.api.utils.strToHex(item.fileHash);
 		}
-		return client.api.fs.renewFile({
+		return client.api.fs.renewFiles({
 			filesRenew: renews,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
