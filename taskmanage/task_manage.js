@@ -63,9 +63,26 @@ class TaskMgr {
     getUploadTaskByTaskId(taskId) {
         const task = this.uploadTaskHub[taskId]
         if (task) {
-            const taskCopy = JSON.parse(JSON.stringify(task))
-            delete taskCopy.baseInfo["blockHashes"]
-            delete taskCopy.baseInfo["allOffset"]
+            let taskCopy = {}
+            if (task.baseInfo) {
+                taskCopy.baseInfo = {
+                    taskId: task.baseInfo.taskId,
+                    status: task.baseInfo.status,
+                    progress: task.baseInfo.progress,
+                    errorInfo: task.baseInfo.errorInfo,
+                    blockCount: task.baseInfo.blockCount,
+                    fileHash: task.baseInfo.fileHash,
+                    filePrefix: task.baseInfo.filePrefix,
+                    pdpHashData: task.baseInfo.pdpHashData,
+                    storeTxHash: task.baseInfo.storeTxHash,
+                    storeTxHeight: task.baseInfo.storeTxHeight,
+                }
+            }
+            if (task.transferInfo) {
+                taskCopy.transferInfo = {
+                    blockSendDetails: task.transferInfo.blockSendDetails
+                }
+            }
             return taskCopy
         }
         throw new Error(`[GetUploadTaskByTaskId] task (id: ${taskId})is not exist`)
@@ -81,8 +98,25 @@ class TaskMgr {
     getDownloadTaskByTaskId(taskId) {
         const task = this.downloadTaskHub[taskId]
         if (task) {
-            const taskCopy = JSON.parse(JSON.stringify(task))
-            delete taskCopy.baseInfo["fileBlockHashes"]
+            let taskCopy = {}
+            if (task.baseInfo) {
+                taskCopy.baseInfo = {
+                    taskID: task.baseInfo.taskID,
+                    status: task.baseInfo.status,
+                    progress: task.baseInfo.progress,
+                    errorInfo: task.baseInfo.errorInfo,
+                    readPlanTx: task.baseInfo.readPlanTx,
+                    fileDesc: task.baseInfo.fileDesc,
+                    filePrefix: task.baseInfo.filePrefix,
+                    fileBlockCount: task.baseInfo.fileBlockCount,
+                    fileServerNetAddrs: task.baseInfo.fileServerNetAddrs,
+                }
+            }
+            if (task.transferInfo) {
+                taskCopy.transferInfo = {
+                    blockDownloadInfo: task.transferInfo.blockDownloadInfo
+                }
+            }
             return taskCopy
         }
         throw new Error(`[GetDownloadTaskByTaskId] task (id: ${taskId})is not exist`)
