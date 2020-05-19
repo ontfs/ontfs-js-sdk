@@ -3,7 +3,7 @@ const { reverseHex } = require("ontology-ts-sdk").utils;
 const { Address, PublicKey, Signature } = Crypto;
 const address = require("./address.js");
 const CryptoJS = require("crypto-js");
-
+const Buffer = require('buffer/').Buffer
 /**
  * verify sign
  *
@@ -44,7 +44,8 @@ const publicKeyMatchAddress = (pubKey, base58Addr) => {
  * @returns {string}
  */
 const str2base64 = (str) => {
-	return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(str));
+	return Buffer.from(str).toString("base64")
+	// return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(str));
 };
 
 /**

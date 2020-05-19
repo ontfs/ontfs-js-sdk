@@ -413,6 +413,12 @@ class TaskUpload {
             blockSendDetail.index = respFileMsg.breakpoint.index + 1
         }
         let toBeSentBlocks = []
+        let maxSendBlockCount = common.MAX_SEND_BLOCK_COUNT
+        maxSendBlockCount = common.MAX_SEND_BLOCK_COUNT - parseInt(this.baseInfo.blockCount / 200) * 4
+        if (!maxSendBlockCount || maxSendBlockCount <= 0) {
+            maxSendBlockCount = 4
+        }
+        console.log("maxSendBlockCount", maxSendBlockCount, this.baseInfo.blockCount)
         for (let blockIndex = blockSendDetail.index; blockIndex < this.baseInfo.blockCount; blockIndex++) {
             const blockHash = this.baseInfo.blockHashes[blockIndex]
             const blockMsgData = await this.getMsgData(blockHash, blockIndex)
@@ -426,7 +432,8 @@ class TaskUpload {
                 offset: blockMsgData.offset,
             }
             toBeSentBlocks.push(b)
-            if (blockIndex != this.baseInfo.blockCount - 1 && toBeSentBlocks.length < common.MAX_SEND_BLOCK_COUNT) {
+            // if (blockIndex != this.baseInfo.blockCount - 1 && toBeSentBlocks.length < common.MAX_SEND_BLOCK_COUNT) {
+            if (blockIndex != this.baseInfo.blockCount - 1 && toBeSentBlocks.length < maxSendBlockCount) {
                 continue
             }
             // console.log("toBeSentBlocks", toBeSentBlocks)
@@ -434,6 +441,9 @@ class TaskUpload {
                 console.log(`send block flight msg err`, e.toString())
                 throw e
             })
+            if (this.baseInfo.blockCount > 800) {
+                await utils.sleep(1000)
+            }
             console.log("blockAck", blocksAck)
             this.cleanMsgData(blocksAck)
             blockSendDetail.index = blockIndex
@@ -500,7 +510,7 @@ class TaskUpload {
             throw e
         })
         if (ret.data) {
-            console.log("send block ret", message.decodeMsg(ret.data))
+            // console.log("send block ret", message.decodeMsg(ret.data))
         }
         let blockAck = []
         for (let blk of blocks) {
@@ -584,6 +594,7 @@ class TaskUpload {
                 continue
             }
             delete this.transferInfo.blockMsgDataMap[key]
+            console.log("delete blockMsgData", key)
             sdk.globalSdk().fs.returnBuffer(data.blockData)
         }
     }
