@@ -226,37 +226,23 @@ class TaskUpload {
         }
 
         if (this.baseInfo.progress < Upload_WaitPdpRecords) {
-            let waitPdpSecond = 0
-            let isPdpCommitted = false
-            let checkPdpErr
-            while (true) {
-                await utils.sleep(common.UPLOAD_WAIT_PDP_RECIRDS_INTERVAL * 1000)
-                waitPdpSecond += common.UPLOAD_WAIT_PDP_RECIRDS_INTERVAL
-                if (waitPdpSecond >= common.MAX_UPLOAD_WAIT_PDP_RECORDS_TIMEWAIT) {
-                    if (isPdpCommitted) {
-                        console.log(`pdp commit true`)
-                        break
-                    }
-                    checkPdpErr = new Error(`wait pdp prove records failed`)
-                    break
+            for (let count = 0; count < common.UPLOAD_WAIT_PDP_RECORDS_MAX_TIME + 1; count++) {
+                if (count == common.UPLOAD_WAIT_PDP_RECORDS_MAX_TIME) {
+                    throw new Error(`Task Id: ${this.baseInfo.taskID} FileHash: ${this.baseInfo.fileHash}` +
+                        ` Wait for pdp records timeout `)
+                } else if (count != 0) {
+                    await utils.sleep(common.UPLOAD_WAIT_PDP_RECIRDS_INTERVAL * 1000)
                 }
                 try {
                     const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
-                    isPdpCommitted = (pdpRecordList && pdpRecordList.pdpRecords &&
-                        pdpRecordList.pdpRecords.length == this.option.copyNum)
-                    console.log("pdpRecordList", pdpRecordList, isPdpCommitted, this.option.copyNum)
+                    console.log("pdpRecordList", pdpRecordList, this.option.copyNum)
+                    if (pdpRecordList && pdpRecordList.pdpRecords &&
+                        pdpRecordList.pdpRecords.length == this.option.copyNum) {
+                        break
+                    }
                 } catch (e) {
                     console.log(`get file pdp record list err ${e.toString()}`)
-                    checkPdpErr = e
-                    break
                 }
-                if (isPdpCommitted) {
-                    console.log(`pdp commit true`)
-                    break
-                }
-            }
-            if (checkPdpErr) {
-                throw checkPdpErr
             }
             this.baseInfo.progress = Upload_WaitPdpRecords
         }

@@ -175,14 +175,17 @@ class TaskDownload {
                         console.log(`DownloadBlockFlightsFromPeer getBlocksReq return nil`)
                         break
                     }
+                    let promiseErr
                     const blocksResp = await this.downloadBlockFlightsFromPeer(
                         peerNetAddr, peerDownloadInfo.peerWallet, blocksReq).catch((err) => {
                             console.log(`DownloadBlockFlightsFromPeer error: ${err.toString()}`)
-                            // promiseErr = err
+                            promiseErr = err
                         })
                     console.log('blockResponses', blocksResp ? blocksResp.length : 0)
                     if (!blocksResp) {
-                        console.log(`${routineInfo} DownloadBlockFlightsFromPeer error: blocksResp is nil`)
+                        console.log(`${routineInfo} DownloadBlockFlightsFromPeer error: ${promiseErr ? promiseErr.toString() : ''}`)
+                        this.transferInfo.blockDownloadInfo[peerNetAddr].errorInfo =
+                            `${routineInfo} DownloadBlockFlightsFromPeer error: ${promiseErr ? promiseErr.toString() : ''}`
                         this.transferInfo.microTasks[taskIndex].status = types.BlockTaskUnStart
                         break
                     }
@@ -447,14 +450,36 @@ class TaskDownload {
      */
     async pledge() {
         let readPlan = []
+        const account = await dapi.api.asset.getAccount();
+        const oldReadPledgeRet = await sdk.globalSdk().ontFs.getFileReadPledge(this.option.fileHash,
+            account).catch((err) => {
+                // console.log(`contract interface FileReadPledge called failed`)
+            })
         for (let [peerAddr, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
-            let plan = {
-                nodeAddr: peerDownloadInfo.peerWallet,
-                maxReadBlockNum: this.baseInfo.fileBlockCount,
-                haveReadBlockNum: 0,
-                numOfSettlements: 0
+            let hasPlan = false
+            if (oldReadPledgeRet) {
+                for (let v of oldReadPledgeRet.readPlans) {
+                    if ((typeof v.nodeAddr == "string" && v.nodeAddr == peerDownloadInfo.peerWallet) ||
+                        v.nodeAddr.toBase58() == peerDownloadInfo.peerWallet) {
+                        hasPlan = true
+                        const restBlockNum = v.maxReadBlockNum - peerDownloadInfo.sliceId
+                        readPlan.push({
+                            nodeAddr: peerDownloadInfo.peerWallet,
+                            maxReadBlockNum: this.baseInfo.fileBlockCount - restBlockNum,
+                            haveReadBlockNum: 0,
+                            numOfSettlements: 0
+                        })
+                    }
+                }
             }
-            readPlan.push(plan)
+            if (!hasPlan) {
+                readPlan.push({
+                    nodeAddr: peerDownloadInfo.peerWallet,
+                    maxReadBlockNum: this.baseInfo.fileBlockCount,
+                    haveReadBlockNum: 0,
+                    numOfSettlements: 0
+                })
+            }
         }
         console.log('readPlan', readPlan)
         const readPledgeRet = await sdk.globalSdk().ontFs.fileReadPledge(this.option.fileHash, readPlan).catch((err) => {
@@ -463,7 +488,7 @@ class TaskDownload {
         })
         await sdk.globalSdk().waitForGenerateBlock(60, 1)
         console.log('readPledgeRet', readPledgeRet)
-        const account = await dapi.api.asset.getAccount();
+
         const readPledge = await sdk.globalSdk().ontFs.getFileReadPledge(this.option.fileHash,
             account).catch((err) => {
                 console.log(`contract interface FileReadPledge called failed`)
@@ -557,9 +582,11 @@ class TaskDownload {
         peerTransferInfo.totalCount += blocksRespCount
         await this.payForBlocks(peerNetAddr, peerWalletAddr, peerTransferInfo.sliceId + peerTransferInfo.totalCount,
             blockHashes, blocksResp[0].paymentId).catch((err) => {
+                console.log("pay for block err", err)
                 // throw err
             })
         // await utils.sleep(2000)
+        console.log("pay for block success", blockHashes)
         return blocksResp
     }
 
@@ -599,8 +626,10 @@ class TaskDownload {
             `, sliceId: ${sliceId}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
             peerWalletAddr, sliceId, 0).catch((err) => {
+                console.log("generate file read settle failed", err)
                 throw err
             })
+
         console.log('fileReadSlice', fileReadSlice)
         let payFrom = fileReadSlice.payFrom
         let payTo = fileReadSlice.payTo
@@ -632,11 +661,10 @@ class TaskDownload {
             PubKey: utils.hex2base64str(fileReadSlicePubKey),
         }
         // console.log('fileReadSlice', fileReadSlice, fileReadSlice.sig.serializeHex(), fileReadSlice.pubKey.serializeHex())
-        // console.log('sliceData', sliceData)
-
+        console.log('sliceData', sliceData)
         const msg = message.newPaymentMsg(payFrom.toBase58(), payTo.toBase58(),
-            message.PAYMENT_OP_PAY, paymentId, this.option.fileHash, blockHashes, sliceData,
-            [message.withWalletAddress(currentWalletAddress)])
+            message.PAYMENT_OP_PAY, paymentId, this.option.fileHash, blockHashes, sliceData, []
+        )
         // console.log('payment msg', msg)
 
         const ret = await client.httpSendWithRetry(msg, peerNetAddr, common.MAX_NETWORK_REQUEST_RETRY,

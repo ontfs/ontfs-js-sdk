@@ -15,6 +15,7 @@ class TaskMgr {
     constructor(_uploadTaskHub, _downloadTaskHub) {
         this.uploadTaskHub = _uploadTaskHub
         this.downloadTaskHub = _downloadTaskHub
+        this.mutex = new utils.Mutex()
     }
     /**
      * add a task with option, return a taskID if add success
@@ -24,6 +25,7 @@ class TaskMgr {
      * @memberof TaskMgr
      */
     async addTask(taskOption) {
+        let unlock = await this.mutex.lock()
         const taskID = getTaskId()
         switch (taskOption.constructor) {
             case types.TaskUploadOption: {
@@ -32,6 +34,7 @@ class TaskMgr {
                     this.uploadTaskHub[taskID] = task
                     await task.start()
                 } catch (e) {
+                    unlock()
                     throw e
                 }
                 break
@@ -42,14 +45,17 @@ class TaskMgr {
                     this.downloadTaskHub[taskID] = task
                     task.start()
                 } catch (e) {
+                    unlock()
                     throw e
                 }
                 break
             }
             default: {
+                unlock()
                 throw new Error(`[AddTask] task type error`)
             }
         }
+        unlock()
         return taskID
     }
 
@@ -60,10 +66,14 @@ class TaskMgr {
      * @returns {Object}
      * @memberof TaskMgr
      */
-    getUploadTaskByTaskId(taskId) {
+    async getUploadTaskByTaskId(taskId) {
+        let unlock = await this.mutex.lock()
         const task = this.uploadTaskHub[taskId]
         if (task) {
-            let taskCopy = {}
+            let taskCopy = {
+                baseInfo: {},
+                transferInfo: {},
+            }
             if (task.baseInfo) {
                 taskCopy.baseInfo = {
                     taskId: task.baseInfo.taskId,
@@ -83,8 +93,10 @@ class TaskMgr {
                     blockSendDetails: task.transferInfo.blockSendDetails
                 }
             }
+            unlock()
             return taskCopy
         }
+        unlock()
         throw new Error(`[GetUploadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
@@ -95,10 +107,14 @@ class TaskMgr {
     * @returns {Object}
     * @memberof TaskMgr
     */
-    getDownloadTaskByTaskId(taskId) {
+    async getDownloadTaskByTaskId(taskId) {
+        let unlock = await this.mutex.lock()
         const task = this.downloadTaskHub[taskId]
         if (task) {
-            let taskCopy = {}
+            let taskCopy = {
+                baseInfo: {},
+                transferInfo: {},
+            }
             if (task.baseInfo) {
                 taskCopy.baseInfo = {
                     taskID: task.baseInfo.taskID,
@@ -117,8 +133,10 @@ class TaskMgr {
                     blockDownloadInfo: task.transferInfo.blockDownloadInfo
                 }
             }
+            unlock()
             return taskCopy
         }
+        unlock()
         throw new Error(`[GetDownloadTaskByTaskId] task (id: ${taskId})is not exist`)
     }
 
@@ -128,8 +146,11 @@ class TaskMgr {
      * @returns {Object}, key is task ID, value is task object
      * @memberof TaskMgr
      */
-    getAllUploadTask() {
-        return this.uploadTaskHub
+    async getAllUploadTask() {
+        let unlock = await this.mutex.lock()
+        const hub = this.uploadTaskHub
+        unlock()
+        return hub
     }
 
     /**
@@ -138,8 +159,11 @@ class TaskMgr {
      * @returns {Object}, key is task ID, value is task object
      * @memberof TaskMgr
      */
-    getAllDownloadTask() {
-        return this.downloadTaskHub
+    async getAllDownloadTask() {
+        let unlock = await this.mutex.lock()
+        const hub = this.downloadTaskHub
+        unlock()
+        return hub
     }
 
     /**
@@ -149,17 +173,21 @@ class TaskMgr {
     * @memberof TaskMgr
     */
     async delTask(id) {
+        let unlock = await this.mutex.lock()
         const task = this.getTaskById(id)
         if (task) {
             try {
                 await task.clean()
                 this.delTaskById(id)
             } catch (e) {
+                unlock()
                 throw e
             }
         } else {
+            unlock()
             throw new Error(`[DelTask] task (id: ${id})is not exist`)
         }
+        unlock()
     }
 
     /**
@@ -169,14 +197,18 @@ class TaskMgr {
      * @memberof TaskMgr
      */
     async resumeTask(id) {
+        let unlock = await this.mutex.lock()
         const task = this.getTaskById(id)
         if (task) {
             try {
                 await task.resume()
+                unlock()
             } catch (e) {
+                unlock()
                 throw e
             }
         } else {
+            unlock()
             throw new Error(`[ResumeTask] task (id: ${id})is not exist`)
         }
     }
@@ -188,14 +220,18 @@ class TaskMgr {
     * @memberof TaskMgr
     */
     async stopTask(id) {
+        let unlock = await this.mutex.lock()
         const task = this.getTaskById(id)
         if (task) {
             try {
                 await task.stop()
+                unlock()
             } catch (e) {
+                unlock()
                 throw e
             }
         } else {
+            unlock()
             throw new Error(`[StopTask] task (id: ${id})is not exist`)
         }
     }
