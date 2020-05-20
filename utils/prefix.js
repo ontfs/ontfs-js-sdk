@@ -1,6 +1,5 @@
 const { num2hexstring, bool2VarByte, str2hexstr, StringReader, hexstr2str } = require("ontology-ts-sdk").utils
-const sha256 = require("crypto-js/sha256")
-
+const { hex2sha256 } = require("./crypto")
 const PREFIX_VERSION = 1
 const PASSWORD_MAX_LEN = 16
 const CRYPT_SALT_LEN = 16
@@ -63,7 +62,7 @@ class FilePrefix {
         let zero16Bstr = num2hexstring(0, 16, true)
         let encryptSaltStr = this.encryptSalt ? this.encryptSalt : zero16Bstr
         const encryptData = pwdHex + encryptSaltStr
-        return sha256(hexstr2str(encryptData)).toString()
+        return hex2sha256(encryptData)
     }
 
     /**
@@ -87,7 +86,7 @@ class FilePrefix {
         return num2hexstring(this.version, 1, true) +
             bool2VarByte(this.encrypt) +
             num2hexstring(this.encryptPwdLen, 1, true) +
-            this.encryptPwdToHex() + encryptSaltStr +
+            zero16Bstr + encryptSaltStr +
             this.encryptHash +
             num2hexstring(this.fileSize, 8, true) + reservedStr
     }
@@ -133,8 +132,7 @@ class FilePrefix {
      * @memberof FilePrefix
      */
     verifyEncryptPassword(password) {
-        const encrypt = password + this.encryptSalt
-        const hash = sha256(encrypt.toString()).toString()
+        const hash = hex2sha256(str2hexstr(password) + str2hexstr(this.encryptSalt))
         return hash == str2hexstr(this.encryptHash)
     }
 }
@@ -155,5 +153,6 @@ module.exports = {
     FilePrefix,
     PREFIX_VERSION,
     PREFIX_LEN,
+    CRYPT_SALT_LEN,
     getPrefixEncrypted
 } 

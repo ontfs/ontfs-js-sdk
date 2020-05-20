@@ -213,7 +213,7 @@ class Sdk {
             if (!info) {
                 console.log(`delete space success`);
             } else {
-                throw new Error(`get space info also exist`);
+                throw new Error(`get space info also exists`);
             }
         } catch (e) {
             throw e;

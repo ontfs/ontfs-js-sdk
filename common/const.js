@@ -28,7 +28,8 @@ const DEFAULT_FS_NODES_LIST = 64 // default fs nodes list
 const MAX_COPY_NUM = 64 // max copy num limit
 const PER_SEND_BLOCK_SIZE = 1024 * 128 //network.PER_SEND_BLOCK_SIZE
 const UPLOAD_WAIT_PDP_RECIRDS_INTERVAL = 6
-const MAX_UPLOAD_WAIT_PDP_RECORDS_TIMEWAIT = 60
+// const MAX_UPLOAD_WAIT_PDP_RECORDS_TIMEWAIT = 60
+const UPLOAD_WAIT_PDP_RECORDS_MAX_TIME = 10
 const DOWNLOAD_STREAM_WRITE_TIMEOUT = 2
 const MAX_REQ_BLOCK_COUNT = 32 // max block count when request for download flights                                                                    // download stream timeout 128KB/2s 64KB/s 	// share blocks min speed 100 KB/S 	// timeout = DataSize / 100 KB/s = 81s
 const DOWNLOAD_BLOCKFLIGHTS_TIMEOUT = (CHUNK_SIZE / PER_SEND_BLOCK_SIZE) * DOWNLOAD_STREAM_WRITE_TIMEOUT * MAX_REQ_BLOCK_COUNT // download block flights time out,  Notice: DOWNLOAD_BLOCKFLIGHTS_TIMEOUT <= DOWNLOAD_FILE_TIMEOUT / 2, 128s
@@ -68,7 +69,8 @@ module.exports = {
     MAX_COPY_NUM,
     PER_SEND_BLOCK_SIZE,
     UPLOAD_WAIT_PDP_RECIRDS_INTERVAL,
-    MAX_UPLOAD_WAIT_PDP_RECORDS_TIMEWAIT,
+    // MAX_UPLOAD_WAIT_PDP_RECORDS_TIMEWAIT,
+    UPLOAD_WAIT_PDP_RECORDS_MAX_TIME,
     DOWNLOAD_STREAM_WRITE_TIMEOUT,
     DOWNLOAD_BLOCKFLIGHTS_TIMEOUT,
     DOWNLOAD_FILE_TIMEOUT,

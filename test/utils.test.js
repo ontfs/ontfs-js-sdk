@@ -1,7 +1,7 @@
 const utils = require("../utils")
 const { CurveLabel, KeyParameters, KeyType, PrivateKey, SignatureScheme, Signature, PublicKey } = require("ontology-ts-sdk").Crypto
 const { str2hexstr, reverseHex } = require("ontology-ts-sdk").utils
-const { serializeVarUint } = require("ontology-ts-sdk/fs/utils")
+// const { serializeVarUint } = require("ontology-ts-sdk/fs/utils")
 const { Address } = require("ontology-ts-sdk").Crypto
 const Deferred = require("deferred")
 const fs = require("fs")
@@ -63,9 +63,14 @@ describe('prefix test', () => {
         prefix.encryptPwdLen = pwd.length
         prefix.version = 1
         prefix.fileSize = 4 * 1024 * 1024 * 1024
+        // prefix.encrypt = false
         prefix.encrypt = true
+        const genRanHex = size => [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        prefix.encryptSalt = genRanHex(32)
         let prefixHex = prefix.string()
-        expect(prefixHex).toEqual("010104313233340000000000000000000000000000000000000000000000000000000026ec09abde52fb0d39c9e0649e7fd74940a13ebadb4956b5c43af59176398479000000000100000000000000")
+        console.log('encryptSalt', prefix.encryptSalt)
+        console.log('prefixHex', prefixHex)
+        // expect(prefixHex).toEqual("010104313233340000000000000000000000000000000000000000000000000000000026ec09abde52fb0d39c9e0649e7fd74940a13ebadb4956b5c43af59176398479000000000100000000000000")
     });
 
     test('test new prefix from string', () => {
@@ -85,6 +90,7 @@ describe('prefix test', () => {
         prefix.version = 1
         prefix.fileSize = 4 * 1024 * 1024 * 1024
         prefix.encrypt = true
+        prefix.encryptSalt = utils.randomHex(16)
         let prefixHex = prefix.string()
         const dir = './temp'
         fs.mkdirSync(`${dir}/files/`, { recursive: true, mode: 0o766 })
@@ -133,6 +139,13 @@ describe('prefix test', () => {
         }
     })
 
+    test('verifyEncryptPassword', async () => {
+        const filePrefix = new utils.FilePrefix()
+        filePrefix.fromString("010104000000000000000000000000000000008c35ed35906bec37e202878b4c276bdcd49394896b0e0fd04df6118be2bb350244ddaf85686fe3bce68de7845363ebbd000000000100000000000000")
+        console.log('filePrefix', filePrefix)
+        console.log('encrypt', filePrefix.encrypt)
+        console.log("password", filePrefix.verifyEncryptPassword("1234"))
+    })
 
 
 

@@ -3,27 +3,7 @@ const { addressFromPubKeyHex } = require('../utils/address')
 const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
 const Base64 = require("js-base64").Base64;
-
-class Mutex {
-	constructor() {
-		this._locking = Promise.resolve();
-		this._locks = 0;
-	}
-	isLocked() {
-		return this._locks > 0;
-	}
-	lock() {
-		this._locks += 1;
-		let unlockNext;
-		let willLock = new Promise(resolve => unlockNext = () => {
-			this._locks -= 1;
-			resolve();
-		});
-		let willUnlock = this._locking.then(() => unlockNext);
-		this._locking = this._locking.then(() => willLock);
-		return willUnlock;
-	}
-}
+const utils = require("../utils")
 
 class OntFs {
 	/**
@@ -36,7 +16,25 @@ class OntFs {
 		client.registerClient({});
 		this.gasPrice = _gasPrice;
 		this.gasLimit = _gasLimit;
-		this.mutex = new Mutex()
+		this.mutex = new utils.Mutex()
+	}
+
+	async waitForGenerateBlock(timeout, blockCount) {
+		if (!blockCount) {
+			return;
+		}
+		let blockHeight = await client.api.network.getBlockHeight();
+		if (!timeout) {
+			timeout = 1;
+		}
+		for (let i = 0; i < timeout; i++) {
+			await utils.sleep(1000);
+			let curBlockHeigh = await client.api.network.getBlockHeight();
+			if (curBlockHeigh - blockHeight >= blockCount) {
+				return true;
+			}
+		}
+		return false
 	}
 
 	/**
@@ -342,7 +340,7 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async challenge(fileHash, nodeAddr) {
-		return client.api.fs.chanllenge({
+		return client.api.fs.challenge({
 			fileHash,
 			nodeAddr,
 			gasPrice: this.gasPrice,
@@ -427,12 +425,15 @@ class OntFs {
 	 */
 	async genFileReadSettleSlice(fileHash, peerWalletAddr, sliceId, blockHeight) {
 		let unlock = await this.mutex.lock()
+		console.log('genFileReadSettleSlice', fileHash, peerWalletAddr, sliceId)
 		const result = await client.api.fs.genFileReadSettleSlice({
 			fileHash,
 			payTo: peerWalletAddr,
 			sliceId,
 			pledgeHeight: blockHeight
 		});
+		await this.waitForGenerateBlock(60, 1)
+		console.log('genFileReadSettleSlice done', fileHash, peerWalletAddr, sliceId)
 		unlock()
 		return result
 	}

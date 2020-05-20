@@ -313,11 +313,12 @@ class TaskUpload {
      */
     async clean() {
         if (this.baseInfo.status == TaskFinish || this.baseInfo.status == TaskPause) {
-
-        } else {
-            if (this.baseInfo.status == TaskStart) {
-                throw new Error("Task clean error: task is running")
+            if ((this.baseInfo.errorInfo && this.baseInfo.errorInfo.length) ||
+                this.baseInfo.progress == Upload_Error) {
+                return sdk.globalSdk().deleteFile(this.baseInfo.fileHash)
             }
+        } else if (this.baseInfo.status == TaskStart) {
+            throw new Error("Task clean error: task is running")
         }
     }
 
@@ -398,10 +399,12 @@ class TaskUpload {
         const blockSendDetail = this.transferInfo.blockSendDetails[peerNetAddr]
         const newFileResp = await this.sendFetchReadyMsg(peerNetAddr).catch((e) => {
             console.log(`notify fetch ready msg failed, err ${e.toString()} `)
+            blockSendDetail.errorInfo = `notify fetch ready msg failed, err ${e.toString()}`
             throw e
         })
         if (newFileResp.error && newFileResp.error.code != message.MSG_ERROR_CODE_NONE) {
             console.log(`receive rdy msg reply err ${newFileResp.error.code}, msg ${newFileResp.error.message} `)
+            blockSendDetail.errorInfo = `receive rdy msg reply err ${newFileResp.error.code}, msg ${newFileResp.error.message}`
             throw new Error(`receive rdy msg reply err ${newFileResp.error.code}, msg ${newFileResp.error.message} `)
         }
         const respFileMsg = newFileResp.payload
@@ -423,6 +426,7 @@ class TaskUpload {
             const blockHash = this.baseInfo.blockHashes[blockIndex]
             const blockMsgData = await this.getMsgData(blockHash, blockIndex)
             if (!blockMsgData) {
+                blockSendDetail.errorInfo = `no block msg data to send`
                 throw new Error(`no block msg data to send`)
             }
             const b = {
@@ -439,6 +443,7 @@ class TaskUpload {
             // console.log("toBeSentBlocks", toBeSentBlocks)
             const blocksAck = await this.sendBlockFlightMsg(peerNetAddr, toBeSentBlocks).catch((e) => {
                 console.log(`send block flight msg err`, e.toString())
+                blockSendDetail.errorInfo = e.toString()
                 throw e
             })
             if (this.baseInfo.blockCount > 800) {
@@ -609,6 +614,7 @@ class TaskUpload {
  */
 const getFilePrefix = (to) => {
     const filePrefix = new utils.FilePrefix(utils.PREFIX_VERSION, false, 0, "", "", "", to.fileSize, "")
+    filePrefix.encryptSalt = utils.randomHex(utils.CRYPT_SALT_LEN * 2)
     if (to.encPassword && to.encPassword.length) {
         filePrefix.encryptPwd = to.encPassword
         filePrefix.encryptPwdLen = to.encPassword.length
