@@ -336,7 +336,7 @@ const decryptFile = async (argv) => {
     }
     try {
         const content = fs.readFileSync(argv.filePath)
-        const data = globalSdk().decryptDownloadedFile(content, argv.decryptPwd)
+        const data = await globalSdk().decryptDownloadedFile(content, argv.decryptPwd)
         fs.writeFileSync(argv.outFilePath, data)
         console.log(`decrypt ${argv.filePath} success`)
     } catch (err) {

@@ -266,7 +266,7 @@
             u8a.set(datas[index], offsetByIndex[index])
         }
         if (option.decryptPwd) {
-            const decryptedDatas = ontfs.SDK.globalSdk().decryptDownloadedFile(u8a, option.decryptPwd)
+            const decryptedDatas = await ontfs.SDK.globalSdk().decryptDownloadedFile(u8a, option.decryptPwd)
             console.log('datas', decryptedDatas, option.decryptPwd)
             blob = new Blob([decryptedDatas])
         } else {

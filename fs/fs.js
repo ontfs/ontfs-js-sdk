@@ -117,7 +117,7 @@ class Fs {
      * @returns {ArrayBuffer} encrypted buffer
      * @memberof Fs
      */
-    aesEncryptFile(fileBuf, password) {
+    async aesEncryptFile(fileBuf, password) {
         return this.fs.encrypt(fileBuf, password)
     }
 
@@ -130,8 +130,9 @@ class Fs {
      * @returns {ArrayBuffer} origin data buffer
      * @memberof Fs
      */
-    aesDecryptFile(fileBuf, password, prefixLen) {
-        return this.fs.decrypt(fileBuf, password, prefixLen)
+    async aesDecryptFile(fileBuf, password, prefixLen) {
+        const result = this.fs.decrypt(fileBuf, password, prefixLen)
+        return result
     }
 
     /**

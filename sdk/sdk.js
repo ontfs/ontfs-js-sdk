@@ -582,13 +582,14 @@ class Sdk {
 	 * @returns {ArrayBuffer} : decrypted array buffer
 	 * @memberof Sdk
 	 */
-    decryptDownloadedFile(fileContent, decryptPwd) {
+    async decryptDownloadedFile(fileContent, decryptPwd) {
         if (!decryptPwd || !decryptPwd.length) {
             throw new Error(`no decrypt password`);
         }
         // to do test
         const filePrefix = new utils.FilePrefix();
-        let prefix = Buffer.from(fileContent).toString().substr(0, utils.PREFIX_LEN);
+        console.log("will read prefix")
+        let prefix = Buffer.from(fileContent.subarray(0, utils.PREFIX_LEN)).toString();
         console.log("read first n prefix :", prefix);
         filePrefix.fromString(prefix);
         if (!filePrefix.encrypt) {

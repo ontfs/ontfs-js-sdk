@@ -215,6 +215,30 @@ const ab2hexstring = (arr) => {
 	}
 	return result;
 }
+
+const hexstr2ab = (str) => {
+	if (!str) {
+		return new Uint8Array();
+	}
+	var a = [];
+	for (var i = 0, len = str.length; i < len; i += 2) {
+		a.push(parseInt(str.substr(i, 2), 16));
+	}
+	return new Uint8Array(a);
+}
+
+const str2ab = (str) => {
+	var bytes = new Uint8Array(str.length);
+	for (var iii = 0; iii < str.length; iii++) {
+		bytes[iii] = str.charCodeAt(iii);
+	}
+	return bytes;
+}
+
+const str2MD5hexstr = (str) => {
+	return CryptoJS.MD5(str).toString()
+}
+
 module.exports = {
 	verify,
 	publicKeyMatchAddress,
@@ -230,5 +254,8 @@ module.exports = {
 	hex2sha256,
 	bytes2address,
 	number2ArrayBuffer,
-	ab2hexstring
+	ab2hexstring,
+	hexstr2ab,
+	str2ab,
+	str2MD5hexstr
 };

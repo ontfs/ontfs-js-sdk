@@ -804,7 +804,7 @@ const getDownloadSessionId = (taskId, peerAddr) => {
  */
 const decryptDownloadedFile = async (fileContent, decryptPwd) => {
     try {
-        const data = sdk.globalSdk().decryptDownloadedFile(fileContent, decryptPwd)
+        const data = await sdk.globalSdk().decryptDownloadedFile(fileContent, decryptPwd)
         return data
     } catch (e) {
         console.log('decrypt file err', e)

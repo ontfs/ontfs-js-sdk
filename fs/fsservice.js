@@ -10,7 +10,7 @@ const { Errors } = require('interface-datastore')
 const ERR_NOT_FOUND = Errors.notFoundError().code
 const Crypto = require("crypto");
 const Buffer = require('buffer/').Buffer
-
+const utils = require("../utils")
 const MAX_PREFIX_BUFFER_LENGTH = 256
 const MAX_PREFIX_LENGTH_LENGTH = 4
 const MAX_PREFIX_LENGTH = MAX_PREFIX_BUFFER_LENGTH + MAX_PREFIX_LENGTH_LENGTH
@@ -49,13 +49,65 @@ class FsService {
         await this.ipld.bs._repo.close()
     }
 
+    async browserAesEncrypt(data, password) {
+        console.log('browserAesEncrypt', window.crypto)
+        const iv = utils.hexstr2ab(utils.str2MD5hexstr(password));
+        const keyHash = await crypto.subtle.digest(
+            { name: "SHA-256" },
+            utils.str2ab(password)
+        );
+        console.log('iv', iv)
+        const key = await crypto.subtle.importKey(
+            "raw",
+            keyHash,
+            { name: "AES-CBC", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+        console.log("key", key, typeof data);
+        console.log("data", data);
+        const encrypted = await window.crypto.subtle.encrypt({ name: "AES-CBC", iv }, key, data)
+        console.log(encrypted ? "encrypted success" : "encrypted falied");
+        console.log("encrypted", encrypted);
+        return encrypted
+    }
+
+    async browserAesDecrypt(data, password) {
+        console.log('browserAesDecrypt', window.crypto)
+        const iv = utils.hexstr2ab(utils.str2MD5hexstr(password));
+        const keyHash = await crypto.subtle.digest(
+            { name: "SHA-256" },
+            utils.str2ab(password)
+        );
+        const key = await crypto.subtle.importKey(
+            "raw",
+            keyHash,
+            { name: "AES-CBC", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+        console.log("key", key, typeof data);
+        console.log("data", data);
+        const decrypt = await window.crypto.subtle.decrypt({ name: "AES-CBC", iv }, key, data)
+        console.log(decrypt ? "decrypt success" : "decrypt falied");
+        console.log("encrypted", decrypt);
+        return decrypt
+    }
+
     async addFile(filePath, fileArrayBuf, filePrefix, encrypt, password) {
         var data = Buffer.from(fileArrayBuf);
         if (encrypt) {
-            var cipher = Crypto.createCipher('aes-256-cbc', password);
-            data = Buffer.concat([cipher.update(data), cipher.final()]);
+            if (window.crypto) {
+                // user browser encrypt
+                const encrypted = await this.browserAesEncrypt(data, password)
+                data = Buffer.from(encrypted)
+                console.log("window.crypto", data, typeof data)
+            } else {
+                console.log("no window.crypto")
+                var cipher = Crypto.createCipher('aes-256-cbc', password);
+                data = Buffer.concat([cipher.update(data), cipher.final()]);
+            }
         }
-
         //add prefix at the beginning
         const fullDataBuf = Buffer.concat([Buffer.from(filePrefix), data])
         for await (const file of importer([{ path: filePath, content: fullDataBuf }], this.ipld, this.opts)) {
@@ -206,9 +258,12 @@ class FsService {
         return block
     }
 
-    encrypt(fileBuf, password) {
+    async encrypt(fileBuf, password) {
         try {
             var data = Buffer.from(fileBuf);
+            if (window.crypto) {
+                return Buffer.from(await this.browserAesEncrypt(data, password))
+            }
             var cipher = Crypto.createCipher('aes-256-cbc', password);
             var encryptedFileBuf = Buffer.concat([cipher.update(data), cipher.final()]);
             return encryptedFileBuf
@@ -216,10 +271,13 @@ class FsService {
             throw new Error(exception.message);
         }
     }
-    decrypt(fileBuf, password, prefixLen) {
+    async decrypt(fileBuf, password, prefixLen) {
         try {
             var data = Buffer.from(fileBuf)
             data = data.slice(prefixLen)
+            if (window.crypto) {
+                return Buffer.from(await this.browserAesDecrypt(data, password))
+            }
             var decipher = Crypto.createDecipher("aes-256-cbc", password);
             var decryptedFileBuf = Buffer.concat([decipher.update(data), decipher.final()]);
             return decryptedFileBuf
