@@ -28,10 +28,10 @@ const Upload_Error = 8
  * @param {Object} transferInfo transfer info, for a new task, it is null
  * @returns
  */
-const newTaskUpload = (taskID, option, baseInfo, transferInfo) => {
+const newTaskUpload = async (taskID, option, baseInfo, transferInfo) => {
     if (!baseInfo && !transferInfo) {
         try {
-            checkParams(option)
+            await checkParams(option)
         } catch (e) {
             throw e
         }
@@ -616,7 +616,7 @@ const getFilePrefix = (to) => {
  *
  * @param {Object} to upload option
  */
-const checkParams = (to) => {
+const checkParams = async (to) => {
     if (!to.fileDesc || !to.fileDesc.length) {
         throw new Error("[TaskUploadOption] CheckParams file desc is missing")
     }
@@ -632,6 +632,20 @@ const checkParams = (to) => {
     }
     if (to.copyNum > common.MAX_COPY_NUM) {
         throw new Error(`[TaskUploadOption] CheckParams max copy num limit ${common.MAX_COPY_NUM}, (CopyNum: ${to.copyNum})`)
+    }
+    switch (to.storageType) {
+        case types.FileStorageTypeUseFile:
+            break
+        case types.FileStorageTypeUseSpace:
+            const sp = await sdk.globalSdk().getSpaceInfo().catch((err) => {
+                throw err
+            })
+            if (sp.copyNumber != to.copyNum) {
+                throw new Error("[TaskUploadOption] CheckParams copyNum not equals spaceCopyNum: ", sp.copyNumber)
+            }
+            break
+        default:
+            throw new Error("[TaskUploadOption] CheckParams file storage type error")
     }
 
     if (to.storageType != types.FileStorageTypeUseFile && to.storageType != types.FileStorageTypeUseSpace) {

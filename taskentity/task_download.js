@@ -717,7 +717,7 @@ class TaskDownload {
                 console.log(`block ${block.cid.toString()} index ${value.index} block-len ${data.length}, offset ${value.offset}` +
                     ` prefix ${this.baseInfo.filePrefix ? this.baseInfo.filePrefix.length : 0}, pos ${writeAtPos}`)
                 if (this.option.receiveBlock) {
-                    this.option.receiveBlock(data, data.length, writeAtPos)
+                    await this.option.receiveBlock(data, data.length, writeAtPos)
                 }
             }
             console.log(`${this.option.fileHash}-${value.hash}-${value.index} set downloaded`)
