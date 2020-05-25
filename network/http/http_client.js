@@ -23,8 +23,9 @@ const httpSend = async (address, data) => {
       url: address,
       data,
       timeout: HTTP_REQ_TIMEOUT * SECOND,
+      responseType: 'arraybuffer',
       headers: {
-        'content-type': 'application/form-data'
+        'content-type': 'application/octet-stream'
       }
     }
     return await axios(options);
@@ -51,8 +52,9 @@ const httpSendWithRetry = async (msg = "", peer, retry = HTTP_REQ_RETRY, timeout
     url: peer,
     data: msg,
     timeout: timeout * SECOND,
+    responseType: 'arraybuffer',
     headers: {
-      'content-type': 'application/form-data'
+      'Content-Type': 'application/octet-stream',
     }
   }
   for (let index = 0; index < retry; index++) {
@@ -91,6 +93,7 @@ const httpBroadcast = async (address, data, needReply = false, action) => {
       url: address[i],
       data: data,
       timeout: HTTP_REQ_TIMEOUT * SECOND,
+      responseType: 'arraybuffer',
       cancelToken: new CancelToken((cancel) => {
         cancelLists.push(cancel);
       })

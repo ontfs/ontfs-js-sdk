@@ -1,4 +1,8 @@
 const message = require("../network/message")
+const axios = require("axios")
+const BSON = require('bson');
+const utils = require("../utils")
+const Buffer = require('buffer/').Buffer
 
 describe('network test', () => {
     test('test encode/decode msg', () => {
@@ -49,5 +53,53 @@ describe('network test', () => {
     })
 
 
+    test('test send bson msg', async () => {
+        try {
+            const msg = message.newFileMsg("bafkreiddoznq4lpkdaa5hq3tpu4xjwcw4n3wgixkhaxx334updfm4zbb2q", message.FILE_OP_UPLOAD_ASK, [
+                message.withSessionId("3815639632350695400_http://127.0.0.1:30337_upload"),
+                message.withBlockHashes(["bafkreiddoznq4lpkdaa5hq3tpu4xjwcw4n3wgixkhaxx334updfm4zbb2q"]),
+                message.withWalletAddress("AHTP7bg2aJYhTw2nJxBtAQaUk8poJKAW2Z"),
+                message.withTxHash("cfe12cd4e2e13830c9c1d8e2bae05bab467aeb0d9bceeaaed194aac614c5474f"),
+                message.withTxHeight(10805),
+            ])
+
+            console.log('bsonData', msg)
+            const resp = await axios({
+                method: 'post',
+                url: 'http://127.0.0.1:30337',
+                responseType: 'arraybuffer',
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    // 'Accept': 'application/octet-stream',
+
+                },
+                data: msg
+            })
+            console.log('resp', resp)
+            console.log('resp', resp.data)
+            console.log('hex', Buffer.from(resp.data))
+            let ack = BSON.deserialize(Buffer.from(resp.data))
+            // console.log("post resp", typeof resp.MessageId)
+            console.log("post resp", ack)
+
+
+        } catch (e) {
+            console.log(e)
+        }
+    })
+
+    test('test send big int', async () => {
+        try {
+            let total = 1
+            let cnt = {
+                Total: BSON.Long.fromNumber(total)
+            }
+            console.log('cnt', cnt)
+
+
+        } catch (e) {
+            console.log(e)
+        }
+    })
 
 })

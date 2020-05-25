@@ -1,28 +1,49 @@
 const utils = require("../../utils")
 const { MESSAGE_VERSION, MSG_TYPE_FILE, MSG_TYPE_BLOCK_FLIGHTS, MSG_TYPE_PAYMENT } = require("./const")
-
-
+const BSON = require('bson');
+const Buffer = require('buffer/').Buffer
 
 const encodeMsg = (msg, msgType) => {
-    const msgId = utils.randomInt()
+    const msgId = BSON.Long.fromNumber(utils.randomInt())
     const header = {
         Version: MESSAGE_VERSION,
-        Type: msgType
+        Type: msgType,
+        MsgLength: 0,
     }
-    const payload = utils.str2base64(JSON.stringify(msg))
+    // const payload = utils.str2base64(JSON.stringify(msg))
+    const payload = new BSON.Binary(BSON.serialize(msg))
     const encoded = {
         MessageId: msgId,
         Header: header,
         Payload: payload,
+        Sig: {
+            SigData: new BSON.Binary(),
+            PublicKey: new BSON.Binary(),
+        },
+        Error: {
+            Code: 0,
+            Message: "",
+        }
     }
-    return encoded
+    const req = BSON.serialize(encoded)
+    // console.log('hex', req.toString('hex'))
+    // return BSON.serialize(encoded)
+    return req
 }
 
-const decodeMsg = (msg) => {
-    if (typeof msg == "string") {
-        msg = JSON.parse(msg)
+const decodeMsg = (resp) => {
+    // console.log('decode msg str 2 ab', typeof resp)
+    if (typeof resp == 'string') {
+        resp = Buffer.from(resp)
     }
+    // console.log('resp++++', Buffer.from(resp).toString('hex'))
+    const msg = BSON.deserialize(Buffer.from(resp))
+    // console.log('decode msg done')
+    // if (typeof msg == "string") {
+    //     msg = JSON.parse(msg)
+    // }
     if (!msg) {
+        console.log('bson deserialize msg failed')
         return
     }
     const messageId = msg.MessageId
@@ -31,9 +52,9 @@ const decodeMsg = (msg) => {
         type: msg.Header.Type,
         msgLength: msg.Header.MsgLength,
     }
-    const payload = utils.base64str2utf8str(msg.Payload)
+    const payload = msg.Payload ? msg.Payload.buffer : null
     // console.log("msg.payload ", msg.Payload, payload)
-    const payloadObj = JSON.parse(payload)
+    const payloadObj = BSON.deserialize(payload)
     let decoded = {
         messageId,
         header,
@@ -46,14 +67,16 @@ const decodeMsg = (msg) => {
                 hash: payloadObj.Hash,
                 blockHashes: payloadObj.BlockHashes,
                 operation: payloadObj.Operation,
-                prefix: payloadObj.Prefix && payloadObj.Prefix.length ? utils.base64str2utf8str(payloadObj.Prefix) : '',
+                prefix: payloadObj.Prefix && payloadObj.Prefix && payloadObj.Prefix.buffer
+                    ? payloadObj.Prefix.buffer.toString() : '',
                 totalBlockCount: payloadObj.TotalBlockCount,
                 blocksRoot: payloadObj.BLocksRoot,
             }
             if (payloadObj.Payinfo) {
                 fileMsg.payInfo = {
                     walletAddress: payloadObj.Payinfo.WalletAddress,
-                    latestPayment: payloadObj.Payinfo.LatestPayment,
+                    latestPayment: payloadObj.Payinfo.LatestPayment && payloadObj.Payinfo.LatestPayment
+                        ? payloadObj.Payinfo.LatestPayment.toString() : '',
                 }
             }
             if (payloadObj.Tx) {
@@ -93,10 +116,9 @@ const decodeMsg = (msg) => {
                         hash: b.Hash,
                         index: b.Index,
                         offset: b.Offset,
-                        // data: utils.base64str2str(b.Data),
                     }
-                    if (b.Data && b.Data.length) {
-                        blk.data = utils.base64str2str(b.Data)
+                    if (b.Data && b.Data.buffer) {
+                        blk.data = b.Data.buffer
                     }
                     blocks.push(blk)
                 }
@@ -122,7 +144,7 @@ const decodeMsg = (msg) => {
                 paymentId: payloadObj.PaymentId,
                 fileHash: payloadObj.FileHash,
                 blockHashes: payloadObj.BlockHashes,
-                data: payloadObj.Data,
+                data: payloadObj.Data ? payloadObj.Data.buffer : null,
             }
             decoded.payload = paymentMsg
             break
@@ -158,7 +180,7 @@ const withBlockHashes = (blockHashes) => {
 
 const withPrefix = (prefix) => {
     return {
-        Prefix: utils.str2base64(prefix),
+        Prefix: new BSON.Binary(Buffer.from(prefix)),
     }
 }
 
@@ -174,43 +196,84 @@ const withTxHash = (txHash) => {
 const withTxHeight = (height) => {
     return {
         Tx: {
-            Height: height,
+            Height: BSON.Long.fromNumber(height),
         }
     }
 }
 
 const withBlocksRoot = (blocksRoot) => {
     return {
-        BlocksRoot: blocksRoot
+        BLocksRoot: blocksRoot
     }
 }
 
 const withTotalBlockCount = (totalBlockCount) => {
-    return {
-        TotalBlockCount: totalBlockCount,
+    const cnt = {
+        TotalBlockCount: BSON.Long.fromNumber(totalBlockCount),
     }
+    return cnt
 }
 
 const newFileMsg = (fileHash, operation, options) => {
     let payload = {
+        SessionId: '',
         Hash: fileHash,
-        Operation: operation
+        BlockHashes: null,
+        Operation: operation,
+        Prefix: new BSON.Binary(),
+        Payinfo: null,
+        Tx: null,
+        Breakpoint: null,
+        TotalBlockCount: BSON.Long.fromNumber(0),
+        ChainInfo: null,
+        BLocksRoot: ''
     }
+    console.log('build new file msg payload', payload, options)
     for (let opt of options) {
-        const payloadKeys = Object.keys(payload)
-        const optKeys = Object.keys(opt)
-        if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
-            Object.assign(opt[optKeys[0]], payload[optKeys[0]])
-        }
         Object.assign(payload, opt)
     }
-    // console.log(`new file msg`, payload)
+    console.log(`new file msg`, payload)
     return encodeMsg(payload, MSG_TYPE_FILE)
 }
 
 
-const newBlockFlightMsg = (flights) => {
-    return encodeMsg(flights, MSG_TYPE_BLOCK_FLIGHTS)
+const newBlockFlightMsg = (msg) => {
+    const flight = {
+        SessionId: msg.SessionId,
+        FileHash: msg.FileHash,
+        Operation: msg.Operation,
+        Blocks: null,
+        Payment: null
+    }
+    if (msg.Blocks) {
+        const blocks = []
+        for (let blk of msg.Blocks) {
+            const block = {
+                Index: blk.Index,
+                Hash: blk.Hash,
+                Offset: BSON.Long.fromNumber(blk.Offset),
+                Data: null,
+            }
+            if (blk.Data) {
+                block.Data = new BSON.Binary(blk.Data)
+            }
+            blocks.push(block)
+        }
+        flight.Blocks = blocks
+    }
+    if (msg.Payment) {
+        const payment = {
+            Sender: msg.Payment.Sender,
+            Receiver: msg.Payment.Receiver,
+            PaymentId: msg.Payment.PaymentId,
+            BlockHashes: null,
+        }
+        if (msg.Payment.BlockHashes) {
+            payment.BlockHashes = msg.Payment.BlockHashes
+        }
+        flight.Payment = payment
+    }
+    return encodeMsg(flight, MSG_TYPE_BLOCK_FLIGHTS)
 }
 
 const newBlockFlightsReqMsg = (fileHash, sender, blocks, op, options) => {
@@ -223,11 +286,11 @@ const newBlockFlightsReqMsg = (fileHash, sender, blocks, op, options) => {
         }
     }
     for (let opt of options) {
-        const payloadKeys = Object.keys(payload)
-        const optKeys = Object.keys(opt)
-        if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
-            Object.assign(opt[optKeys[0]], payload[optKeys[0]])
-        }
+        // const payloadKeys = Object.keys(payload)
+        // const optKeys = Object.keys(opt)
+        // if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
+        //     Object.assign(opt[optKeys[0]], payload[optKeys[0]])
+        // }
         Object.assign(payload, opt)
     }
     return newBlockFlightMsg(payload)
@@ -236,7 +299,6 @@ const newBlockFlightsReqMsg = (fileHash, sender, blocks, op, options) => {
 const newPaymentMsg = (sender, receiver, op, paymentId, fileHash, blockHashes, paymentData, options) => {
     console.log('sliceData', JSON.stringify(paymentData))
     console.log('sliceData', utils.str2base64(JSON.stringify(paymentData)))
-
     const payload = {
         Sender: sender,
         Receiver: receiver,
@@ -244,16 +306,17 @@ const newPaymentMsg = (sender, receiver, op, paymentId, fileHash, blockHashes, p
         PaymentId: paymentId,
         FileHash: fileHash,
         BlockHashes: blockHashes,
-        Data: utils.str2base64(JSON.stringify(paymentData)),
+        Data: new BSON.Binary(Buffer.from(JSON.stringify(paymentData))),
     }
     for (let opt of options) {
-        const payloadKeys = Object.keys(payload)
-        const optKeys = Object.keys(opt)
-        if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
-            Object.assign(opt[optKeys[0]], payload[optKeys[0]])
-        }
+        // const payloadKeys = Object.keys(payload)
+        // const optKeys = Object.keys(opt)
+        // if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
+        //     Object.assign(opt[optKeys[0]], payload[optKeys[0]])
+        // }
         Object.assign(payload, opt)
     }
+    console.log('payload', payload)
     return encodeMsg(payload, MSG_TYPE_PAYMENT)
 
 }

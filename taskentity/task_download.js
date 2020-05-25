@@ -553,9 +553,7 @@ class TaskDownload {
                 throw new Error(`block ${blockRespKey} is not match request task`)
             }
             // console.log('received blockMsg.data', blockMsg.data)
-            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(blockMsg.data, 'hex'), blockMsg.hash)
-            // console.log('encode block ', blockMsg.data, blockMsg.hash)
-            // console.log('encode block result ', block)
+            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(blockMsg.data), blockMsg.hash)
             if (!block || block.cid.toString() != blockMsg.hash) {
                 console.log(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
                 throw new Error(`receive wrong block ${blockMsg.hash}-${blockMsg.index}`)
@@ -687,13 +685,13 @@ class TaskDownload {
     async combine() {
         let hasCutPrefix = this.transferInfo.combineInfo.hasCutPrefix
         const isFileEncrypted = this.transferInfo.combineInfo.isFileEncrypted
-        const file = this.transferInfo.combineInfo.fileStream
+        // const file = this.transferInfo.combineInfo.fileStream
         const value = this.transferInfo.blockDownloadNotify.respNotify
 
         if (value) {
             console.log(`received block ${this.option.fileHash}-${value.hash}-${value.index} from ` +
                 `${value.peerAddr}`)
-            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(value.block, 'hex'), value.hash)
+            const block = sdk.globalSdk().fs.encodedToBlockWithCid(Buffer.from(value.block), value.hash)
             if (block.cid.toString() != value.hash) {
                 console.log(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)
                 throw new Error(`receive a unmatched hash block ${block.cid.toString()} ${value.hash}`)

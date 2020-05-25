@@ -480,7 +480,7 @@ class TaskUpload {
             block.Hash = block.hash
             block.Index = block.index
             block.Offset = block.offset
-            block.Data = block.data.toString('base64')
+            block.Data = block.data
             delete block['hash']
             delete block['index']
             delete block['offset']
@@ -585,7 +585,7 @@ class TaskUpload {
                 continue
             }
             delete this.transferInfo.blockMsgDataMap[key]
-            console.log("delete blockMsgData", key)
+            console.log("delete blockMsgData", this.baseInfo.fileHash, key)
             sdk.globalSdk().fs.returnBuffer(data.blockData)
         }
     }
