@@ -26,7 +26,9 @@ const encodeMsg = (msg, msgType) => {
         }
     }
     const req = BSON.serialize(encoded)
-    // console.log('hex', req.toString('hex'))
+    if (msgType == MSG_TYPE_FILE) {
+        // console.log('hex', req.toString('hex'))
+    }
     // return BSON.serialize(encoded)
     return req
 }
@@ -228,11 +230,16 @@ const newFileMsg = (fileHash, operation, options) => {
         ChainInfo: null,
         BLocksRoot: ''
     }
-    console.log('build new file msg payload', payload, options)
     for (let opt of options) {
-        Object.assign(payload, opt)
+        const optKeys = Object.keys(opt)
+        const key = optKeys[0]
+        if (!payload[key]) {
+            Object.assign(payload, opt)
+            continue
+        }
+        Object.assign(payload[key], opt[key])
     }
-    console.log(`new file msg`, payload)
+    console.log('build new file msg payload', payload, options)
     return encodeMsg(payload, MSG_TYPE_FILE)
 }
 
@@ -286,12 +293,13 @@ const newBlockFlightsReqMsg = (fileHash, sender, blocks, op, options) => {
         }
     }
     for (let opt of options) {
-        // const payloadKeys = Object.keys(payload)
-        // const optKeys = Object.keys(opt)
-        // if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
-        //     Object.assign(opt[optKeys[0]], payload[optKeys[0]])
-        // }
-        Object.assign(payload, opt)
+        const optKeys = Object.keys(opt)
+        const key = optKeys[0]
+        if (!payload[key]) {
+            Object.assign(payload, opt)
+            continue
+        }
+        Object.assign(payload[key], opt[key])
     }
     return newBlockFlightMsg(payload)
 }
@@ -309,14 +317,15 @@ const newPaymentMsg = (sender, receiver, op, paymentId, fileHash, blockHashes, p
         Data: new BSON.Binary(Buffer.from(JSON.stringify(paymentData))),
     }
     for (let opt of options) {
-        // const payloadKeys = Object.keys(payload)
-        // const optKeys = Object.keys(opt)
-        // if (payloadKeys && optKeys && payloadKeys.length && optKeys.length && payloadKeys.indexOf(optKeys[0]) != -1) {
-        //     Object.assign(opt[optKeys[0]], payload[optKeys[0]])
-        // }
-        Object.assign(payload, opt)
+        const optKeys = Object.keys(opt)
+        const key = optKeys[0]
+        if (!payload[key]) {
+            Object.assign(payload, opt)
+            continue
+        }
+        Object.assign(payload[key], opt[key])
     }
-    console.log('payload', payload)
+    console.log('payload', payload, options)
     return encodeMsg(payload, MSG_TYPE_PAYMENT)
 
 }
