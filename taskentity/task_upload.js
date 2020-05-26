@@ -301,7 +301,14 @@ class TaskUpload {
         if (this.baseInfo.status == TaskFinish || this.baseInfo.status == TaskPause) {
             if ((this.baseInfo.errorInfo && this.baseInfo.errorInfo.length) ||
                 this.baseInfo.progress == Upload_Error) {
-                return sdk.globalSdk().deleteFile(this.baseInfo.fileHash)
+                const fileInfo = await sdk.globalSdk().getFileInfo(this.baseInfo.fileHash).catch((err) => {
+                    throw err
+                })
+                if (fileInfo) {
+                    await sdk.globalSdk().deleteFile(this.baseInfo.fileHash).catch((err) => {
+                        throw err
+                    })
+                }
             }
         } else if (this.baseInfo.status == TaskStart) {
             throw new Error("Task clean error: task is running")
