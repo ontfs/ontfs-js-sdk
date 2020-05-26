@@ -358,7 +358,7 @@ class TaskDownload {
         try {
             const currentWalletAddress = await sdk.globalSdk().walletAddress()
             if (fileMsg.payInfo.latestPayment && fileMsg.payInfo.latestPayment.length) {
-                const sliceObj = JSON.parse(utils.base64str2utf8str(fileMsg.payInfo.latestPayment))
+                const sliceObj = JSON.parse(fileMsg.payInfo.latestPayment)
                 settleSlice = {
                     fileHash: utils.base64str2utf8str(sliceObj.FileHash),
                     payFrom: utils.bytes2address(sliceObj.PayFrom).toBase58(),
@@ -386,6 +386,7 @@ class TaskDownload {
                     return false
                 }
                 latestSliceId = settleSlice.sliceId
+                console.log('latestSliceId', latestSliceId)
             }
         } catch (err) {
             console.log('process response err', err)
