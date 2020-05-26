@@ -410,10 +410,10 @@ class TaskUpload {
         }
         let toBeSentBlocks = []
         let maxSendBlockCount = common.MAX_SEND_BLOCK_COUNT
-        maxSendBlockCount = common.MAX_SEND_BLOCK_COUNT - parseInt(this.baseInfo.blockCount / 200) * 4
-        if (!maxSendBlockCount || maxSendBlockCount <= 0) {
-            maxSendBlockCount = 4
-        }
+        // maxSendBlockCount = common.MAX_SEND_BLOCK_COUNT - parseInt(this.baseInfo.blockCount / 200) * 4
+        // if (!maxSendBlockCount || maxSendBlockCount <= 0) {
+        //     maxSendBlockCount = 4
+        // }
         console.log("maxSendBlockCount", maxSendBlockCount, this.baseInfo.blockCount)
         for (let blockIndex = blockSendDetail.index; blockIndex < this.baseInfo.blockCount; blockIndex++) {
             const blockHash = this.baseInfo.blockHashes[blockIndex]
@@ -439,9 +439,9 @@ class TaskUpload {
                 blockSendDetail.errorInfo = e.toString()
                 throw e
             })
-            if (this.baseInfo.blockCount > 800) {
-                await utils.sleep(1000)
-            }
+            // if (this.baseInfo.blockCount > 800) {
+            //     await utils.sleep(1000)
+            // }
             console.log("blockAck", blocksAck)
             this.cleanMsgData(blocksAck)
             blockSendDetail.index = blockIndex
