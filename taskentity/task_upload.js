@@ -237,7 +237,7 @@ class TaskUpload {
                     const pdpRecordList = await sdk.globalSdk().ontFs.getFilePdpRecordList(this.baseInfo.fileHash)
                     console.log("pdpRecordList", pdpRecordList, this.option.copyNum)
                     if (pdpRecordList && pdpRecordList.pdpRecords &&
-                        pdpRecordList.pdpRecords.length == this.option.copyNum) {
+                        pdpRecordList.pdpRecords.length) {
                         break
                     }
                 } catch (e) {
