@@ -4,6 +4,7 @@ const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
 const Base64 = require("js-base64").Base64;
 const utils = require("../utils")
+const { ONTFS_CONTRACT_ADDRESS } = require("../common")
 
 class OntFs {
 	/**
@@ -151,7 +152,12 @@ class OntFs {
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
-		const events = await client.api.network.getSmartCodeEvent({ value: tx.transaction })
+		await this.getFsSmartCodeEvent(tx.transaction)
+		return tx
+	}
+
+	async getFsSmartCodeEvent(transaction) {
+		const events = await client.api.network.getSmartCodeEvent({ value: transaction })
 		console.log("events:", events);
 		if (
 			events &&
@@ -160,15 +166,14 @@ class OntFs {
 		) {
 			for (let n of events.Notify) {
 				if (
-					n.ContractAddress == "0b00000000000000000000000000000000000000"
+					n.ContractAddress == ONTFS_CONTRACT_ADDRESS
 				) {
 					const str = Base64.decode(n.States);
 					console.log("tx " + tx.transaction + "state failed, " + str)
-					// throw ("tx " + tx.transaction + "state failed, " + str);
+					throw new Error(str)
 				}
 			}
 		}
-		return tx
 	}
 
 	/**
@@ -208,11 +213,13 @@ class OntFs {
 		for (let item of renews) {
 			item.fileHash = client.api.utils.strToHex(item.fileHash);
 		}
-		return client.api.fs.renewFiles({
+		const tx = client.api.fs.renewFiles({
 			filesRenew: renews,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
+		await this.getFsSmartCodeEvent(tx.transaction)
+		return tx
 	}
 
 	/**
@@ -245,11 +252,13 @@ class OntFs {
 		for (let item of fileHashes) {
 			newFileHashes.push(client.api.utils.strToHex(item));
 		}
-		return client.api.fs.deleteFiles({
+		const tx = client.api.fs.deleteFiles({
 			fileHashes: newFileHashes,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
 		});
+		await this.getFsSmartCodeEvent(tx.transaction)
+		return tx
 	}
 
 	/**
