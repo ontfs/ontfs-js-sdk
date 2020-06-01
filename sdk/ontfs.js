@@ -166,10 +166,10 @@ class OntFs {
 		) {
 			for (let n of events.Notify) {
 				if (
-					n.ContractAddress == ONTFS_CONTRACT_ADDRESS
+					n.ContractAddress == ONTFS_CONTRACT_ADDRESS && n.States != 'AA=='
 				) {
-					const str = Base64.decode(n.States);
-					console.log("tx " + tx.transaction + "state failed, " + str)
+					const str = utils.base64str2utf8str(n.States);
+					console.log("tx " + transaction + "state failed, " + str)
 					throw new Error(str)
 				}
 			}
