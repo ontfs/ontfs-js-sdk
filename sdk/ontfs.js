@@ -433,18 +433,24 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async genFileReadSettleSlice(fileHash, peerWalletAddr, sliceId, blockHeight) {
-		let unlock = await this.mutex.lock()
 		console.log('genFileReadSettleSlice', fileHash, peerWalletAddr, sliceId)
-		const result = await client.api.fs.genFileReadSettleSlice({
-			fileHash,
-			payTo: peerWalletAddr,
-			sliceId,
-			pledgeHeight: blockHeight
-		});
-		await this.waitForGenerateBlock(60, 1)
-		console.log('genFileReadSettleSlice done', fileHash, peerWalletAddr, sliceId)
-		unlock()
-		return result
+		let unlock = await this.mutex.lock()
+		try {
+			const result = await client.api.fs.genFileReadSettleSlice({
+				fileHash,
+				payTo: peerWalletAddr,
+				sliceId,
+				pledgeHeight: blockHeight
+			});
+			await this.waitForGenerateBlock(60, 1)
+			console.log('genFileReadSettleSlice done', fileHash, peerWalletAddr, sliceId)
+			unlock()
+			return result
+		} catch (e) {
+			console.log("generate file read settle", e.message ? e.message : e.toString())
+			unlock()
+			throw e
+		}
 	}
 }
 

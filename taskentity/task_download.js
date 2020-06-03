@@ -622,7 +622,7 @@ class TaskDownload {
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
         const currentWalletAddress = await sdk.globalSdk().walletAddress()
         console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${currentWalletAddress}` +
-            `, sliceId: ${sliceId}`)
+            `, file ${this.option.fileHash}, sliceId: ${sliceId}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
             peerWalletAddr, sliceId, 0).catch((err) => {
                 console.log("generate file read settle failed", err)
