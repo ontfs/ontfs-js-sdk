@@ -195,7 +195,8 @@ class TaskUpload {
             }
             for (let fsNode of nodeList.nodesInfo) {
                 const fsNodeAddr = fsNode.nodeAddr
-                if (fsNode.serviceTime < this.option.timeExpired) {
+                console.log(`node service time: ${parseInt(fsNode.serviceTime.getTime() / 1000)}, time expired:${this.option.timeExpired}`)
+                if (parseInt(fsNode.serviceTime.getTime() / 1000) < this.option.timeExpired) {
                     console.log(`"CheckFsServerStatus ${fsNodeAddr} error: fsNode.ServiceTime(${fsNode.serviceTime}) 
                     < opt.TimeExpired(${this.option.timeExpired})"`)
                     continue
