@@ -444,6 +444,11 @@ class TaskUpload {
             // if (this.baseInfo.blockCount > 800) {
             //     await utils.sleep(1000)
             // }
+            if (!blocksAck || blocksAck.length != toBeSentBlocks.length) {
+                const e = new Error("blocks ack not match")
+                blockSendDetail.errorInfo = e.toString()
+                throw e
+            }
             console.log("blockAck", blocksAck)
             this.cleanMsgData(blocksAck)
             blockSendDetail.index = blockIndex
@@ -511,12 +516,12 @@ class TaskUpload {
         })
         if (!ret.data) {
             console.log("send block response data is null")
-            return []
+            throw new Error("send block response data is null")
         }
         const retMsg = message.decodeMsg(ret.data)
         if (!retMsg || !retMsg.payload || !retMsg.payload.blocks) {
             console.log("response msg invalid format", ret.data, retMsg)
-            return []
+            throw new Error("response msg invalid format")
         }
         let blockAck = []
         console.log("push block ack", this.baseInfo.fileHash, retMsg.payload.blocks.length)
