@@ -509,14 +509,21 @@ class TaskUpload {
             console.log(`send block err ${e.toString()} `)
             throw e
         })
-        if (ret.data) {
-            // console.log("send block ret", message.decodeMsg(ret.data))
+        if (!ret.data) {
+            console.log("send block response data is null")
+            return []
+        }
+        const retMsg = message.decodeMsg(ret.data)
+        if (!retMsg || !retMsg.payload || !retMsg.payload.blocks) {
+            console.log("response msg invalid format", ret.data, retMsg)
+            return []
         }
         let blockAck = []
-        for (let blk of blocks) {
+        console.log("push block ack", this.baseInfo.fileHash, retMsg.payload.blocks.length)
+        for (let blk of retMsg.payload.blocks) {
             blockAck.push({
-                hash: blk.Hash,
-                index: blk.Index
+                hash: blk.hash,
+                index: blk.index
             })
         }
         return blockAck
