@@ -222,7 +222,7 @@ class TaskUpload {
             await this.blocksSend(fileReceivers).catch((e) => {
                 throw e
             })
-            console.log("block send this.baseInfo.allOffse", this.baseInfo)
+            console.log("block send this.baseInfo.allOffset", this.baseInfo)
             console.log(`Task Id: ${this.baseInfo.taskID} FileHash: ${this.baseInfo.fileHash}, BlocksSend Done.`)
             this.baseInfo.progress = Upload_FileTransferBlocks
         }
@@ -356,6 +356,7 @@ class TaskUpload {
     async blocksSend(fileReceivers) {
         let promiseList = []
         console.log('blocksSend', fileReceivers)
+        let blocksSendErrs = []
         for (let peerNetAddr in fileReceivers) {
             const peerAddr = fileReceivers[peerNetAddr]
             const peerUploadInfo = {
@@ -371,6 +372,7 @@ class TaskUpload {
                     resolve()
                 }).catch((e) => {
                     console.log(`send block to peer error ${e.toString()} `)
+                    blocksSendErrs.push(e)
                     resolve()
                 })
             })
@@ -381,6 +383,9 @@ class TaskUpload {
             await Promise.all(promiseList)
         } catch (e) {
             throw e
+        }
+        if (blocksSendErrs.length == fileReceivers.length) {
+            throw new Error("BlocksSend error: all routines transfer file failed")
         }
     }
 
