@@ -213,7 +213,7 @@ class OntFs {
 		for (let item of renews) {
 			item.fileHash = client.api.utils.strToHex(item.fileHash);
 		}
-		const tx = client.api.fs.renewFiles({
+		const tx = await client.api.fs.renewFiles({
 			filesRenew: renews,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit
@@ -252,7 +252,7 @@ class OntFs {
 		for (let item of fileHashes) {
 			newFileHashes.push(client.api.utils.strToHex(item));
 		}
-		const tx = client.api.fs.deleteFiles({
+		const tx = await client.api.fs.deleteFiles({
 			fileHashes: newFileHashes,
 			gasPrice: this.gasPrice,
 			gasLimit: this.gasLimit

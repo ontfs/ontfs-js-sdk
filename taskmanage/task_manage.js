@@ -188,6 +188,7 @@ class TaskMgr {
             throw new Error(`[DelTask] task (id: ${id})is not exist`)
         }
         unlock()
+        console.log("del task done", id)
     }
 
     /**

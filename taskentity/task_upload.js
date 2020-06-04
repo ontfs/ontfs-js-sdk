@@ -220,6 +220,7 @@ class TaskUpload {
                 throw new Error(`find fs receivers count(${Object.keys(fileReceivers).length}) less than copyNum(${this.option.copyNum})`)
             }
             await this.blocksSend(fileReceivers).catch((e) => {
+                console.log("blocks send err", e)
                 throw e
             })
             console.log("block send this.baseInfo.allOffset", this.baseInfo)
@@ -308,6 +309,7 @@ class TaskUpload {
                 })
                 if (fileInfo) {
                     await sdk.globalSdk().deleteFile(this.baseInfo.fileHash).catch((err) => {
+                        console.log("delete file err", err)
                         throw err
                     })
                 }
@@ -382,9 +384,11 @@ class TaskUpload {
         try {
             await Promise.all(promiseList)
         } catch (e) {
+            console.log('throw err of blocksSend', e)
             throw e
         }
-        if (blocksSendErrs.length == fileReceivers.length) {
+        console.log('check err count', blocksSendErrs.length, Object.keys(fileReceivers).length)
+        if (blocksSendErrs.length == Object.keys(fileReceivers).length) {
             throw new Error("BlocksSend error: all routines transfer file failed")
         }
     }
