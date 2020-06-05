@@ -163,7 +163,9 @@ class TaskUpload {
                 throw e
             })
             console.log('fileStore', fileStore, tx)
-            await sdk.globalSdk().waitForGenerateBlock(60, 1)
+            await sdk.globalSdk().waitForGenerateBlock(60, 1).catch((e) => {
+                console.log("wait generate err", e)
+            })
             const uploaded = await fileHasUploaded(this.baseInfo.fileHash)
             if (!uploaded) {
                 throw new Error(`contract interface StoreFile called failed`)
@@ -305,7 +307,6 @@ class TaskUpload {
             if ((this.baseInfo.errorInfo && this.baseInfo.errorInfo.length) ||
                 this.baseInfo.progress == Upload_Error) {
                 const fileInfo = await sdk.globalSdk().getFileInfo(this.baseInfo.fileHash).catch((err) => {
-                    throw err
                 })
                 if (fileInfo) {
                     await sdk.globalSdk().deleteFile(this.baseInfo.fileHash).catch((err) => {
