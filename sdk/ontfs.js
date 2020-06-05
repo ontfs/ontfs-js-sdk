@@ -77,6 +77,11 @@ class OntFs {
 	 * @memberof OntFs
 	 */
 	async createSpace(volume, copyNumber, timeExpired) {
+		const nodes = await client.api.fs.getNodeInfoList({ count: 0 });
+		if (nodes && nodes.nodesInfo && nodes.nodesInfo.length < copyNumber) {
+			throw new Error(`node count ${nodes.nodesInfo.length} less than copy number ${copyNumber}`)
+		}
+
 		return client.api.fs.space.create({
 			volume,
 			copyNumber,

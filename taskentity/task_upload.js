@@ -271,9 +271,9 @@ class TaskUpload {
         this.upload().then(() => {
             this.baseInfo.status = TaskFinish
         }).catch((e) => {
-            console.log(`file upload failed`, JSON.stringify(e))
+            console.log(`file upload failed`, e, typeof (e))
             this.baseInfo.progress = Upload_Error
-            this.baseInfo.errorInfo = e.toString()
+            this.baseInfo.errorInfo = e.message ? e.message : e.toString()
             this.baseInfo.status = TaskFinish
         })
     }

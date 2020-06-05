@@ -686,7 +686,6 @@ class TaskDownload {
     async combine() {
         let hasCutPrefix = this.transferInfo.combineInfo.hasCutPrefix
         const isFileEncrypted = this.transferInfo.combineInfo.isFileEncrypted
-        // const file = this.transferInfo.combineInfo.fileStream
         const value = this.transferInfo.blockDownloadNotify.respNotify
 
         if (value) {
@@ -720,18 +719,20 @@ class TaskDownload {
                 }
             }
             console.log(`${this.option.fileHash}-${value.hash}-${value.index} set downloaded`)
+            this.transferInfo.combineInfo.combinedBlockNum++
         }
-        this.transferInfo.combineInfo.combinedBlockNum++
+
+        console.log('combinedBlockNum', this.transferInfo.combineInfo.combinedBlockNum)
         if (this.transferInfo.combineInfo.combinedBlockNum != this.baseInfo.fileBlockCount) {
             let exitDownloadRoutineCount = 0
-            console.log('this.transferInfo.blockDownloadInfo', this.transferInfo == undefined, this.transferInfo.blockDownloadInfo == undefined)
+            // console.log('this.transferInfo.blockDownloadInfo', this.transferInfo, this.transferInfo.blockDownloadInfo)
             for (let [_, peerDownloadInfo] of Object.entries(this.transferInfo.blockDownloadInfo)) {
                 if (peerDownloadInfo.routineStatus == types.RoutineExit) {
                     exitDownloadRoutineCount += 1
                 }
             }
             if (this.transferInfo.blockDownloadInfo &&
-                exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo)) {
+                exitDownloadRoutineCount == Object.keys(this.transferInfo.blockDownloadInfo).length) {
                 throw new Error("[Combine] all download routine exited but blocks is not complete")
             }
             return
