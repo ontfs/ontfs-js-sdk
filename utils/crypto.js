@@ -101,6 +101,19 @@ const hex2base64str = (hex) => {
 };
 
 /**
+ * convert a hex string to utf8 string
+ *
+ * @param {string} hex
+ * @returns {string}
+ */
+const hex2utf8str = (hex) => {
+	var _data = CryptoJS.enc.Hex.parse(hex);
+	var utf8_data = _data.toString(CryptoJS.enc.Utf8);
+	return utf8_data;
+};
+
+
+/**
  * convert a hex string to sha256 string
  *
  * @param {string} hex
@@ -245,6 +258,7 @@ module.exports = {
 	str2base64,
 	base64str2str,
 	hex2base64str,
+	hex2utf8str,
 	hexstr2Bytes,
 	address2bytestr,
 	base64str2utf8str,

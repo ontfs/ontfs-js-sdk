@@ -1,4 +1,4 @@
-const { hexstr2str, str2hexstr } = require("ontology-ts-sdk").utils;
+const { hexstr2str, str2hexstr, StringReader } = require("ontology-ts-sdk").utils;
 const { addressFromPubKeyHex } = require('../utils/address')
 const { Address } = require("ontology-ts-sdk").Crypto; // todo
 const { client } = require("@ont-dev/ontology-dapi");
@@ -173,9 +173,18 @@ class OntFs {
 				if (
 					n.ContractAddress == ONTFS_CONTRACT_ADDRESS && n.States != 'AA=='
 				) {
-					const str = utils.base64str2utf8str(n.States);
-					console.log("tx " + transaction + "state failed, " + str)
-					throw new Error(str)
+
+					const str = utils.base64str2hex(n.States);
+					let sr = new StringReader(str)
+					let count = utils.decodeVarUint(sr)
+					let result = {}
+					for (let i = 0; i < count; i++) {
+						let hash = utils.hex2utf8str(utils.decodeVarBytes(sr))
+						let error = utils.hex2utf8str(utils.decodeVarBytes(sr))
+						result[hash] = error
+					}
+					console.log("tx " + transaction + "state failed, " + JSON.stringify(result))
+					throw new Error(JSON.stringify(result))
 				}
 			}
 		}
