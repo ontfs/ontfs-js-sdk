@@ -456,7 +456,7 @@ class OntFs {
 				sliceId,
 				pledgeHeight: blockHeight
 			});
-			await this.waitForGenerateBlock(60, 1)
+			// await this.waitForGenerateBlock(60, 1)
 			console.log('genFileReadSettleSlice done', fileHash, peerWalletAddr, sliceId)
 			unlock()
 			return result

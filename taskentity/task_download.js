@@ -622,14 +622,14 @@ class TaskDownload {
     async payForBlocks(peerNetAddr, peerWalletAddr, sliceId, blockHashes, paymentId) {
         const currentWalletAddress = await sdk.globalSdk().walletAddress()
         console.log(`paying to node peer addr ${peerNetAddr}, wallet addr ${currentWalletAddress}` +
-            `, file ${this.option.fileHash}, sliceId: ${sliceId}`)
+            `, file ${this.option.fileHash}, sliceId: ${sliceId} ${new Date()}`)
         const fileReadSlice = await sdk.globalSdk().ontFs.genFileReadSettleSlice(this.option.fileHash,
             peerWalletAddr, sliceId, 0).catch((err) => {
                 console.log("generate file read settle failed", err)
                 throw err
             })
 
-        console.log('fileReadSlice', fileReadSlice)
+        console.log('fileReadSlice', fileReadSlice, new Date())
         let payFrom = fileReadSlice.payFrom
         let payTo = fileReadSlice.payTo
         if (typeof payFrom == 'string') {
@@ -660,7 +660,7 @@ class TaskDownload {
             PubKey: utils.hex2base64str(fileReadSlicePubKey),
         }
         // console.log('fileReadSlice', fileReadSlice, fileReadSlice.sig.serializeHex(), fileReadSlice.pubKey.serializeHex())
-        console.log('sliceData', sliceData)
+        console.log('sliceData', sliceData, new Date())
         const msg = message.newPaymentMsg(payFrom.toBase58(), payTo.toBase58(),
             message.PAYMENT_OP_PAY, paymentId, this.option.fileHash, blockHashes, sliceData, []
         )
@@ -675,7 +675,7 @@ class TaskDownload {
         if (!ret.data) {
             throw new Error(``)
         }
-        console.log(`payment msg response:`, message.decodeMsg(ret.data))
+        console.log(`payment msg response:`, message.decodeMsg(ret.data), new Date())
     }
 
     /**
